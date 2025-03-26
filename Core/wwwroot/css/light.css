@@ -1,0 +1,60 @@
+:root {
+  --bg: #d0d2d4;
+  --fg: #000;
+  --sb-face: #2699fb;
+  --sb-base: #2699fb;
+  --sb-3dlight: #2699fb;
+  --sb-highlight: #2699fb;
+  --sb-track: #FFF;
+  --sb-arrow: #FFF;
+  --sb-shadow: #2699fb;
+  --wk-sb-w: 15px;
+  --wk-sb-h: 15px;
+  --wk-button: #2699fb;
+  --wk-track: #b5e8ff;
+  --wk-track-piece: #FFF;
+  --wk-thumb: 50px;
+  --wk-thumb-color: #82c6ff;
+  --wk-corner: #2699fb;
+  --wk-resizer: #2699fb;
+}
+
+html {
+  scrollbar-face-color: var(--sb-face);
+  scrollbar-base-color: var(--sb-base);
+  scrollbar-3dlight-color: var(--sb-3dlight);
+  scrollbar-highlight-color: var(--sb-highlight);
+  scrollbar-track-color: var(--sb-track);
+  scrollbar-arrow-color: var(--sb-arrow);
+  scrollbar-shadow-color: var(--sb-shadow);
+}
+
+::-webkit-scrollbar {
+  width: var(--webkit-sb-w);
+  height: var(--webkit-sb-h);
+}
+
+::-webkit-scrollbar-button {
+  background-color: var(--wk-button);
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--wk-track);
+}
+
+::-webkit-scrollbar-track-piece {
+  background-color: var(--wk-track-piece);
+}
+
+::-webkit-scrollbar-thumb {
+  height: var(--wk-thumb);
+  background-color: var(--wk-thumb-color);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: var(--wk-corner);
+}
+
+::-webkit-resizer {
+  background-color: var(--wk-resizer);
+}

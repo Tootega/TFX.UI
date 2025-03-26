@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35919.96 d17.13
+VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "TFX.UI.Core", "TFX.UI.Core\TFX.UI.Core.esproj", "{EAACD42B-9456-9CD6-4322-F54DB2EB39B8}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Core", "Core\Core.esproj", "{EAACD42B-9456-9CD6-4322-F54DB2EB39B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

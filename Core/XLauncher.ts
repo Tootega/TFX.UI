@@ -1,0 +1,8 @@
+﻿class XLauncher
+{
+    static Run()
+    {
+        
+    }
+}
+
