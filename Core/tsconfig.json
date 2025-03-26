@@ -1,7 +1,7 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "outFile": "wwwroot/js/TFX.UI.Core.js",
+    "outFile": "wwwroot/js/tfx.ui.js",
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */

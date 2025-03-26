@@ -1,36 +1,32 @@
 ﻿class DateEditor
 {
-    private container: HTMLElement;
-    private input: HTMLInputElement;
-    private calendarPopup: HTMLElement;
-    private currentViewDate: Date;
-    private selectedDate: Date | null = null;
-    private currentPanel: 'days' | 'months' | 'years' = 'days';
+    private _Container: HTMLElement;
+    private _Input: HTMLInputElement;
+    private _CalendarPopup: HTMLElement;
+    private _CurrentViewDate: Date;
+    private _CselectedDate: Date | null = null;
+    private _CurrentPanel: 'days' | 'months' | 'years' = 'days';
 
     constructor(containerId: string)
     {
-        this.container = document.getElementById(containerId)!;
-        this.currentViewDate = new Date();
-        this.init();
-    }
+        this._Container = document.getElementById(containerId)!;
+        this._CurrentViewDate = new Date();
 
-    private init()
-    {
         // Criar input e botão
-        this.input = document.createElement('input');
-        this.input.placeholder = 'dd/mm/aaaa';
-        this.input.addEventListener('input', this.handleInput.bind(this));
-        this.input.addEventListener('blur', this.validateDate.bind(this));
+        this._Input = document.createElement('input');
+        this._Input.placeholder = 'dd/mm/aaaa';
+        this._Input.addEventListener('input', this.handleInput.bind(this));
+        this._Input.addEventListener('blur', this.validateDate.bind(this));
 
         const button = document.createElement('button');
         button.innerHTML = '📅';
         button.addEventListener('click', this.toggleCalendar.bind(this));
 
         // Popup do calendário
-        this.calendarPopup = document.createElement('div');
-        this.calendarPopup.className = 'calendar-popup hidden';
+        this._CalendarPopup = document.createElement('div');
+        this._CalendarPopup.className = 'calendar-popup hidden';
 
-        this.container.append(this.input, button, this.calendarPopup);
+        this._Container.append(this._Input, button, this._CalendarPopup);
         this.updateCalendar();
     }
 
@@ -44,34 +40,34 @@
         else if (value.length > 2) formatted = `${value.slice(0, 2)}/${value.slice(2)}`;
         else formatted = value;
 
-        this.input.value = formatted;
+        this._Input.value = formatted;
     }
 
     private validateDate()
     {
-        const [d, m, y] = this.input.value.split('/');
+        const [d, m, y] = this._Input.value.split('/');
         const date = new Date(`${y}-${m}-${d}`);
         if (isNaN(date.getTime()))
         {
-            this.input.classList.add('error');
+            this._Input.classList.add('error');
         } else
         {
-            this.selectedDate = date;
-            this.input.classList.remove('error');
+            this._CselectedDate = date;
+            this._Input.classList.remove('error');
         }
     }
 
     private toggleCalendar()
     {
-        this.calendarPopup.classList.toggle('hidden');
+        this._CalendarPopup.classList.toggle('hidden');
         this.updateCalendar();
     }
 
     private updateCalendar()
     {
-        this.calendarPopup.innerHTML = '';
-        this.calendarPopup.appendChild(this.createHeader());
-        this.calendarPopup.appendChild(this.createContent());
+        this._CalendarPopup.innerHTML = '';
+        this._CalendarPopup.appendChild(this.createHeader());
+        this._CalendarPopup.appendChild(this.createContent());
     }
 
     private createHeader(): HTMLElement
@@ -80,10 +76,12 @@
         header.className = 'calendar-header';
 
         const prevButton = document.createElement('div');
+        prevButton.className = "arrow";
         prevButton.innerHTML = '◀';
         prevButton.addEventListener('click', () => this.navigate(-1));
 
         const nextButton = document.createElement('div');
+        nextButton.className = "arrow";
         nextButton.innerHTML = '▶';
         nextButton.addEventListener('click', () => this.navigate(1));
 
@@ -91,20 +89,20 @@
         title.className = 'calendar-title';
         title.addEventListener('click', () =>
         {
-            this.currentPanel = this.currentPanel === 'days' ? 'months' : 'years';
+            this._CurrentPanel = this._CurrentPanel === 'days' ? 'months' : 'years';
             this.updateCalendar();
         });
 
         // Atualizar título conforme o painel atual
-        if (this.currentPanel === 'days')
+        if (this._CurrentPanel === 'days')
         {
-            title.textContent = this.currentViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        } else if (this.currentPanel === 'months')
+            title.textContent = this._CurrentViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        } else if (this._CurrentPanel === 'months')
         {
-            title.textContent = this.currentViewDate.getFullYear().toString();
+            title.textContent = this._CurrentViewDate.getFullYear().toString();
         } else
         {
-            const year = this.currentViewDate.getFullYear();
+            const year = this._CurrentViewDate.getFullYear();
             title.textContent = `${year - 6} - ${year + 9}`;
         }
 
@@ -114,15 +112,15 @@
 
     private navigate(direction: number)
     {
-        if (this.currentPanel === 'days')
+        if (this._CurrentPanel === 'days')
         {
-            this.currentViewDate.setMonth(this.currentViewDate.getMonth() + direction);
-        } else if (this.currentPanel === 'months')
+            this._CurrentViewDate.setMonth(this._CurrentViewDate.getMonth() + direction);
+        } else if (this._CurrentPanel === 'months')
         {
-            this.currentViewDate.setFullYear(this.currentViewDate.getFullYear() + direction);
+            this._CurrentViewDate.setFullYear(this._CurrentViewDate.getFullYear() + direction);
         } else
         {
-            this.currentViewDate.setFullYear(this.currentViewDate.getFullYear() + (direction * 16));
+            this._CurrentViewDate.setFullYear(this._CurrentViewDate.getFullYear() + (direction * 16));
         }
         this.updateCalendar();
     }
@@ -132,10 +130,10 @@
         const content = document.createElement('div');
         content.className = 'calendar-content';
 
-        if (this.currentPanel === 'days')
+        if (this._CurrentPanel === 'days')
         {
             content.appendChild(this.createDaysGrid());
-        } else if (this.currentPanel === 'months')
+        } else if (this._CurrentPanel === 'months')
         {
             content.appendChild(this.createMonthsGrid());
         } else
@@ -161,8 +159,8 @@
         });
 
         // Dias do mês
-        const firstDay = new Date(this.currentViewDate.getFullYear(), this.currentViewDate.getMonth(), 1);
-        const lastDay = new Date(this.currentViewDate.getFullYear(), this.currentViewDate.getMonth() + 1, 0);
+        const firstDay = new Date(this._CurrentViewDate.getFullYear(), this._CurrentViewDate.getMonth(), 1);
+        const lastDay = new Date(this._CurrentViewDate.getFullYear(), this._CurrentViewDate.getMonth() + 1, 0);
 
         let date = new Date(firstDay);
         date.setDate(date.getDate() - firstDay.getDay());
@@ -172,17 +170,17 @@
             const cell = document.createElement('div');
             cell.className = 'day-cell';
 
-            const isCurrentMonth = date.getMonth() === this.currentViewDate.getMonth();
+            const isCurrentMonth = date.getMonth() === this._CurrentViewDate.getMonth();
             const isToday = date.toDateString() === new Date().toDateString();
-            const isSelected = this.selectedDate && date.toDateString() === this.selectedDate.toDateString();
+            const isSelected = this._CselectedDate && date.toDateString() === this._CselectedDate.toDateString();
 
             if (!isCurrentMonth) cell.classList.add('faded');
             if (isToday) cell.classList.add('current');
             if (isSelected) cell.classList.add('selected');
 
             cell.textContent = date.getDate().toString();
-            cell.addEventListener('click', () => this.selectDate(new Date(date)));
-
+            let dt = new Date(date);
+            cell.addEventListener('click', () => this.selectDate(dt));
             if (date.getDay() === 0) cell.classList.add('sunday');
             if (date.getDay() === 6) cell.classList.add('saturday');
 
@@ -195,10 +193,10 @@
 
     private selectDate(date: Date)
     {
-        this.selectedDate = date;
-        this.input.value = date.toLocaleDateString('pt-BR');
-        this.currentViewDate = new Date(date);
-        this.updateCalendar();
+        this._CselectedDate = date;
+        this._Input.value = date.toLocaleDateString('pt-BR');
+        this._CurrentViewDate = new Date(date);
+        this._CalendarPopup.className = 'calendar-popup hidden';
     }
 
     private createMonthsGrid(): HTMLElement
@@ -210,17 +208,17 @@
         {
             const cell = document.createElement('div');
             cell.className = 'month-cell';
-            cell.textContent = new Date(this.currentViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'short' });
+            cell.textContent = new Date(this._CurrentViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'short' });
 
-            if (month === new Date().getMonth() && this.currentViewDate.getFullYear() === new Date().getFullYear())
+            if (month === new Date().getMonth() && this._CurrentViewDate.getFullYear() === new Date().getFullYear())
             {
                 cell.classList.add('current');
             }
 
             cell.addEventListener('click', () =>
             {
-                this.currentViewDate.setMonth(month);
-                this.currentPanel = 'days';
+                this._CurrentViewDate.setMonth(month);
+                this._CurrentPanel = 'days';
                 this.updateCalendar();
             });
 
@@ -235,7 +233,7 @@
         const grid = document.createElement('div');
         grid.className = 'years-grid';
 
-        const currentYear = this.currentViewDate.getFullYear();
+        const currentYear = this._CurrentViewDate.getFullYear();
         const startYear = currentYear - (currentYear % 16) - 1;
 
         for (let year = startYear; year < startYear + 16; year++)
@@ -250,8 +248,8 @@
 
             cell.addEventListener('click', () =>
             {
-                this.currentViewDate.setFullYear(year);
-                this.currentPanel = 'months';
+                this._CurrentViewDate.setFullYear(year);
+                this._CurrentPanel = 'months';
                 this.updateCalendar();
             });
 

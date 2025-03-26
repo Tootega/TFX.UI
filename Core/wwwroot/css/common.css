@@ -1,0 +1,19 @@
+@import url("light.css");
+@import url("desktop.css");
+
+html {
+  min-height: 100%;
+  width: 100%;
+  overflow: auto;
+  position: relative;
+  margin: 0px;
+  border: none;
+  background-color: var(--bg);
+}
+
+body {
+  display: block;
+  margin: var(--body-margin);
+  min-height: var(--body-mh);
+  min-width: var(--body-mw);
+}

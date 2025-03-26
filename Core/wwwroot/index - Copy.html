@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="js/TFX.UI.Core.js"></script>
+    <link href="css/DateEditor.css" rel="stylesheet" />
+    <link href="css/light.css" rel="stylesheet" />
+  
+</head>
+<body>
+
+    
+
+    <div class="input-wrapper">
+        <input type="text" placeholder="Digite aqui...">
+    </div>
+
+    <div class="search-container">
+        <input type="search">
+        <div class="button"><div class="emoji-blue">🔻</div></div>
+    </div>
+
+
+    <style>
+        .emoji-blue {
+            filter: invert(48%) sepia(99%) saturate(2476%) hue-rotate(190deg) brightness(118%) contrast(119%);
+        }
+
+        .search-container {
+            position: absolute;
+            display: inline-block;
+        }
+
+        input {
+            padding: 10px 40px 10px 15px;
+            width: 300px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+        }
+
+        .button {
+            position: absolute;
+            right: 3px;
+            top: 3PX;
+            bottom: 3px;
+            width: 35px;
+            background-color: #9d929226;
+            cursor: pointer;
+            font-size: 1.2em;
+            border-radius: 3px;
+            text-align: center;
+            align-content: space-around;
+        }
+
+            .button:hover {
+                background-color: lightgray
+            }
+    </style>
+    <div id="app"></div>
+</body>
+</html>
