@@ -17,3 +17,9 @@ body {
   min-height: var(--body-mh);
   min-width: var(--body-mw);
 }
+
+.MainDiv {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}

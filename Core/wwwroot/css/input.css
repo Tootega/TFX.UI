@@ -1,0 +1,7 @@
+@import url("light.css");
+@import url("desktop.css");
+
+.InputContainer {
+  position: absolute;
+  display: inline-block;
+}
