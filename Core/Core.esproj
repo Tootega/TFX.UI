@@ -4,7 +4,6 @@
     <TypeScriptConfiguration Remove=".vscode\**" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Elements\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
 </Project>
