@@ -10,6 +10,7 @@ declare class XElement {
     protected Container: HTMLElement;
     Element: HTMLElement;
     Owner: XElement | null;
+    protected CreateChildren(): void;
     protected CreateContainer(): HTMLElement;
     protected CreateElement(pClass?: string | null): HTMLElement;
 }
@@ -25,6 +26,8 @@ declare class XDiv extends XElement {
 }
 declare class XBaseButtonInput extends XBaseInput {
     constructor(pOwner: XElement | null, pClass?: string | null);
+    Button: HTMLElement;
+    ButtonIcon: HTMLElement;
 }
 interface Element {
     Owner: XElement | null;

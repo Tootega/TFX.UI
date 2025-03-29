@@ -20,7 +20,6 @@ class XArray extends Array {
 class XLauncher {
     static Run() {
         this.Body = new XDiv(null, "MainDiv");
-        let x = new XBaseInput(this.Body);
         new XBaseButtonInput(this.Body);
     }
 }
@@ -29,6 +28,9 @@ class XElement {
         this.Owner = pOwner;
         this.Container = this.CreateContainer();
         this.Element = this.CreateElement(pClass !== null && pClass !== void 0 ? pClass : this.constructor.name);
+        this.CreateChildren();
+    }
+    CreateChildren() {
     }
     CreateContainer() {
         throw new Error("Method not implemented.");
@@ -65,6 +67,8 @@ class XDiv extends XElement {
 class XBaseButtonInput extends XBaseInput {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
+        this.Button = XUtils.AddElement(this.Container, "div", "XLookupButton");
+        this.ButtonIcon = XUtils.AddElement(this.Button, "div", "XButtonIcon");
     }
 }
 /// <reference path="Elements/Base/XElement.ts" />
