@@ -4,12 +4,17 @@
     {
         this.Owner = pOwner;
         this.Container = this.CreateContainer();        
-        this.Element = this.CreateElement(pClass ?? this.constructor.name);        
+        this.Element = this.CreateElement(pClass ?? this.constructor.name);     
+        this.CreateChildren();
     }
 
     protected Container: HTMLElement;
     public Element: HTMLElement;
     Owner: XElement | null;
+
+    protected CreateChildren()
+    {
+    }
 
     protected CreateContainer(): HTMLElement 
     {
