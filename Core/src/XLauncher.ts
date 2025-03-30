@@ -4,7 +4,7 @@
     {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
         this.Body = new XDiv(null, "MainDiv");
-        new XBaseButtonInput(this.Body);
+        new XMenu(this.Body);
         //new XDatePicker(this.Body);
     }
 

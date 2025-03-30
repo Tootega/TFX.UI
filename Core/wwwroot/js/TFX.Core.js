@@ -254,7 +254,7 @@ class XLauncher {
     static Run() {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
         this.Body = new XDiv(null, "MainDiv");
-        new XBaseButtonInput(this.Body);
+        new XMenu(this.Body);
         //new XDatePicker(this.Body);
     }
 }
@@ -2646,6 +2646,132 @@ class XDatePicker extends XBaseButtonInput {
         this.Calendar.SelectedDate = this.SelectedDate;
     }
 }
+class XMenuButtonItem extends XDiv {
+    constructor(pOwner, pItem) {
+        super(pOwner, "hover-item");
+        this.HTML.textContent = pItem;
+        //this.HTML.style.padding = '10px';
+        //this.HTML.style.borderBottom = '1px solid #ddd';
+    }
+}
+class XHoverPanel extends XDiv {
+    constructor(pOwner, pItem) {
+        super(pOwner, "hover-panel");
+        this.Header = new XDiv(this, 'accordion-header');
+        const icon = new XDiv(this.Header, 'icon');
+        icon.HTML.innerHTML = pItem.icon;
+        const headerText = XUtils.AddElement(this.Header, "span", null);
+        headerText.textContent = pItem.title;
+    }
+}
+class XMenuItem extends XDiv {
+    constructor(pOwner, pItem) {
+        super(pOwner, "accordion-item");
+        this.Menu = null;
+        this.HoverPanel = null;
+        this.HoverItens = new XArray();
+        this.Header = new XDiv(this, 'accordion-header');
+        this.DataItem = pItem;
+        this.Header.HTML.addEventListener('click', () => { var _a; return (_a = this.Menu) === null || _a === void 0 ? void 0 : _a.ExpandItem(this); });
+        const icon = new XDiv(this.Header, 'icon');
+        icon.HTML.innerHTML = pItem.icon;
+        const headerText = XUtils.AddElement(this.Header, "span", "menu-span");
+        headerText.textContent = pItem.title;
+        this.CreateHoverPanel();
+        this.CreateItens();
+    }
+    CreateItens() {
+        if (this.DataItem.subItems) {
+            const submenu = XUtils.AddElement(this, 'ul', 'accordion-submenu');
+            if (this.DataItem.subItems.length > 8)
+                submenu.classList.add('has-scroll');
+            for (var i = 0; i < this.DataItem.subItems.length; i++) {
+                var subitem = this.DataItem.subItems[i];
+                const li = XUtils.AddElement(submenu, 'li', "XAppItem");
+                li.textContent = subitem;
+            }
+            ;
+        }
+    }
+    CreateHoverPanel() {
+        if (this.DataItem.subItems) {
+            this.HoverPanel = new XHoverPanel(this, this.DataItem);
+            for (var i = 0; i < this.DataItem.subItems.length; i++) {
+                var subitem = this.DataItem.subItems[i];
+                var hitem = new XMenuButtonItem(this.HoverPanel, subitem);
+                this.HoverItens.Add(hitem);
+            }
+        }
+    }
+}
+class XMenu extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XMenu");
+        this.menuData = [
+            {
+                icon: '🏠',
+                title: 'Home',
+                subItems: ['Nossa História', 'Equipe', 'Parceiros']
+            },
+            {
+                icon: '🛠️',
+                title: 'Serviços',
+                subItems: Array.from({ length: 10 }, (_, i) => `Serviço ${i + 1}`)
+            },
+            {
+                icon: '📚',
+                title: 'Sobre',
+                subItems: ['Nossa História', 'Equipe', 'Parceiros']
+            },
+            {
+                icon: '📦',
+                title: 'Produtos',
+                subItems: Array.from({ length: 12 }, (_, i) => `Produto ${i + 1}`)
+            },
+            {
+                icon: '📞',
+                title: 'Contato',
+                subItems: ['Nossa História', 'Equipe', 'Parceiros']
+            }
+        ];
+        this.Itens = new XArray();
+        this.ToggleButton = new XBaseButton(this, "collapse-toggle");
+        this.AccordionMenu = new XDiv(this, "accordion-menu");
+        this.ToggleButton.HTML.addEventListener('click', (e) => this.Collaspse(e));
+        this.CreateItens();
+    }
+    ExpandItem(pItem) {
+        if (this.AccordionMenu.HTML.classList.contains('collapsed'))
+            return;
+        if (this.UnExpand(pItem))
+            return;
+        //if (this.AccordionMenu.HTML.classList.contains('collapsed'))
+        //    this.AccordionMenu.HTML.classList.remove('collapsed');
+        this.Itens.forEach(i => i.HTML.classList.remove('active'));
+        if (pItem.DataItem.subItems)
+            pItem.HTML.classList.add('active');
+    }
+    UnExpand(pItem = null) {
+        var ret = false;
+        if (pItem != null && !pItem.HTML.classList.contains('active'))
+            return ret;
+        this.Itens.forEach(i => i.HTML.classList.remove('active'));
+        return true;
+    }
+    Collaspse(pArg) {
+        this.UnExpand();
+        this.AccordionMenu.HTML.classList.toggle('collapsed');
+        this.HTML.classList.toggle('Collapsed');
+    }
+    CreateItens() {
+        for (var i = 0; i < this.menuData.length; i++) {
+            var mitem = this.menuData[i];
+            var item = new XMenuItem(this.AccordionMenu, mitem);
+            item.Menu = this;
+            this.Itens.Add(item);
+        }
+    }
+}
 /// <reference path="DateEditor.ts" />
 /// <reference path="XDefault.ts" />
 /// <reference path="XConst.ts" />
@@ -2663,6 +2789,7 @@ class XDatePicker extends XBaseButtonInput {
 /// <reference path="Elements/Base/XPopupElement.ts" />
 /// <reference path="Elements/Base/XCalendar.ts" />
 /// <reference path="Editors/XDatePicker.ts" />
+/// <reference path="Elements/XMenu.ts" />
 /// <reference path="XLauncher.ts" />
 /// <reference path="DateEditor.ts" />
 class XUtils {
@@ -2676,7 +2803,7 @@ class XUtils {
         else if (pOwner instanceof HTMLElement)
             own = pOwner;
         else
-            own = pOwner.Element;
+            own = pOwner.HTML;
         var elm = document.createElement(pType);
         if (pClass != null)
             elm.className = pClass;

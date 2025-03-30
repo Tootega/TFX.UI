@@ -622,6 +622,34 @@ declare class XDatePicker extends XBaseButtonInput {
     private ValidateDate;
     OnClick(pArg: KeyboardEvent): void;
 }
+declare class XMenuButtonItem extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null, pItem: any);
+}
+declare class XHoverPanel extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null, pItem: any);
+    Header: XDiv;
+}
+declare class XMenuItem extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null, pItem: any);
+    Header: XDiv;
+    Menu: XMenu | null;
+    DataItem: any;
+    HoverPanel: XHoverPanel | null;
+    HoverItens: XArray<XMenuButtonItem>;
+    private CreateItens;
+    private CreateHoverPanel;
+}
+declare class XMenu extends XDiv {
+    private menuData;
+    constructor(pOwner: XElement | HTMLElement | null);
+    ToggleButton: XBaseButton;
+    AccordionMenu: XDiv;
+    Itens: XArray<XMenuItem>;
+    ExpandItem(pItem: XMenuItem): void;
+    UnExpand(pItem?: XMenuItem | null): boolean;
+    Collaspse(pArg: MouseEvent): void;
+    CreateItens(): void;
+}
 interface Element {
     Owner: XElement | null;
 }
