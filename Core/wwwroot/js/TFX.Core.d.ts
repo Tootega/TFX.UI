@@ -284,6 +284,17 @@ interface Window {
     InitializeMap: any;
     CITHook: any;
 }
+interface XIElement {
+    HTML: HTMLElement;
+}
+interface XIPopupPanel extends XIElement {
+    CallPopupClosed(): void;
+    Show(): void;
+    AutoClose: boolean;
+    OnPopupClosed: XPopupClosedEvent | null;
+    CanClose(pSource: HTMLElement): boolean;
+    IsVisible: boolean;
+}
 declare class XKeyValue<K, V> {
     Key: K | undefined;
     Value: V | undefined;
@@ -297,6 +308,11 @@ declare class Guid {
 }
 interface Document {
     Styles: StyleSheetList;
+}
+interface Node {
+    IsChildOf(pElement: Node, pOrIsSelf?: boolean): boolean;
+    Any(pPredicate: XFunc<Node>): boolean;
+    Name: string;
 }
 interface Array<T> {
     Order: any;
@@ -515,22 +531,42 @@ declare class XEventManager {
     static DelayedEvent(pContext: any, pEvent: any, pTime?: number): void;
     static SetTiemOut(pContext: any, pEvent: any, pTime?: number): void;
 }
+interface XPopupClosedEvent {
+    (pPopupPanel: XIPopupPanel): void;
+}
+declare class XPopupManager {
+    private static PopupList;
+    private static AutoEvent;
+    static UseCrl: boolean;
+    static AddAutoEvent(pContext: XElement, pMethod: any, pOnce?: boolean): void;
+    static Remove(pView: XIPopupPanel): void;
+    static Show(pView: XIPopupPanel): void;
+    static Add(pView: XIPopupPanel): void;
+    static HideAll(pArg?: MouseEvent, pValid?: boolean): void;
+}
 declare class XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
-    Container: HTMLElement;
-    Element: HTMLElement;
+    HTML: HTMLElement;
+    Element: HTMLElement | null;
     Owner: XElement | HTMLElement | null;
-    Hide(): void;
-    Show(): void;
+    private _IsVisible;
+    BindTo(pElement: XElement): void;
+    CheckClose(pElement: HTMLElement): boolean;
+    get IsDrawed(): boolean;
+    OnHide(): void;
+    OnShow(): void;
+    Show(pValue?: boolean): void;
     SetContent(pValue: string): void;
     protected CreateChildren(): void;
     protected CreateContainer(): HTMLElement;
-    protected CreateElement(pClass?: string | null): HTMLElement;
+    CanClose(pSource: HTMLElement): boolean;
+    get IsVisible(): boolean;
+    set IsVisible(pValue: boolean);
 }
 declare class XBaseInput extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    Input: HTMLInputElement;
     protected CreateContainer(): HTMLElement;
-    protected CreateElement(pClass?: string | null): HTMLElement;
 }
 declare class XDiv extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
@@ -539,21 +575,32 @@ declare class XDiv extends XElement {
 }
 declare class XBaseButtonInput extends XBaseInput {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
-    Button: XButton;
+    Button: XBaseButton;
     OnClick(pArg: KeyboardEvent): void;
 }
-declare class XCalendar extends XElement {
+declare class XPopupElement extends XDiv implements XIPopupPanel {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    AutoClose: boolean;
+    OnPopupClosed: XPopupClosedEvent | null;
+    ReferenceElement: XElement | null;
+    CallPopupClosed(): void;
+    CanClose(pElement: HTMLElement): boolean;
+}
+declare class XCalendar extends XPopupElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
     protected Header: XDiv;
-    protected LeftArrow: XButton;
-    protected CenterButton: XButton;
-    protected RightArrow: XButton;
+    protected LeftArrow: XBaseButton;
+    protected CenterButton: XBaseButton;
+    protected RightArrow: XBaseButton;
     protected DaysGrid: XDiv;
     protected MonthsGrid: XDiv;
     protected YearsGrid: XDiv;
     private CurrentPanel;
     private ViewDate;
     private SelectedDate;
+    Show(pValue?: boolean): void;
+    OnHide(): void;
+    CallPopupClosed(): void;
     private ShowYears;
     private ShowMonths;
     private ShowDays;
@@ -565,6 +612,9 @@ declare class XCalendar extends XElement {
 }
 declare class XDatePicker extends XBaseButtonInput {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Calendar: XCalendar;
+    OnClick(pArg: KeyboardEvent): void;
+    private ToggleCalendar;
 }
 interface Element {
     Owner: XElement | null;
@@ -573,7 +623,7 @@ declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: XElement | HTMLElement | null, pType: string, pClass: string | null, pInsert?: boolean): T;
 }
-declare class XButton extends XElement {
+declare class XBaseButton extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     protected CreateContainer(): HTMLElement;
     protected CreateElement(pClass?: string | null): HTMLElement;

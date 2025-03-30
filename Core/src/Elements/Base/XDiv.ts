@@ -12,6 +12,6 @@
 
     protected override CreateElement(pClass: string | null = null): HTMLElement
     {
-        return <HTMLElement>this.Container;
+        return <HTMLElement>this.HTML;
     }
 }
