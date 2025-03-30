@@ -735,7 +735,7 @@ enum XDatePart
 }
 interface Date
 {
-    FormatDateTime(pTypeID: string, pPattern: string): string
+    FormatDateTime(pPattern: string): string
     ToString(): string;
     DateTimeString(): string;
     TimeString(pShort?: boolean): string;
@@ -915,7 +915,7 @@ Date.prototype.ToString = function (): string
     return dstr;
 }
 
-Date.prototype.FormatDateTime = function (pTypeID: string, pPattern: string): string
+Date.prototype.FormatDateTime = function (pPattern: string): string
 {
     if (this.getFullYear() == 1755)
         return "";

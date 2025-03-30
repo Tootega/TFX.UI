@@ -1,6 +1,6 @@
 ﻿class XCalendar extends XPopupElement
 {
-    
+
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
         super(pOwner, pClass);
@@ -38,7 +38,8 @@
     protected YearsGrid: XDiv;
     private CurrentPanel: 'days' | 'months' | 'years' = 'days';
     private ViewDate: Date;
-    private SelectedDate: Date;
+    SelectedDate: Date;
+    OnSelectdate: XMethod<Date> | null = null;
 
     override Show(pValue: boolean = true)
     {
@@ -67,17 +68,23 @@
         this.YearsGrid.HTML.innerHTML = "";
 
         const currentYear = this.ViewDate.getFullYear();
-        const startYear = currentYear - (currentYear % 16) - 1;
 
-        for (let year = startYear; year < startYear + 16; year++)
+        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1; 
+        const decadeEnd = decadeStart + 10; 
+        const gridStartYear = decadeStart - (decadeStart % 16);
+
+        for (let year = gridStartYear; year < gridStartYear + 16; year++)
         {
             const cell = document.createElement('div');
             cell.className = 'YearCell';
             cell.textContent = year.toString();
 
-            const isCurrentDecade = year >= (startYear + 1) && year <= (startYear + 10);
-            if (!isCurrentDecade) cell.classList.add('faded');
-            if (year === new Date().getFullYear()) cell.classList.add('current');
+            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
+
+            if (!isCurrentDecade)
+                cell.classList.add('Faded');
+            if (year === new Date().getFullYear())
+                cell.classList.add('Current');
 
             cell.addEventListener('click', () =>
             {
@@ -126,7 +133,6 @@
             this.DaysGrid.HTML.appendChild(cell);
         });
 
-        // Dias do mês
         const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
         const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
 
@@ -163,11 +169,13 @@
         }
     }
 
-    private SelectDate(pDate: Date)
+    SelectDate(pDate: Date)
     {
         this.SelectedDate = pDate;
         this.ViewDate = new Date(pDate);
         this.UpdateCalendar();
+        if (this.OnSelectdate != null)
+            this.OnSelectdate.apply(this, [pDate]);
     }
 
     private Navigate(pDirection: number)
@@ -202,18 +210,17 @@
                 this.CenterButton.SetContent(this.ViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
                 break;
 
-            case 'months':    
+            case 'months':
                 this.ShowMonths();
                 this.CenterButton.SetContent(this.ViewDate.getFullYear().toString());
                 break;
 
             default:
                 this.ShowYears();
-                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16) - 1;
+                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
                 this.CenterButton.SetContent(`${year} - ${year + 15}`);
                 break;
         }
-
     }
 
     protected override CreateContainer(): HTMLElement

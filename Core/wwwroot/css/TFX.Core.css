@@ -23,7 +23,8 @@
   --body-margin: 0;
   --body-mh: 700px;
   --body-mw: 1400px;
-  --ip-border: 2px solid #007bff;
+  --ip-border: 2px solid;
+  --ip-border-color-err: #fe4e00ff;
   --ip-padding: 5px 0px 5px 5px;
   --ip-height: 23px;
   --bg-hv-XLookupButton: #ebebeb;
@@ -113,7 +114,7 @@
   left: 10px;
   right: 10px;
   bottom: 10px;
-  background-color: aqua;
+  background-color: transparent;
 }
 
 .XDaysGrid {
@@ -178,7 +179,11 @@
 }
 
 .Error {
-  border-color: red;
+  background-color: #ffcccc;
+}
+
+.XDatePicker {
+  outline: none;
 }
 
 html {
@@ -253,8 +258,9 @@ html {
   padding: var(--ip-padding);
   width: 300px;
   height: var(--ip-height);
-  border: var(--ip-border);
   border-radius: 5px;
+  border: 1.5px solid #74ddff;
+  outline: none;
 }
 
 .XLookupButton {
@@ -274,12 +280,13 @@ html {
   background-color: var(--bg-hv-XLookupButton);
 }
 
-.XButtonIcon {
+.XLookupButton::before {
+  content: "";
   position: absolute;
+  top: 9px;
+  left: 7px;
+  bottom: 6px;
+  right: 7px;
+  background-color: #333;
   clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
-  width: 20px;
-  height: 20px;
-  left: 8px;
-  top: 8px;
-  background-color: var(--bg-XButtonIcon);
 }

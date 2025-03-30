@@ -1452,7 +1452,7 @@ Date.prototype.ToString = function () {
         X.PadStart(this.getUTCHours(), 2, "0") + ":" + X.PadStart(this.getUTCMinutes(), 2, "0") + ":" + X.PadStart(this.getUTCSeconds(), 2, "0");
     return dstr;
 };
-Date.prototype.FormatDateTime = function (pTypeID, pPattern) {
+Date.prototype.FormatDateTime = function (pPattern) {
     if (this.getFullYear() == 1755)
         return "";
     if (pPattern.length > 16)
@@ -2330,9 +2330,8 @@ class XElement {
     }
 }
 class XBaseInput extends XElement {
-    constructor(pOwner, pClass = null) {
-        super(pOwner, pClass);
-        this.HTML.className = "InputContainer";
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
         this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
     }
     CreateContainer() {
@@ -2351,8 +2350,8 @@ class XDiv extends XElement {
     }
 }
 class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner, pClass = null) {
-        super(pOwner, pClass);
+    constructor(pOwner) {
+        super(pOwner);
         this.Button = new XBaseButton(this, "XLookupButton");
         XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
     }
@@ -2378,6 +2377,7 @@ class XCalendar extends XPopupElement {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
         this.CurrentPanel = 'days';
+        this.OnSelectdate = null;
         this.Header = new XDiv(this.HTML, "XCalendar-Header");
         this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
         this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
@@ -2416,16 +2416,18 @@ class XCalendar extends XPopupElement {
         this.YearsGrid.IsVisible = true;
         this.YearsGrid.HTML.innerHTML = "";
         const currentYear = this.ViewDate.getFullYear();
-        const startYear = currentYear - (currentYear % 16) - 1;
-        for (let year = startYear; year < startYear + 16; year++) {
+        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
+        const decadeEnd = decadeStart + 10;
+        const gridStartYear = decadeStart - (decadeStart % 16);
+        for (let year = gridStartYear; year < gridStartYear + 16; year++) {
             const cell = document.createElement('div');
             cell.className = 'YearCell';
             cell.textContent = year.toString();
-            const isCurrentDecade = year >= (startYear + 1) && year <= (startYear + 10);
+            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
             if (!isCurrentDecade)
-                cell.classList.add('faded');
+                cell.classList.add('Faded');
             if (year === new Date().getFullYear())
-                cell.classList.add('current');
+                cell.classList.add('Current');
             cell.addEventListener('click', () => {
                 this.ViewDate.setFullYear(year);
                 this.CurrentPanel = 'months';
@@ -2460,7 +2462,6 @@ class XCalendar extends XPopupElement {
             cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
             this.DaysGrid.HTML.appendChild(cell);
         });
-        // Dias do mês
         const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
         const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
         let date = new Date(firstDay);
@@ -2492,6 +2493,8 @@ class XCalendar extends XPopupElement {
         this.SelectedDate = pDate;
         this.ViewDate = new Date(pDate);
         this.UpdateCalendar();
+        if (this.OnSelectdate != null)
+            this.OnSelectdate.apply(this, [pDate]);
     }
     Navigate(pDirection) {
         switch (this.CurrentPanel) {
@@ -2522,7 +2525,7 @@ class XCalendar extends XPopupElement {
                 break;
             default:
                 this.ShowYears();
-                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16) - 1;
+                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
                 this.CenterButton.SetContent(`${year} - ${year + 15}`);
                 break;
         }
@@ -2535,21 +2538,115 @@ class XCalendar extends XPopupElement {
     }
 }
 class XDatePicker extends XBaseButtonInput {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
+    constructor(pOwner) {
+        super(pOwner);
+        this.SelectedDate = new Date();
+        this.Input.className = "XDatePicker";
         this.Calendar = new XCalendar(pOwner);
         this.Calendar.IsVisible = false;
+        this.Calendar.OnSelectdate = (d) => this.Selected(d);
         this.Calendar.ReferenceElement = this;
         XPopupManager.Add(this.Calendar);
+        this.Input.placeholder = 'dd/mm/aaaa hh:MM:ss';
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
+    }
+    Selected(pDate) {
+        this.SelectedDate = pDate;
+        this.Calendar.IsVisible = false;
+        this.Input.value = this.FormatDate(pDate, this.Input.placeholder);
+    }
+    FormatDate(data, formato) {
+        const completarComZero = (valor) => {
+            return valor < 10 ? `0${valor}` : valor.toString();
+        };
+        // Extrai componentes da data
+        const dia = completarComZero(data.getDate());
+        const mes = completarComZero(data.getMonth() + 1); // +1 pois meses são 0-based
+        const ano = data.getFullYear().toString();
+        const horas = completarComZero(data.getHours());
+        const minutos = completarComZero(data.getMinutes());
+        const segundos = completarComZero(data.getSeconds());
+        // Detecta partes do formato
+        const partes = formato.split(' ');
+        const formatoData = partes.find(p => p.toLowerCase().includes('dd')) || null;
+        const formatoHora = partes.find(p => p.toLowerCase().includes('hh')) || null;
+        // Monta a string
+        let resultado = '';
+        // Formata a data se necessário
+        if (formatoData) {
+            resultado = `${dia}/${mes}/${ano}`;
+        }
+        // Formata a hora se necessário
+        if (formatoHora) {
+            const separador = resultado ? ' ' : ''; // Espaço se já tiver data
+            let horaFormatada = `${horas}:${minutos}`;
+            // Adiciona segundos se necessário
+            if (formatoHora.toLowerCase().includes('ss')) {
+                horaFormatada += `:${segundos}`;
+            }
+            resultado += separador + horaFormatada;
+        }
+        return resultado;
+    }
+    HandleInput(pEvent) {
+        this.ValidateDate();
+        const input = pEvent.target;
+        const value = input.value.replace(/\D/g, '');
+        const placeholder = this.Input.placeholder;
+        const [datePart, timePart] = placeholder.includes(' ') ?
+            placeholder.split(' ') : [placeholder.startsWith('dd')
+                ? placeholder : null, placeholder.startsWith('hh') ? placeholder : null];
+        let formatted = '';
+        let remainingDigits = value;
+        if (datePart === null || datePart === void 0 ? void 0 : datePart.startsWith('dd/mm/aaaa')) {
+            const dateDigits = remainingDigits.slice(0, 8);
+            formatted = this.formatDateSection(dateDigits);
+            remainingDigits = remainingDigits.slice(8);
+        }
+        if (timePart === null || timePart === void 0 ? void 0 : timePart.startsWith('hh')) {
+            if (formatted !== '' && X.Length(formatted) == X.Length(datePart))
+                formatted += ' ';
+            formatted += this.formatTimeSection(remainingDigits, timePart === 'hh:MM:ss' ? 6 : 4);
+        }
+        if (pEvent.inputType == "deleteContentBackward")
+            formatted = formatted.trim();
+        input.value = formatted;
+    }
+    formatDateSection(pDigits) {
+        let formatted = '';
+        for (let i = 0; i < pDigits.length; i++) {
+            if (i === 2 || i === 4)
+                formatted += '/';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    formatTimeSection(pDigits, pMax) {
+        let formatted = '';
+        for (let i = 0; i < Math.min(pDigits.length, pMax); i++) {
+            if (i === 2 || i === 4)
+                formatted += ':';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    ValidateDate() {
+        this.Input.classList.remove('Error');
+        if (X.IsEmpty(this.Input.value))
+            return;
+        if (!Date.IsDateOrTime(this.Input.value))
+            this.Input.classList.add('Error');
+        else {
+            const [d, m, y] = this.Input.value.split('/');
+            const date = new Date(`${y}-${m}-${d}`);
+            if (this.Calendar.IsVisible)
+                this.Calendar.SelectDate(date);
+        }
     }
     OnClick(pArg) {
         this.Calendar.BindTo(this);
         this.Calendar.Show();
-        //this.ToggleCalendar.bind(this)
-    }
-    ToggleCalendar() {
-        this.Calendar.Show();
-        this.Calendar.UpdateCalendar();
+        this.Calendar.SelectedDate = this.SelectedDate;
     }
 }
 /// <reference path="DateEditor.ts" />

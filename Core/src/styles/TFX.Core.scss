@@ -74,8 +74,9 @@ html {
     padding: var(--ip-padding);
     width: 300px;
     height: var(--ip-height);
-    border: var(--ip-border);
     border-radius: 5px;
+    border: 1.5px solid #74ddff;
+    outline:none;
 }
 
 .XBaseButtonInput {
@@ -99,14 +100,14 @@ html {
         background-color: var(--bg-hv-XLookupButton);
     }
 }
-
-
-.XButtonIcon {
+.XLookupButton::before {
+    content: "";
     position: absolute;
+    top: 9px;
+    left: 7px;
+    bottom: 6px;
+    right: 7px;
+    background-color: #333;
     clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
-    width: 20px;
-    height: 20px;
-    left: 8px;
-    top: 8px;
-    background-color: var(--bg-XButtonIcon);
 }
+

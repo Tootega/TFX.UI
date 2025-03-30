@@ -1,9 +1,8 @@
 ﻿class XBaseInput extends XElement
 {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement | HTMLElement | null)
     {
-        super(pOwner, pClass);
-        this.HTML.className = "InputContainer";
+        super(pOwner, "InputContainer");
         this.Input = XUtils.AddElement<HTMLInputElement>(this.HTML, "input", "XBaseButtonInput");
     }
 

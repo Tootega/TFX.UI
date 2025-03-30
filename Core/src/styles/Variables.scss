@@ -21,7 +21,8 @@
     --body-margin: 0;
     --body-mh: 700px;
     --body-mw: 1400px;
-    --ip-border: 2px solid #007bff;
+    --ip-border: 2px solid;
+    --ip-border-color-err: #fe4e00ff;
     --ip-padding: 5px 0px 5px 5px;
     --ip-height: 23px;
     --bg-hv-XLookupButton: #ebebeb;

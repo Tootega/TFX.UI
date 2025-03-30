@@ -394,7 +394,7 @@ declare enum XDatePart {
     Second = "second"
 }
 interface Date {
-    FormatDateTime(pTypeID: string, pPattern: string): string;
+    FormatDateTime(pPattern: string): string;
     ToString(): string;
     DateTimeString(): string;
     TimeString(pShort?: boolean): string;
@@ -564,7 +564,7 @@ declare class XElement {
     set IsVisible(pValue: boolean);
 }
 declare class XBaseInput extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    constructor(pOwner: XElement | HTMLElement | null);
     Input: HTMLInputElement;
     protected CreateContainer(): HTMLElement;
 }
@@ -574,7 +574,7 @@ declare class XDiv extends XElement {
     protected CreateElement(pClass?: string | null): HTMLElement;
 }
 declare class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    constructor(pOwner: XElement | HTMLElement | null);
     Button: XBaseButton;
     OnClick(pArg: KeyboardEvent): void;
 }
@@ -597,24 +597,31 @@ declare class XCalendar extends XPopupElement {
     protected YearsGrid: XDiv;
     private CurrentPanel;
     private ViewDate;
-    private SelectedDate;
+    SelectedDate: Date;
+    OnSelectdate: XMethod<Date> | null;
     Show(pValue?: boolean): void;
     OnHide(): void;
     CallPopupClosed(): void;
     private ShowYears;
     private ShowMonths;
     private ShowDays;
-    private SelectDate;
+    SelectDate(pDate: Date): void;
     private Navigate;
     UpdateCalendar(): void;
     protected CreateContainer(): HTMLElement;
     protected CreateElement(pClass?: string | null): HTMLElement;
 }
 declare class XDatePicker extends XBaseButtonInput {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    constructor(pOwner: XElement | HTMLElement | null);
     Calendar: XCalendar;
+    SelectedDate: Date;
+    Selected(pDate: Date): void;
+    FormatDate(data: Date, formato: string): string;
+    private HandleInput;
+    private formatDateSection;
+    private formatTimeSection;
+    private ValidateDate;
     OnClick(pArg: KeyboardEvent): void;
-    private ToggleCalendar;
 }
 interface Element {
     Owner: XElement | null;

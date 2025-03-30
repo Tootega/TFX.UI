@@ -1,6 +1,11 @@
 @import url(Variables.scss);
 @import url(TFX.Core.scss);
 
+.Error {
+    background-color: #ffcccc;
+}
+
 .XDatePicker {
     @extend .XBaseInput;
+    outline: none;
 }
