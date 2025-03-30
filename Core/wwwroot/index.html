@@ -2,25 +2,166 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>TFX Core</title>
     <script src="js/TFX.Core.js"></script>
     <link href="css/TFX.Core.css" rel="stylesheet" />
 </head>
-<body onload="XLauncher.Run()">
-    <!--<div id="container" style="position:absolute;top:0"></div>
-    <div id="container1" style="position:absolute;top:100px"></div>
-    <div id="container2" style="position: absolute; top: 200px"></div>
-    <div id="container3" style="position: absolute; top: 200px"></div>
-    <div id="container4" style="position: absolute; top: 400px"></div>
-    <script>
+<!--<body onload="XLauncher.Run()">-->
+<body>
+    <script>// script.ts
 
-        document.head.appendChild(style);
-        new DateEditor("container");
-        //new DateEditor("container1");
-        //new DateEditor("container2");
-        //new DateEditor("container3");
-        const editor = new XDatePicker(document.getElementById("container1"));
-    </script>-->
+        // script.ts
+        document.addEventListener('DOMContentLoaded', () =>
+        {
+            // Adiciona os estilos dinamicamente
+            const style = document.createElement('style');
+            style.textContent = `
+        .accordion-menu {
+            width: 250px;
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+            margin: 20px;
+        }
 
+        .accordion-item {
+            border-bottom: 1px solid #ccc;
+        }
+
+        .accordion-header {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #ddd;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .accordion-header:hover {
+            background-color: #ccc;
+        }
+
+        .accordion-header .icon {
+            width: 20px;
+            margin-right: 10px;
+            transition: transform 0.3s;
+        }
+
+        .accordion-item.active .accordion-header .icon {
+            transform: rotate(90deg);
+        }
+
+        .accordion-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .accordion-submenu li {
+            padding: 12px 15px 12px 40px;
+            list-style: none;
+            border-top: 1px solid #eee;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .accordion-submenu li::before {
+            position: absolute;
+            left: 30px;
+            color: #666;
+        }
+
+        .accordion-submenu li:hover {
+            background-color: #e6e6e6;
+        }
+
+        .accordion-item.active .accordion-submenu {
+            max-height: 500px;
+            transition: max-height 0.35s ease-in;
+        }
+
+        .accordion-item.active .accordion-header {
+            background-color: #bbb;
+        }
+    `;
+            document.head.appendChild(style);
+
+            // Dados do menu
+            const menuData = [
+                { title: 'Home' },
+                {
+                    title: 'Serviços',
+                    subItems: ['Web Design', 'Desenvolvimento', 'SEO']
+                },
+                {
+                    title: 'Sobre',
+                    subItems: ['Nossa História', 'Equipe', 'Parceiros', 'Nossa História', 'Equipe', 'Parceiros', 'Nossa História', 'Equipe', 'Parceiros']
+                },
+                { title: 'Contato' }
+            ];
+
+            // Cria a estrutura do menu
+            const accordionMenu = document.createElement('div');
+            accordionMenu.className = 'accordion-menu';
+
+            menuData.forEach(item =>
+            {
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+
+                // Ícone de seta
+                const icon = document.createElement('div');
+                icon.className = 'icon';
+                icon.innerHTML = '▶';
+                header.appendChild(icon);
+
+                // Texto do header
+                const headerText = document.createElement('span');
+                headerText.textContent = item.title;
+                header.appendChild(headerText);
+
+                // Evento de clique
+                header.addEventListener('click', () =>
+                {
+                    const items = document.querySelectorAll('.accordion-item');
+                    items.forEach(i => i.classList.remove('active'));
+
+                    if (item.subItems)
+                    {
+                        accordionItem.classList.add('active');
+                    }
+                });
+
+                accordionItem.appendChild(header);
+
+                // Subitens
+                if (item.subItems)
+                {
+                    const submenu = document.createElement('ul');
+                    submenu.className = 'accordion-submenu';
+
+                    item.subItems.forEach(subItem =>
+                    {
+                        const li = document.createElement('li');
+                        li.textContent = subItem;
+                        submenu.appendChild(li);
+                    });
+
+                    accordionItem.appendChild(submenu);
+                }
+
+                accordionMenu.appendChild(accordionItem);
+            });
+
+            document.body.appendChild(accordionMenu);
+        });
+    </script>
 </body>
 </html>
