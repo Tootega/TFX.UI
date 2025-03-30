@@ -253,8 +253,9 @@ XDefault.NullID = "00000000-0000-0000-0000-000000000000";
 class XLauncher {
     static Run() {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
-        //this.Body = new XDiv(null, "MainDiv");
-        //new XBaseButtonInput(this.Body)       
+        this.Body = new XDiv(null, "MainDiv");
+        new XBaseButtonInput(this.Body);
+        //new XDatePicker(this.Body);
     }
 }
 var XKey;
@@ -2329,15 +2330,6 @@ class XElement {
         this.Show(pValue);
     }
 }
-class XBaseInput extends XElement {
-    constructor(pOwner) {
-        super(pOwner, "InputContainer");
-        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
-    }
-    CreateContainer() {
-        return XUtils.AddElement(this.Owner, "div", null);
-    }
-}
 class XDiv extends XElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
@@ -2347,6 +2339,12 @@ class XDiv extends XElement {
     }
     CreateElement(pClass = null) {
         return this.HTML;
+    }
+}
+class XBaseInput extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
+        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
     }
 }
 class XBaseButtonInput extends XBaseInput {
@@ -2397,10 +2395,9 @@ class XCalendar extends XPopupElement {
         this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
         this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
     }
-    Show(pValue = true) {
+    OnShow(pValue = true) {
         this.CurrentPanel = 'days';
         this.UpdateCalendar();
-        super.Show(pValue);
     }
     OnHide() {
         this.DaysGrid.IsVisible = false;
@@ -2660,8 +2657,8 @@ class XDatePicker extends XBaseButtonInput {
 /// <reference path="XEventManager.ts" />
 /// <reference path="XPopupManager.ts" />
 /// <reference path="Elements/Base/XElement.ts" />
-/// <reference path="Elements/Base/XBaseInput.ts" />
 /// <reference path="Elements/Base/XDiv.ts" />
+/// <reference path="Elements/Base/XBaseInput.ts" />
 /// <reference path="Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="Elements/Base/XPopupElement.ts" />
 /// <reference path="Elements/Base/XCalendar.ts" />

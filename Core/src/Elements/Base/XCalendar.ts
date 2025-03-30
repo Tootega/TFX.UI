@@ -41,11 +41,10 @@
     SelectedDate: Date;
     OnSelectdate: XMethod<Date> | null = null;
 
-    override Show(pValue: boolean = true)
+    override OnShow(pValue: boolean = true)
     {
         this.CurrentPanel = 'days';
         this.UpdateCalendar();
-        super.Show(pValue);
     }
 
     override OnHide()
@@ -196,7 +195,6 @@
         }
         this.UpdateCalendar();
     }
-
 
     UpdateCalendar()
     {

@@ -563,15 +563,14 @@ declare class XElement {
     get IsVisible(): boolean;
     set IsVisible(pValue: boolean);
 }
-declare class XBaseInput extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Input: HTMLInputElement;
-    protected CreateContainer(): HTMLElement;
-}
 declare class XDiv extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     protected CreateContainer(): HTMLElement;
     protected CreateElement(pClass?: string | null): HTMLElement;
+}
+declare class XBaseInput extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Input: HTMLInputElement;
 }
 declare class XBaseButtonInput extends XBaseInput {
     constructor(pOwner: XElement | HTMLElement | null);
@@ -599,7 +598,7 @@ declare class XCalendar extends XPopupElement {
     private ViewDate;
     SelectedDate: Date;
     OnSelectdate: XMethod<Date> | null;
-    Show(pValue?: boolean): void;
+    OnShow(pValue?: boolean): void;
     OnHide(): void;
     CallPopupClosed(): void;
     private ShowYears;
