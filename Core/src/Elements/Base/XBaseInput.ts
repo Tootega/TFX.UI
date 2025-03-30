@@ -1,6 +1,6 @@
 ﻿class XBaseInput extends XElement
 {
-    constructor(pOwner: XElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
         super(pOwner, pClass);
         this.Container.className = "InputContainer";

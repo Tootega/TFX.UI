@@ -1,11 +1,15 @@
 ﻿class XBaseButtonInput extends XBaseInput 
 {
-    constructor(pOwner: XElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
         super(pOwner, pClass);
+        this.Button = new XButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.Container, XEventType.KeyDown, this.OnClick, true);
+
     }
+    Button: XButton;
 
-    Button: HTMLElement = XUtils.AddElement<HTMLElement>(this.Container, "div", "XLookupButton");
-    ButtonIcon: HTMLElement = XUtils.AddElement<HTMLElement>(this.Button, "div", "XButtonIcon");
-
+    OnClick(pArg: KeyboardEvent)
+    {
+    }
 }

@@ -1,0 +1,6 @@
+@import url(Variables.scss);
+@import url(TFX.Core.scss);
+
+.XDatePicker {
+    @extend .XBaseInput;
+}

@@ -1,10 +1,8 @@
 class XUtils
 {
-    public static X()
+    public static IsNumber(pValue: any): boolean
     {
-        var elm = <Element>document.createElement("div");
-
-        document.body.appendChild(elm);
+        return !isNaN(parseFloat(pValue)) && isFinite(pValue);
     }
 
     public static AddElement<T extends Element>(pOwner: XElement | HTMLElement | null, pType: string, pClass: string | null, pInsert: boolean = false): T
