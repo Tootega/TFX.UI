@@ -1,8 +1,8 @@
 ﻿class XBaseButtonInput extends XBaseInput 
 {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement | HTMLElement | null)
     {
-        super(pOwner, pClass);
+        super(pOwner);
         this.Button = new XBaseButton(this, "XLookupButton");
         XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
     }
