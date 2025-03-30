@@ -252,8 +252,9 @@ XDefault.NullDate = new Date(XDefault.StrNullDate);
 XDefault.NullID = "00000000-0000-0000-0000-000000000000";
 class XLauncher {
     static Run() {
-        this.Body = new XDiv(null, "MainDiv");
-        new XBaseButtonInput(this.Body);
+        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        //this.Body = new XDiv(null, "MainDiv");
+        //new XBaseButtonInput(this.Body)       
     }
 }
 var XKey;
@@ -881,6 +882,46 @@ class Guid {
 }
 Guid.Empty = "00000000-0000-0000-0000-000000000000";
 document.Styles = document.styleSheets;
+Node.prototype.IsChildOf = function (pElement, pOrIsSelf) {
+    var elm = this;
+    if (pOrIsSelf && elm == pElement)
+        return true;
+    while (elm != null) {
+        if (elm.parentElement == pElement)
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.Any = function (pPredicate) {
+    var elm = this;
+    while (elm != null) {
+        if (pPredicate(elm))
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.IsChildOf = function (pElement, pOrIsSelf) {
+    var elm = this;
+    if (pOrIsSelf && elm == pElement)
+        return true;
+    while (elm != null) {
+        if (elm.parentElement == pElement)
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.Any = function (pPredicate) {
+    var elm = this;
+    while (elm != null) {
+        if (pPredicate(elm))
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
 Array.prototype.GroupBy = function (pValue) {
     var ar = new Array();
     var ord = this.OrderBy(e => pValue(e));
@@ -2107,7 +2148,7 @@ class XEventManager {
     }
     static AddObserver(pContext, pConfig, pEvent) {
         const observer = new MutationObserver(() => pEvent.apply(pContext));
-        observer.observe(pContext.Container, pConfig);
+        observer.observe(pContext.HTML, pConfig);
     }
     static AddEvent(pContext, pElement, pEvent, pMethod, pCheckSource = false) {
         if (pElement.Method == null)
@@ -2148,48 +2189,154 @@ class XEventManager {
     }
 }
 XEventManager._CallOnce = new XArray();
+class XPopupManager {
+    static AddAutoEvent(pContext, pMethod, pOnce = true) {
+        var obj = { Context: pContext, Method: pMethod, Once: pOnce };
+        this.AutoEvent.Add(obj);
+    }
+    static Remove(pView) {
+        XPopupManager.PopupList.Remove(pView);
+    }
+    static Show(pView) {
+        pView.Show();
+        //pView.HTML.scrollIntoView();
+    }
+    static Add(pView) {
+        XPopupManager.PopupList.Add(pView);
+    }
+    static HideAll(pArg, pValid = false) {
+        if (pArg != null && this.UseCrl && !pArg.ctrlKey)
+            return;
+        var ar = XPopupManager.AutoEvent.ToArray();
+        for (var i = 0; i < ar.length; i++) {
+            var m = ar[i];
+            if (pArg != null && !m.Context.CanClose(pArg.srcElement))
+                continue;
+            m.Method.apply(m.Context);
+            if (m.Once)
+                XPopupManager.AutoEvent.Remove(m);
+        }
+        for (var i = 0; i < XPopupManager.PopupList.length; i++) {
+            var elm = XPopupManager.PopupList[i];
+            if (!elm.IsVisible)
+                continue;
+            if (pArg == null || elm.CanClose(pArg.srcElement)) {
+                if (!pValid)
+                    elm.CallPopupClosed();
+                elm.IsVisible = false;
+            }
+        }
+    }
+}
+XPopupManager.PopupList = new XArray();
+XPopupManager.AutoEvent = new XArray();
+XPopupManager.UseCrl = false;
 class XElement {
     constructor(pOwner, pClass = null) {
+        this._IsVisible = true;
         this.Owner = pOwner;
-        this.Container = this.CreateContainer();
-        this.Element = this.CreateElement(pClass !== null && pClass !== void 0 ? pClass : this.constructor.name);
+        this.HTML = this.CreateContainer();
+        if (pClass == null)
+            pClass = this.constructor.name;
+        this.Element = null;
         this.CreateChildren();
-        if (pClass != null && this.Container != null)
-            this.Container.className = pClass;
+        this.HTML.className = pClass;
         if (pOwner instanceof XElement)
-            pOwner.Container.appendChild(this.Container);
+            pOwner.HTML.appendChild(this.HTML);
         if (pOwner instanceof HTMLElement)
-            pOwner.appendChild(this.Container);
+            pOwner.appendChild(this.HTML);
     }
-    Hide() {
-        this.Container.style.visibility = 'hidden';
+    BindTo(pElement) {
+        const editorRect = pElement.HTML.getBoundingClientRect();
+        const dropdownRect = this.HTML.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let top;
+        const spaceBelow = viewportHeight - editorRect.bottom;
+        const spaceAbove = editorRect.top;
+        if (dropdownRect.height <= spaceBelow)
+            top = editorRect.bottom;
+        else if (dropdownRect.height <= spaceAbove)
+            top = editorRect.top - dropdownRect.height;
+        else
+            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
+        let left;
+        const spaceRight = viewportWidth - editorRect.left;
+        if (dropdownRect.width <= spaceRight)
+            left = editorRect.left;
+        else {
+            const spaceLeft = editorRect.right;
+            if (dropdownRect.width <= spaceLeft)
+                left = editorRect.right - dropdownRect.width;
+            else
+                left = Math.max(0, viewportWidth - dropdownRect.width);
+        }
+        this.HTML.style.position = 'fixed';
+        this.HTML.style.top = `${top}px`;
+        this.HTML.style.left = `${left}px`;
     }
-    Show() {
-        this.Container.style.visibility = 'visible';
+    CheckClose(pElement) {
+        return true;
+    }
+    get IsDrawed() {
+        var elm = this.HTML;
+        while (elm !== null && elm !== document.body) {
+            if (elm.parentElement == document.body)
+                return true;
+            var style = window.getComputedStyle(elm);
+            if (style.display == "none")
+                return false;
+            elm = elm.parentElement;
+        }
+        return false;
+    }
+    OnHide() {
+    }
+    OnShow() {
+    }
+    Show(pValue = true) {
+        var old = this.IsDrawed;
+        this._IsVisible = pValue;
+        if (pValue === true) {
+            this.HTML.style.visibility = 'visible';
+            this.OnShow();
+        }
+        else if (pValue === false) {
+            this.HTML.style.visibility = 'hidden';
+            this.OnHide();
+        }
+        if (pValue == old)
+            return;
     }
     SetContent(pValue) {
-        if (this.Container != null)
-            this.Container.innerText = pValue;
+        if (this.HTML != null)
+            this.HTML.innerText = pValue;
     }
     CreateChildren() {
     }
     CreateContainer() {
         throw new Error("Method not implemented.");
     }
-    CreateElement(pClass = null) {
-        throw new Error("Method not implemented.");
+    CanClose(pSource) {
+        return true;
+    }
+    get IsVisible() {
+        if (!this._IsVisible)
+            return this._IsVisible;
+        return this.IsDrawed;
+    }
+    set IsVisible(pValue) {
+        this.Show(pValue);
     }
 }
 class XBaseInput extends XElement {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
-        this.Container.className = "InputContainer";
+        this.HTML.className = "InputContainer";
+        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
     }
     CreateContainer() {
         return XUtils.AddElement(this.Owner, "div", null);
-    }
-    CreateElement(pClass = null) {
-        return XUtils.AddElement(this.Container, "input", pClass);
     }
 }
 class XDiv extends XElement {
@@ -2200,44 +2347,74 @@ class XDiv extends XElement {
         return XUtils.AddElement(null, "div", null);
     }
     CreateElement(pClass = null) {
-        return this.Container;
+        return this.HTML;
     }
 }
 class XBaseButtonInput extends XBaseInput {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
-        this.Button = new XButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.Container, XEventType.KeyDown, this.OnClick, true);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
     }
     OnClick(pArg) {
     }
 }
-class XCalendar extends XElement {
+class XPopupElement extends XDiv {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
+        this.AutoClose = false;
+        this.OnPopupClosed = null;
+        this.ReferenceElement = null;
+    }
+    CallPopupClosed() {
+    }
+    CanClose(pElement) {
+        if (this.ReferenceElement != null)
+            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
+        return true;
+    }
+}
+class XCalendar extends XPopupElement {
+    constructor(pOwner, pClass = null) {
+        super(pOwner, pClass);
         this.CurrentPanel = 'days';
-        this.Header = new XDiv(this.Container, "XCalendar-Header");
-        this.LeftArrow = new XButton(this.Header, "XCalendarLeftArrow");
-        this.CenterButton = new XButton(this.Header, "XCalendarCenterButton");
-        this.RightArrow = new XButton(this.Header, "XCalendarRightArrow");
+        this.Header = new XDiv(this.HTML, "XCalendar-Header");
+        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
+        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
+        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
         this.DaysGrid = new XDiv(this, "XDaysGrid");
         this.MonthsGrid = new XDiv(this, "XMonthsGrid");
-        this.MonthsGrid.Hide();
+        this.MonthsGrid.IsVisible = false;
         this.YearsGrid = new XDiv(this, "XYearsGrid");
-        this.YearsGrid.Hide();
+        this.YearsGrid.IsVisible = false;
         this.ViewDate = new Date();
         this.SelectedDate = new Date();
         this.UpdateCalendar();
-        this.CenterButton.Container.addEventListener('click', () => {
+        this.CenterButton.HTML.addEventListener('click', () => {
             this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
             this.UpdateCalendar();
         });
-        this.LeftArrow.Container.addEventListener('click', () => this.Navigate(-1));
-        this.RightArrow.Container.addEventListener('click', () => this.Navigate(1));
+        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
+        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
+    }
+    Show(pValue = true) {
+        this.CurrentPanel = 'days';
+        this.UpdateCalendar();
+        super.Show(pValue);
+    }
+    OnHide() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+    CallPopupClosed() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
     }
     ShowYears() {
-        this.YearsGrid.Show();
-        this.YearsGrid.Container.innerHTML = "";
+        this.YearsGrid.IsVisible = true;
+        this.YearsGrid.HTML.innerHTML = "";
         const currentYear = this.ViewDate.getFullYear();
         const startYear = currentYear - (currentYear % 16) - 1;
         for (let year = startYear; year < startYear + 16; year++) {
@@ -2254,12 +2431,12 @@ class XCalendar extends XElement {
                 this.CurrentPanel = 'months';
                 this.UpdateCalendar();
             });
-            this.YearsGrid.Container.appendChild(cell);
+            this.YearsGrid.HTML.appendChild(cell);
         }
     }
     ShowMonths() {
-        this.MonthsGrid.Show();
-        this.MonthsGrid.Container.innerHTML = "";
+        this.MonthsGrid.IsVisible = true;
+        this.MonthsGrid.HTML.innerHTML = "";
         for (let month = 0; month < 12; month++) {
             const cell = document.createElement('div');
             cell.className = 'MonthCell';
@@ -2271,17 +2448,17 @@ class XCalendar extends XElement {
                 this.CurrentPanel = 'days';
                 this.UpdateCalendar();
             });
-            this.MonthsGrid.Container.appendChild(cell);
+            this.MonthsGrid.HTML.appendChild(cell);
         }
     }
     ShowDays() {
-        this.DaysGrid.Show();
-        this.DaysGrid.Container.innerHTML = '';
+        this.DaysGrid.IsVisible = true;
+        this.DaysGrid.HTML.innerHTML = '';
         ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
             const cell = document.createElement('div');
             cell.textContent = day;
             cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
-            this.DaysGrid.Container.appendChild(cell);
+            this.DaysGrid.HTML.appendChild(cell);
         });
         // Dias do mês
         const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
@@ -2307,7 +2484,7 @@ class XCalendar extends XElement {
                 cell.classList.add('Sunday');
             if (date.getDay() === 6)
                 cell.classList.add('Saturday');
-            this.DaysGrid.Container.appendChild(cell);
+            this.DaysGrid.HTML.appendChild(cell);
             date.setDate(date.getDate() + 1);
         }
     }
@@ -2331,9 +2508,9 @@ class XCalendar extends XElement {
         this.UpdateCalendar();
     }
     UpdateCalendar() {
-        this.DaysGrid.Hide();
-        this.MonthsGrid.Hide();
-        this.YearsGrid.Hide();
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
         switch (this.CurrentPanel) {
             case 'days':
                 this.ShowDays();
@@ -2354,14 +2531,28 @@ class XCalendar extends XElement {
         return XUtils.AddElement(null, "div", null);
     }
     CreateElement(pClass = null) {
-        return this.Container;
+        return this.HTML;
     }
 }
 class XDatePicker extends XBaseButtonInput {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
+        this.Calendar = new XCalendar(pOwner);
+        this.Calendar.IsVisible = false;
+        this.Calendar.ReferenceElement = this;
+        XPopupManager.Add(this.Calendar);
+    }
+    OnClick(pArg) {
+        this.Calendar.BindTo(this);
+        this.Calendar.Show();
+        //this.ToggleCalendar.bind(this)
+    }
+    ToggleCalendar() {
+        this.Calendar.Show();
+        this.Calendar.UpdateCalendar();
     }
 }
+/// <reference path="DateEditor.ts" />
 /// <reference path="XDefault.ts" />
 /// <reference path="XConst.ts" />
 /// <reference path="XTypes.ts" />
@@ -2370,10 +2561,12 @@ class XDatePicker extends XBaseButtonInput {
 /// <reference path="XMath.ts" />
 /// <reference path="XSort.ts" />
 /// <reference path="XEventManager.ts" />
+/// <reference path="XPopupManager.ts" />
 /// <reference path="Elements/Base/XElement.ts" />
 /// <reference path="Elements/Base/XBaseInput.ts" />
 /// <reference path="Elements/Base/XDiv.ts" />
 /// <reference path="Elements/Base/XBaseButtonInput.ts" />
+/// <reference path="Elements/Base/XPopupElement.ts" />
 /// <reference path="Elements/Base/XCalendar.ts" />
 /// <reference path="Editors/XDatePicker.ts" />
 /// <reference path="XLauncher.ts" />
@@ -2404,7 +2597,7 @@ class XUtils {
         return elm;
     }
 }
-class XButton extends XElement {
+class XBaseButton extends XElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
     }
@@ -2412,7 +2605,7 @@ class XButton extends XElement {
         return XUtils.AddElement(null, "div", null);
     }
     CreateElement(pClass = null) {
-        return this.Container;
+        return this.HTML;
     }
 }
 //# sourceMappingURL=TFX.Core.js.map

@@ -1,37 +1,38 @@
-﻿class XCalendar extends XElement
+﻿class XCalendar extends XPopupElement
 {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
+    
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
         super(pOwner, pClass);
-        this.Header = new XDiv(this.Container, "XCalendar-Header");
-        this.LeftArrow = new XButton(this.Header, "XCalendarLeftArrow");
-        this.CenterButton = new XButton(this.Header, "XCalendarCenterButton");
-        this.RightArrow = new XButton(this.Header, "XCalendarRightArrow");
+        this.Header = new XDiv(this.HTML, "XCalendar-Header");
+        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
+        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
+        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
 
         this.DaysGrid = new XDiv(this, "XDaysGrid");
 
         this.MonthsGrid = new XDiv(this, "XMonthsGrid");
-        this.MonthsGrid.Hide();
+        this.MonthsGrid.IsVisible = false;
 
         this.YearsGrid = new XDiv(this, "XYearsGrid");
-        this.YearsGrid.Hide();
+        this.YearsGrid.IsVisible = false;
 
         this.ViewDate = new Date();
         this.SelectedDate = new Date();
         this.UpdateCalendar();
-        this.CenterButton.Container.addEventListener('click', () =>
+        this.CenterButton.HTML.addEventListener('click', () =>
         {
             this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
             this.UpdateCalendar();
         });
-        this.LeftArrow.Container.addEventListener('click', () => this.Navigate(-1));
-        this.RightArrow.Container.addEventListener('click', () => this.Navigate(1));
+        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
+        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
     }
 
     protected Header: XDiv;
-    protected LeftArrow: XButton;
-    protected CenterButton: XButton;
-    protected RightArrow: XButton;
+    protected LeftArrow: XBaseButton;
+    protected CenterButton: XBaseButton;
+    protected RightArrow: XBaseButton;
     protected DaysGrid: XDiv;
     protected MonthsGrid: XDiv;
     protected YearsGrid: XDiv;
@@ -39,11 +40,31 @@
     private ViewDate: Date;
     private SelectedDate: Date;
 
+    override Show(pValue: boolean = true)
+    {
+        this.CurrentPanel = 'days';
+        this.UpdateCalendar();
+        super.Show(pValue);
+    }
+
+    override OnHide()
+    {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+
+    override CallPopupClosed(): void
+    {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
 
     private ShowYears()
     {
-        this.YearsGrid.Show();
-        this.YearsGrid.Container.innerHTML = "";
+        this.YearsGrid.IsVisible = true;
+        this.YearsGrid.HTML.innerHTML = "";
 
         const currentYear = this.ViewDate.getFullYear();
         const startYear = currentYear - (currentYear % 16) - 1;
@@ -65,14 +86,14 @@
                 this.UpdateCalendar();
             });
 
-            this.YearsGrid.Container.appendChild(cell);
+            this.YearsGrid.HTML.appendChild(cell);
         }
     }
 
     private ShowMonths() 
     {
-        this.MonthsGrid.Show();
-        this.MonthsGrid.Container.innerHTML = "";
+        this.MonthsGrid.IsVisible = true;
+        this.MonthsGrid.HTML.innerHTML = "";
         for (let month = 0; month < 12; month++)
         {
             const cell = document.createElement('div');
@@ -89,20 +110,20 @@
                 this.UpdateCalendar();
             });
 
-            this.MonthsGrid.Container.appendChild(cell);
+            this.MonthsGrid.HTML.appendChild(cell);
         }
     }
 
     private ShowDays()
     {
-        this.DaysGrid.Show();
-        this.DaysGrid.Container.innerHTML = '';
+        this.DaysGrid.IsVisible = true;
+        this.DaysGrid.HTML.innerHTML = '';
         ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) =>
         {
             const cell = document.createElement('div');
             cell.textContent = day;
             cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
-            this.DaysGrid.Container.appendChild(cell);
+            this.DaysGrid.HTML.appendChild(cell);
         });
 
         // Dias do mês
@@ -137,7 +158,7 @@
             if (date.getDay() === 6)
                 cell.classList.add('Saturday');
 
-            this.DaysGrid.Container.appendChild(cell);
+            this.DaysGrid.HTML.appendChild(cell);
             date.setDate(date.getDate() + 1);
         }
     }
@@ -171,9 +192,9 @@
 
     UpdateCalendar()
     {
-        this.DaysGrid.Hide();
-        this.MonthsGrid.Hide();
-        this.YearsGrid.Hide();
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
         switch (this.CurrentPanel)
         {
             case 'days':
@@ -202,7 +223,7 @@
 
     protected override CreateElement(pClass: string | null = null): HTMLElement
     {
-        return <HTMLElement>this.Container;
+        return <HTMLElement>this.HTML;
     }
 
 }

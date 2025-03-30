@@ -20,3 +20,18 @@ interface Window
     InitializeMap: any;
     CITHook: any;
 }
+interface XIElement
+{
+    HTML: HTMLElement;
+}
+
+interface XIPopupPanel extends XIElement
+{
+    CallPopupClosed(): void;
+    Show():void;
+
+    AutoClose: boolean;
+    OnPopupClosed: XPopupClosedEvent | null;
+    CanClose(pSource: HTMLElement): boolean;
+    IsVisible: boolean;
+}

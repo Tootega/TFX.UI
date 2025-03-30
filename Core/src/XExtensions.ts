@@ -52,6 +52,67 @@ interface Document
 
 document.Styles = document.styleSheets;
 
+interface Node
+{
+    IsChildOf(pElement: Node, pOrIsSelf?: boolean): boolean;
+
+    Any(pPredicate: XFunc<Node>): boolean;
+
+    Name: string;
+
+}
+
+Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
+{
+    var elm: Node | null = this;
+    if (pOrIsSelf && elm == pElement)
+        return true;
+    while (elm != null)
+    {
+        if (elm.parentElement == pElement)
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.Any = function (pPredicate: XFunc<Node>): boolean
+{
+    var elm: Node | null = this;
+    while (elm != null)
+    {
+        if (pPredicate(elm))
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+
+Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
+{
+    var elm: Node | null = this;
+    if (pOrIsSelf && elm == pElement)
+        return true;
+    while (elm != null)
+    {
+        if (elm.parentElement == pElement)
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.Any = function (pPredicate: XFunc<Node>): boolean
+{
+    var elm: Node | null = this;
+    while (elm != null)
+    {
+        if (pPredicate(elm))
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+
+
 interface Array<T>
 {
     Order: any;

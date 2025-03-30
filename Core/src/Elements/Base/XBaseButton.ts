@@ -1,4 +1,4 @@
-﻿class XButton extends XElement
+﻿class XBaseButton extends XElement
 {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
     {
@@ -12,6 +12,6 @@
 
     protected override CreateElement(pClass: string | null = null): HTMLElement
     {
-        return <HTMLElement>this.Container;
+        return <HTMLElement>this.HTML;
     }
 }

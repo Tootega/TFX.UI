@@ -3,11 +3,11 @@
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
         super(pOwner, pClass);
-        this.Button = new XButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.Container, XEventType.KeyDown, this.OnClick, true);
-
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
     }
-    Button: XButton;
+
+    Button: XBaseButton;
 
     OnClick(pArg: KeyboardEvent)
     {

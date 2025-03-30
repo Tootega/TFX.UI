@@ -2,8 +2,9 @@
 {
     static Run()
     {
-        this.Body = new XDiv(null, "MainDiv");
-        new XBaseButtonInput(this.Body)        
+        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        //this.Body = new XDiv(null, "MainDiv");
+        //new XBaseButtonInput(this.Body)       
     }
 
     static Body: XDiv;
