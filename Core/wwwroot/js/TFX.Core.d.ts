@@ -566,7 +566,6 @@ declare class XElement {
 declare class XDiv extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     protected CreateContainer(): HTMLElement;
-    protected CreateElement(pClass?: string | null): HTMLElement;
 }
 declare class XBaseInput extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
@@ -636,6 +635,8 @@ declare class XMenuItem extends XDiv {
     DataItem: any;
     HoverPanel: XHoverPanel | null;
     HoverItens: XArray<XMenuButtonItem>;
+    Title: HTMLLIElement | null;
+    Instances: HTMLLIElement | null;
     private CreateItens;
     private CreateHoverPanel;
 }

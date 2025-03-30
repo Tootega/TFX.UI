@@ -2337,9 +2337,6 @@ class XDiv extends XElement {
     CreateContainer() {
         return XUtils.AddElement(null, "div", null);
     }
-    CreateElement(pClass = null) {
-        return this.HTML;
-    }
 }
 class XBaseInput extends XDiv {
     constructor(pOwner) {
@@ -2650,8 +2647,6 @@ class XMenuButtonItem extends XDiv {
     constructor(pOwner, pItem) {
         super(pOwner, "hover-item");
         this.HTML.textContent = pItem;
-        //this.HTML.style.padding = '10px';
-        //this.HTML.style.borderBottom = '1px solid #ddd';
     }
 }
 class XHoverPanel extends XDiv {
@@ -2670,6 +2665,8 @@ class XMenuItem extends XDiv {
         this.Menu = null;
         this.HoverPanel = null;
         this.HoverItens = new XArray();
+        this.Title = null;
+        this.Instances = null;
         this.Header = new XDiv(this, 'accordion-header');
         this.DataItem = pItem;
         this.Header.HTML.addEventListener('click', () => { var _a; return (_a = this.Menu) === null || _a === void 0 ? void 0 : _a.ExpandItem(this); });
@@ -2688,7 +2685,10 @@ class XMenuItem extends XDiv {
             for (var i = 0; i < this.DataItem.subItems.length; i++) {
                 var subitem = this.DataItem.subItems[i];
                 const li = XUtils.AddElement(submenu, 'li', "XAppItem");
-                li.textContent = subitem;
+                this.Title = XUtils.AddElement(li, 'span', null);
+                this.Instances = XUtils.AddElement(li, 'span', "XAppCount");
+                this.Title.innerText = subitem;
+                this.Instances.innerText = "(5)";
             }
             ;
         }

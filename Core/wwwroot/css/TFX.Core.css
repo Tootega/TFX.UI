@@ -180,7 +180,7 @@
 
 .XMenu {
   position: absolute;
-  width: 200px;
+  width: 300px;
   height: 100%;
   border-right: 1px solid #999;
   transition: all 0.3s;
@@ -332,6 +332,13 @@
 
 .accordion-item.active .accordion-header {
   background-color: rgba(0, 98, 252, 0.3137254902);
+}
+
+.XAppCount {
+  color: green;
+  font-size: 11px;
+  vertical-align: text-top;
+  padding-left: 2px;
 }
 
 .XAppItem:hover {
