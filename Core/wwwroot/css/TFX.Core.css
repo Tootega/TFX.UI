@@ -259,8 +259,9 @@ html {
   width: 300px;
   height: var(--ip-height);
   border-radius: 5px;
-  border: 1.5px solid #74ddff;
+  border: 2px solid #74ddff;
   outline: none;
+  padding-right: 32px;
 }
 
 .XLookupButton {
@@ -268,7 +269,7 @@ html {
   right: 3px;
   top: 3PX;
   bottom: 3px;
-  width: 35px;
+  width: 28px;
   background-color: var(--bg-XLookupButton);
   cursor: pointer;
   font-size: 1.2em;
@@ -284,9 +285,9 @@ html {
   content: "";
   position: absolute;
   top: 9px;
-  left: 7px;
+  left: 6px;
   bottom: 6px;
-  right: 7px;
+  right: 6px;
   background-color: #333;
   clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
 }

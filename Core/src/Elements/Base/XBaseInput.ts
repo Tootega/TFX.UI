@@ -1,4 +1,4 @@
-﻿class XBaseInput extends XElement
+﻿class XBaseInput extends XDiv
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {
@@ -7,9 +7,4 @@
     }
 
     Input: HTMLInputElement;
-
-    protected override CreateContainer(): HTMLElement 
-    {
-        return XUtils.AddElement<HTMLElement>(this.Owner, "div", null);
-    }
 }
