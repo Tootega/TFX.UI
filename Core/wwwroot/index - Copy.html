@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>TFX Core</title>
+    <!--<script src="js/TFX.Core.js"></script>
+    <link href="css/TFX.Core.css" rel="stylesheet" />-->
+</head>
+<!--<body onload="XLauncher.Run()">-->
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', () =>
+        {
+            // Adiciona os estilos dinamicamente
+            const style = document.createElement('style');
+            style.textContent = `
+                     .accordion-menu {
+                         width: 250px;
+                         font-family: Arial, sans-serif;
+                         background-color: #f1f1f1;
+                         margin: 20px;
+                         transition: all 0.3s;
+                         position: relative;
+                     }
+
+                     .accordion-menu.collapsed {
+                         width: 50px;
+                     }
+
+                     .collapse-toggle {
+                         padding: 15px;
+                         cursor: pointer;
+                         background-color: #ccc;
+                         text-align: left;
+                         border-bottom: 1px solid #999;
+                     }
+
+                     .accordion-item {
+                         border-bottom: 1px solid #ccc;
+                         position: relative;
+                     }
+
+                     .accordion-header {
+                         padding: 15px;
+                         cursor: pointer;
+                         background-color: #ddd;
+                         transition: all 0.3s;
+                         display: flex;
+                         align-items: center;
+                         white-space: nowrap;
+                     }
+
+                     .accordion-menu.collapsed .accordion-header {
+                         padding: 15px;
+                         justify-content: left;
+                     }
+
+                     .accordion-header .icon {
+                         min-width: 20px;
+                         margin-right: 10px;
+                         transition: transform 0.3s;
+                     }
+
+                     .accordion-menu.collapsed .accordion-header .icon {
+                         margin-right: 0;
+                     }
+
+                     .accordion-menu.collapsed .accordion-header span {
+                         display: none;
+                     }
+
+
+                     .accordion-submenu {
+                         max-height: 0;
+                         overflow: hidden;
+                         transition: max-height 0.3s ease-out;
+                         padding-left: 0;
+                         margin: 0;
+                     }
+
+                     .accordion-submenu.has-scroll {
+                         overflow-y: auto;
+                         scrollbar-width: thin;
+                         scrollbar-color: #888 #f1f1f1;
+                     }
+
+                     .accordion-submenu li {
+                         padding: 12px 15px 12px 40px;
+                         list-style: none;
+                         border-top: 1px solid #eee;
+                         cursor: pointer;
+                         transition: background-color 0.2s;
+                     }
+
+                     .accordion-menu.collapsed .accordion-submenu {
+                         display: none;
+                     }
+
+                     .hover-panel {
+                         position: absolute;
+                         left: 100%;
+                         top: 0;
+                         background: #f1f1f1;
+                         min-width: 200px;
+                         box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+                         display: none;
+                         z-index: 1000;
+                         border-left: 3px solid #ccc;
+                     }
+
+                     .accordion-menu.collapsed .accordion-item:hover .hover-panel {
+                         display: block;
+                         animation: fadeIn 0.2s;
+                     }
+
+                     @keyframes fadeIn {
+                         from { opacity: 0; }
+                         to { opacity: 1; }
+                     }
+
+
+                                     .accordion-item.active .accordion-submenu {
+                                         max-height: 500px;
+                                         transition: max-height 0.35s ease-in;
+                                     }
+
+                                     .accordion-item.active .accordion-submenu.has-scroll {
+                                         max-height: 300px;
+                                     }
+
+                                     .accordion-item.active .accordion-header {
+                                         background-color: #bbb;
+                                     }
+                 `;
+            document.head.appendChild(style);
+
+            // Dados do menu
+            const menuData = [
+                {
+                    icon: '🏠',
+                    title: 'Home',
+                    subItems: ['Nossa História', 'Equipe', 'Parceiros']
+                },
+                {
+                    icon: '🛠️',
+                    title: 'Serviços',
+                    subItems: Array.from({ length: 10 }, (_, i) => `Serviço ${i + 1}`)
+                },
+                {
+                    icon: '📚',
+                    title: 'Sobre',
+                    subItems: ['Nossa História', 'Equipe', 'Parceiros']
+                },
+                {
+                    icon: '📦',
+                    title: 'Produtos',
+                    subItems: Array.from({ length: 12 }, (_, i) => `Produto ${i + 1}`)
+                },
+                {
+                    icon: '📞',
+                    title: 'Contato',
+                    subItems: ['Nossa História', 'Equipe', 'Parceiros']
+                }
+            ];
+
+            // Cria a estrutura do menu
+            const accordionMenu = document.createElement('div');
+            accordionMenu.className = 'accordion-menu';
+
+            // Botão de collapse
+            const collapseToggle = document.createElement('div');
+            collapseToggle.className = 'collapse-toggle';
+            collapseToggle.innerHTML = '◀';
+            collapseToggle.addEventListener('click', () =>
+            {
+                accordionMenu.classList.toggle('collapsed');
+                collapseToggle.innerHTML = accordionMenu.classList.contains('collapsed') ? '▶' : '◀';
+            });
+            accordionMenu.appendChild(collapseToggle);
+
+            menuData.forEach(item =>
+            {
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+
+                // Ícone
+                const icon = document.createElement('div');
+                icon.className = 'icon';
+                icon.innerHTML = item.icon;
+                header.appendChild(icon);
+
+                // Texto do header
+                const headerText = document.createElement('span');
+                headerText.textContent = item.title;
+                header.appendChild(headerText);
+
+                // Evento de clique
+                header.addEventListener('click', () =>
+                {
+                    if (accordionItem.classList.contains('active'))
+                    {
+                        const items = document.querySelectorAll('.accordion-item');
+                        items.forEach(i => i.classList.remove('active'));
+
+                        return;
+                    }
+                    if (accordionMenu.classList.contains('collapsed'))
+                        accordionMenu.classList.remove('collapsed');
+
+
+                    const items = document.querySelectorAll('.accordion-item');
+                    items.forEach(i => i.classList.remove('active'));
+
+                    if (item.subItems)
+                    {
+                        accordionItem.classList.add('active');
+                    }
+
+                });
+
+                // Painel flutuante
+                if (item.subItems)
+                {
+                    const hoverPanel = document.createElement('div');
+                    hoverPanel.className = 'hover-panel';
+
+                    item.subItems.forEach(subItem =>
+                    {
+                        const div = document.createElement('div');
+                        div.className = 'hover-item';
+                        div.textContent = subItem;
+                        div.style.padding = '10px';
+                        div.style.borderBottom = '1px solid #ddd';
+                        hoverPanel.appendChild(div);
+                    });
+
+                    accordionItem.appendChild(hoverPanel);
+                }
+
+                accordionItem.appendChild(header);
+
+                // Subitens
+                if (item.subItems)
+                {
+                    const submenu = document.createElement('ul');
+                    submenu.className = 'accordion-submenu';
+
+                    if (item.subItems.length > 8)
+                    {
+                        submenu.classList.add('has-scroll');
+                    }
+
+                    item.subItems.forEach(subItem =>
+                    {
+                        const li = document.createElement('li');
+                        li.textContent = subItem;
+                        submenu.appendChild(li);
+                    });
+
+                    accordionItem.appendChild(submenu);
+                }
+
+                accordionMenu.appendChild(accordionItem);
+            });
+
+            document.body.appendChild(accordionMenu);
+        });
+
+        // script.ts
+        //document.addEventListener('DOMContentLoaded', () =>
+        //{
+        //    // Adiciona os estilos dinamicamente
+        //    const style = document.createElement('style');
+        //    style.textContent = `
+        //                        .accordion-menu {
+        //                            width: 250px;
+        //                            font-family: Arial, sans-serif;
+        //                            background-color: #f1f1f1;
+        //                            margin: 20px;
+        //                        }
+
+        //                        .accordion-item {
+        //                            border-bottom: 1px solid #ccc;
+        //                        }
+
+        //                        .accordion-header {
+        //                            padding: 10px;
+        //                            cursor: pointer;
+        //                            background-color: #ddd;
+        //                            transition: background-color 0.3s;
+        //                            display: flex;
+        //                            align-items: center;
+        //                        }
+
+        //                        .accordion-header:hover {
+        //                            background-color: #ccc;
+        //                        }
+
+        //                        .accordion-header .icon {
+        //                            width: 20px;
+        //                            margin-right: 10px;
+        //                            transition: transform 0.3s;
+        //                        }
+
+        //                        .accordion-item.active .accordion-header .icon {
+        //                            transform: rotate(90deg);
+        //                        }
+
+        //                        .accordion-submenu {
+        //                            max-height: 0;
+        //                            overflow: hidden;
+        //                            transition: max-height 0.3s ease-out;
+        //                            padding-left: 0;
+        //                            margin: 0;
+        //                        }
+
+        //                        .accordion-submenu.has-scroll {
+        //                            overflow-y: auto;
+        //                            scrollbar-width: thin;
+        //                            scrollbar-color: #888 #f1f1f1;
+        //                        }
+
+        //                        .accordion-submenu.has-scroll::-webkit-scrollbar {
+        //                            width: 8px;
+        //                        }
+
+        //                        .accordion-submenu.has-scroll::-webkit-scrollbar-thumb {
+        //                            background-color: #888;
+        //                            border-radius: 4px;
+        //                        }
+
+        //                        .accordion-submenu li {
+        //                            padding: 12px 15px 12px 40px;
+        //                            list-style: none;
+        //                            border-top: 1px solid #eee;
+        //                            cursor: pointer;
+        //                            position: relative;
+        //                            transition: background-color 0.2s;
+        //                            display: flex;
+        //                            align-items: center;
+        //                        }
+
+        //                        .accordion-submenu li::before {
+        //                            position: absolute;
+        //                            left: 20px;
+        //                            color: #666;
+        //                        }
+
+        //                        .accordion-submenu li:hover {
+        //                            background-color: #e6e6e6;
+        //                        }
+
+        //                        .accordion-item.active .accordion-submenu {
+        //                            max-height: 500px;
+        //                            transition: max-height 0.35s ease-in;
+        //                        }
+
+        //                        .accordion-item.active .accordion-submenu.has-scroll {
+        //                            max-height: 300px;
+        //                        }
+
+        //                        .accordion-item.active .accordion-header {
+        //                            background-color: #bbb;
+        //                        }
+        //                    `;
+        //    document.head.appendChild(style);
+
+        //    // Dados do menu com um item com muitos subitens
+        //    const menuData = [
+        //        {
+        //            icon: '⚙',
+        //            title: 'Configurações',
+        //            subItems: ['Nossa História', 'Equipe', 'Parceiros']
+        //        },
+        //        {
+        //            icon: '🛠',
+        //            title: 'Serviços',
+        //            subItems: Array.from({ length: 10 }, (_, i) => `Serviço ${i + 1}`)
+        //        },
+        //        {
+        //            icon: '📚',
+        //            title: 'Sobre',
+        //            subItems: ['Nossa História', 'Equipe', 'Parceiros']
+        //        },
+        //        {
+        //            icon: '📦',
+        //            title: 'Produtos',
+        //            subItems: Array.from({ length: 12 }, (_, i) => `Produto ${i + 1}`)
+        //        },
+
+        //        {
+        //            icon: '📞',
+        //            title: 'Contato',
+        //            subItems: ['E-mail', 'Whatsapp', 'Telefone']
+        //        }
+        //    ];
+
+        //    // Cria a estrutura do menu
+        //    const accordionMenu = document.createElement('div');
+        //    accordionMenu.className = 'accordion-menu';
+
+        //    menuData.forEach(item =>
+        //    {
+        //        const accordionItem = document.createElement('div');
+        //        accordionItem.className = 'accordion-item';
+
+        //        const header = document.createElement('div');
+        //        header.className = 'accordion-header';
+
+        //        // Ícone de seta
+        //        const icon = document.createElement('div');
+        //        icon.className = 'icon';
+        //        icon.innerText = item.icon;
+        //        header.appendChild(icon);
+
+        //        // Texto do header
+        //        const headerText = document.createElement('span');
+        //        headerText.textContent = item.title;
+        //        header.appendChild(headerText);
+
+        //        // Evento de clique
+        //        header.addEventListener('click', () =>
+        //        {
+        //            const items = document.querySelectorAll('.accordion-item');
+        //            if (accordionItem.classList.contains('active'))
+        //            {
+        //                accordionItem.classList.remove('active')
+        //                return
+        //            }
+        //            items.forEach(i => i.classList.remove('active'));
+
+        //            if (item.subItems)
+        //            {
+        //                accordionItem.classList.add('active');
+        //            }
+        //        });
+
+        //        accordionItem.appendChild(header);
+
+        //        // Subitens
+        //        if (item.subItems)
+        //        {
+        //            const submenu = document.createElement('ul');
+        //            submenu.className = 'accordion-submenu';
+
+        //            // Adiciona classe para scroll se tiver mais de 8 itens
+        //            if (item.subItems.length > 8)
+        //            {
+        //                submenu.classList.add('has-scroll');
+        //            }
+
+        //            item.subItems.forEach(subItem =>
+        //            {
+        //                const li = document.createElement('li');
+        //                li.textContent = subItem;
+        //                submenu.appendChild(li);
+        //            });
+
+        //            accordionItem.appendChild(submenu);
+        //        }
+
+        //        accordionMenu.appendChild(accordionItem);
+        //    });
+
+        //    document.body.appendChild(accordionMenu);
+        //});
+    </script>
+</body>
+</html>

@@ -14,7 +14,7 @@ class XUtils
             if (pOwner instanceof HTMLElement)
                 own = pOwner;
             else
-                own = pOwner.Element;
+                own = pOwner.HTML;
 
         var elm = <Element>document.createElement(pType);
 

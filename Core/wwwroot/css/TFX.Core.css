@@ -1,6 +1,8 @@
 ﻿@import url(../../src/styles/TFX.Core.scss);
 @import url(../../src/styles/Variables.scss);
 @import url(../../src/styles/TFX.Core.scss);
+@import url(../../src/styles/Variables.scss);
+@import url(../../src/styles/TFX.Core.scss);
 :root {
   --bg: #d0d2d4;
   --fg: #000;
@@ -27,19 +29,9 @@
   --ip-border-color-err: #fe4e00ff;
   --ip-padding: 5px 0px 5px 5px;
   --ip-height: 23px;
-  --bg-hv-XLookupButton: #ebebeb;
+  --bg-hv-XLookupButton: #1eacff43;
   --bg-XButtonIcon: #007bff;
   --bg-XLookupButton: lightgray;
-}
-
-.XButtonIcon {
-  position: absolute;
-  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
-  width: 20px;
-  height: 20px;
-  left: 8px;
-  top: 8px;
-  background-color: var(--bg-XButtonIcon);
 }
 
 .XCalendar {
@@ -184,6 +176,166 @@
 
 .XDatePicker {
   outline: none;
+}
+
+.XMenu {
+  position: absolute;
+  width: 200px;
+  height: 100%;
+  border-right: 1px solid #999;
+  transition: all 0.3s;
+  user-select: none;
+}
+
+.XMenu.Collapsed {
+  width: 50px;
+  transition: all 0.3s;
+}
+
+.accordion-menu {
+  width: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f1f1f1;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.accordion-menu.collapsed {
+  width: 50px;
+}
+
+.collapse-toggle {
+  height: 51px;
+  cursor: pointer;
+  background-color: rgba(0, 98, 252, 0.2509803922);
+  text-align: left;
+  border-bottom: 1px solid #999;
+}
+
+.collapse-toggle::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  background-color: #333;
+  clip-path: polygon(100% 0%, 0% 50%, 100% 100%);
+}
+
+.accordion-item {
+  border-bottom: 1px solid rgba(0, 98, 252, 0.4901960784);
+  position: relative;
+}
+
+.accordion-header {
+  padding: 15px;
+  cursor: pointer;
+  background-color: rgba(0, 98, 252, 0.1843137255);
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.accordion-header:hover {
+  background-color: rgba(0, 98, 252, 0.1019607843);
+}
+
+.accordion-menu.collapsed .accordion-header {
+  padding: 15px;
+  justify-content: left;
+}
+
+.accordion-header .icon {
+  min-width: 20px;
+  margin-right: 10px;
+  transition: transform 0.3s;
+}
+
+.accordion-menu.collapsed .accordion-header .icon {
+  margin-right: 0;
+}
+
+.accordion-menu.collapsed .accordion-header .menu-span {
+  display: none;
+}
+
+.accordion-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  padding-left: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.accordion-submenu.has-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.accordion-submenu li {
+  padding: 12px 15px 12px 40px;
+  list-style: none;
+  border-top: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.accordion-menu.collapsed .accordion-submenu {
+  display: none;
+}
+
+.hover-item {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+.hover-item:hover {
+  background-color: rgba(0, 98, 252, 0.1019607843);
+}
+
+.hover-panel {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: #f1f1f1;
+  min-width: 200px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  display: none;
+  z-index: 1000;
+  border-left: 3px solid #ccc;
+}
+
+.accordion-menu.collapsed .accordion-item:hover .hover-panel {
+  display: block;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.accordion-item.active .accordion-submenu {
+  max-height: 500px;
+  transition: max-height 0.35s ease-in;
+}
+
+.accordion-item.active .accordion-submenu.has-scroll {
+  max-height: 300px;
+}
+
+.accordion-item.active .accordion-header {
+  background-color: rgba(0, 98, 252, 0.3137254902);
+}
+
+.XAppItem:hover {
+  background-color: var(--bg-hv-XLookupButton);
 }
 
 html {

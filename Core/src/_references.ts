@@ -19,6 +19,8 @@
 /// <reference path="Elements/Base/XCalendar.ts" />
 
 /// <reference path="Editors/XDatePicker.ts" />
+/// <reference path="Elements/XMenu.ts" />
+
 /// <reference path="XLauncher.ts" />
 
 /// <reference path="DateEditor.ts" />
