@@ -5,8 +5,6 @@ class XMenuButtonItem extends XDiv
     {
         super(pOwner, "hover-item");
         this.HTML.textContent = pItem;
-        //this.HTML.style.padding = '10px';
-        //this.HTML.style.borderBottom = '1px solid #ddd';
     }
 }
 
@@ -50,6 +48,8 @@ class XMenuItem extends XDiv
     DataItem: any;
     HoverPanel: XHoverPanel | null = null;
     HoverItens = new XArray<XMenuButtonItem>();
+    Title: HTMLLIElement | null = null;
+    Instances: HTMLLIElement | null = null;
 
     private CreateItens()
     {
@@ -63,7 +63,10 @@ class XMenuItem extends XDiv
             {
                 var subitem = this.DataItem.subItems[i];
                 const li = XUtils.AddElement<HTMLLIElement>(submenu, 'li', "XAppItem");
-                li.textContent = subitem;
+                this.Title = XUtils.AddElement<HTMLLIElement>(li, 'span', null);
+                this.Instances = XUtils.AddElement<HTMLLIElement>(li, 'span', "XAppCount");
+                this.Title.innerText = subitem;
+                this.Instances.innerText = "(5)";
             };
         }
     }
