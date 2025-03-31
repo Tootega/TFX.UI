@@ -1,4 +1,9 @@
 ﻿interface XMouseEvent { (pArg: MouseEvent): void; }
+interface Element
+{
+    Owner: XElement | null;
+}
+
 
 interface Window 
 {
@@ -23,6 +28,16 @@ interface Window
 interface XIElement
 {
     HTML: HTMLElement;
+    IsVisible: boolean;
+    OrderIndex: number;
+}
+
+interface XIEditor extends XIElement
+{
+    Rows: number;
+    Cols: number;
+    NewLine: boolean;
+    Rect: XRect;
 }
 
 interface XIPopupPanel extends XIElement
@@ -33,5 +48,4 @@ interface XIPopupPanel extends XIElement
     AutoClose: boolean;
     OnPopupClosed: XPopupClosedEvent | null;
     CanClose(pSource: HTMLElement): boolean;
-    IsVisible: boolean;
 }

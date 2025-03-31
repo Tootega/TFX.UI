@@ -1,4 +1,5 @@
-﻿class XDiv extends XElement
+﻿/// <reference path="XElement.ts" />
+class XDiv extends XElement
 {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
     {

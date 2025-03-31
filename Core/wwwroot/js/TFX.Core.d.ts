@@ -1,25 +1,3 @@
-declare class TabControl {
-    constructor(container: HTMLElement);
-    private injectStyles;
-    private createStructure;
-    private container;
-    private tabs;
-    private activeTabIndex;
-    private static stylesInjected;
-    buttonsContainer: HTMLDivElement;
-    private overflowButton;
-    private dropdownContainer;
-    private resizeObserver;
-    private createOverflowElements;
-    private setupResizeObserver;
-    private checkOverflow;
-    private toggleDropdown;
-    private updateDropdownPosition;
-    private populateDropdown;
-    private closeDropdown;
-    addTab(title: string, content: string): void;
-    private setActiveTab;
-}
 declare enum XKey {
     K_CANCEL = 3,
     K_HELP = 6,
@@ -152,6 +130,8 @@ declare class XDefault {
     static NullDate: Date;
     static IsDebug: boolean;
     static NullID: string;
+    static DefaultColCount: number;
+    static DefaultRowHeight: number;
 }
 declare enum XEventType {
     MouseMove = "mousemove",
@@ -178,7 +158,7 @@ declare class XEventManager {
     private static _CallOnce;
     static AddExecOnce(pUUID: string, pEvent: any): void;
     static ExecOnce(pUUID: string): void;
-    static AddObserver(pContext: XElement, pConfig: any, pEvent: any): void;
+    static AddObserver(pContext: any, pConfig: any, pEvent: any): void;
     static AddEvent(pContext: any, pElement: any, pEvent: string, pMethod: any, pCheckSource?: boolean): void;
     static RemoveEvent(pContext: any, pElement: any, pEvent: string): void;
     static Call(pCallScope: any, pEvent: any, pHTM: any, pCheckSource: boolean, pArg: any): void;
@@ -254,6 +234,9 @@ interface HTMLElement {
     Swap(pLeft: number, pRight: number): any;
     GetRectRelative(pRelative: HTMLElement): XRect;
     GetRect(pInternal?: boolean): XRect;
+    StyleValue(pItemName: string): number;
+    StyleStrValue(pItemName: string): string;
+    SetRect(pRect: XRect): void;
 }
 interface String {
     IsEqual(pValue: string): boolean;
@@ -357,6 +340,9 @@ declare class XCall {
 interface XMouseEvent {
     (pArg: MouseEvent): void;
 }
+interface Element {
+    Owner: XElement | null;
+}
 interface Window {
     ErrorDialog: any;
     Wait: any;
@@ -372,6 +358,14 @@ interface Window {
 }
 interface XIElement {
     HTML: HTMLElement;
+    IsVisible: boolean;
+    OrderIndex: number;
+}
+interface XIEditor extends XIElement {
+    Rows: number;
+    Cols: number;
+    NewLine: boolean;
+    Rect: XRect;
 }
 interface XIPopupPanel extends XIElement {
     CallPopupClosed(): void;
@@ -379,12 +373,6 @@ interface XIPopupPanel extends XIElement {
     AutoClose: boolean;
     OnPopupClosed: XPopupClosedEvent | null;
     CanClose(pSource: HTMLElement): boolean;
-    IsVisible: boolean;
-}
-declare class XLauncher extends XDiv {
-    static Run(): void;
-    static Body: XDiv;
-    constructor();
 }
 declare class XMath {
     private static m_w;
@@ -414,10 +402,12 @@ interface XPopupClosedEvent {
     (pPopupPanel: XIPopupPanel): void;
 }
 declare class XPopupManager {
+    static _ZIndex: number;
+    static ZIndex(): string;
     private static PopupList;
     private static AutoEvent;
     static UseCrl: boolean;
-    static AddAutoEvent(pContext: XElement, pMethod: any, pOnce?: boolean): void;
+    static AddAutoEvent(pContext: any, pMethod: any, pOnce?: boolean): void;
     static Remove(pView: XIPopupPanel): void;
     static Show(pView: XIPopupPanel): void;
     static Add(pView: XIPopupPanel): void;
@@ -430,7 +420,7 @@ interface XSortSwap<T> {
     (pArray: Array<T>, pLeft: number, pRight: number): void;
 }
 declare class XSort {
-    static Sort<T>(pArray: Array<T>, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: XElement): Array<T>;
+    static Sort<T>(pArray: Array<T>, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: any): Array<T>;
     private static QuickSort;
     static Swap<T>(pArray: Array<T>, pLeft: number, pRight: number): void;
 }
@@ -545,6 +535,51 @@ declare class XSize {
     Height: number;
     Equal(pOther: XSize): boolean;
 }
+declare class XElement {
+    static _ID: number;
+    static NextID(): number;
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    HTML: HTMLElement;
+    Element: HTMLElement | null;
+    Owner: XElement | HTMLElement | null;
+    private _IsVisible;
+    UUID: number;
+    private _ResizeObserver;
+    OnResize: XMethod<XElement> | null;
+    OrderIndex: number;
+    get Rect(): XRect;
+    set Rect(pValue: XRect);
+    SizeChanged(): void;
+    BindTo(pElement: XElement): void;
+    CheckClose(pElement: HTMLElement): boolean;
+    get IsDrawed(): boolean;
+    OnHide(): void;
+    OnShow(): void;
+    Show(pValue?: boolean): void;
+    SetContent(pValue: string): void;
+    protected CreateChildren(): void;
+    protected CreateContainer(): HTMLElement;
+    CanClose(pSource: HTMLElement): boolean;
+    get IsVisible(): boolean;
+    set IsVisible(pValue: boolean);
+}
+declare class XDiv extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    protected CreateContainer(): HTMLElement;
+}
+declare class XBaseInput extends XDiv implements XIEditor {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Input: HTMLInputElement;
+    Rows: number;
+    Cols: number;
+    NewLine: boolean;
+    OrderIndex: number;
+}
+declare class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Button: XBaseButton;
+    OnClick(pArg: KeyboardEvent): void;
+}
 declare class XDatePicker extends XBaseButtonInput {
     constructor(pOwner: XElement | HTMLElement | null);
     Calendar: XCalendar;
@@ -587,6 +622,25 @@ declare class XMenu extends XDiv {
     Collaspse(pArg: MouseEvent): void;
     CreateItens(): void;
 }
+declare class XBaseButton extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    protected CreateContainer(): HTMLElement;
+}
+declare class XBaseTextButton extends XBaseButton {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    protected Text: HTMLSpanElement;
+    get Title(): string;
+    set Title(pValue: string);
+}
+declare class XPopupElement extends XDiv implements XIPopupPanel {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    AutoClose: boolean;
+    OnPopupClosed: XPopupClosedEvent | null;
+    ReferenceElement: XElement | null;
+    CallPopupClosed(): void;
+    Show(pValue?: boolean): void;
+    CanClose(pElement: HTMLElement): boolean;
+}
 declare class XTabControlButton extends XBaseTextButton {
     constructor(pOwner: XElement | HTMLElement | null);
     TabControl: XTabControl | null;
@@ -621,25 +675,7 @@ declare class XTabControl extends XDiv {
     private PopulateDropdown;
     SelectTab(pButton: XTabControlButton): void;
     AddTab(pTitle: string): void;
-}
-declare class XBaseButton extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    protected CreateContainer(): HTMLElement;
-}
-declare class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Button: XBaseButton;
-    OnClick(pArg: KeyboardEvent): void;
-}
-declare class XBaseInput extends XDiv {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Input: HTMLInputElement;
-}
-declare class XBaseTextButton extends XBaseButton {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    protected Text: HTMLSpanElement;
-    get Title(): string;
-    set Title(pValue: string);
+    CreateTab(): XTabControlTab;
 }
 declare class XCalendar extends XPopupElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
@@ -664,48 +700,50 @@ declare class XCalendar extends XPopupElement {
     private Navigate;
     UpdateCalendar(): void;
     protected CreateContainer(): HTMLElement;
-    protected CreateElement(pClass?: string | null): HTMLElement;
-}
-declare class XDiv extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    protected CreateContainer(): HTMLElement;
-}
-declare class XElement {
-    static _ID: number;
-    static NextID(): number;
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
-    HTML: HTMLElement;
-    Element: HTMLElement | null;
-    Owner: XElement | HTMLElement | null;
-    private _IsVisible;
-    UUID: number;
-    private _ResizeObserver;
-    SizeChanged(): void;
-    BindTo(pElement: XElement): void;
-    CheckClose(pElement: HTMLElement): boolean;
-    get IsDrawed(): boolean;
-    OnHide(): void;
-    OnShow(): void;
-    Show(pValue?: boolean): void;
-    SetContent(pValue: string): void;
-    protected CreateChildren(): void;
-    protected CreateContainer(): HTMLElement;
-    CanClose(pSource: HTMLElement): boolean;
-    get IsVisible(): boolean;
-    set IsVisible(pValue: boolean);
-}
-interface Element {
-    Owner: XElement | null;
-}
-declare class XPopupElement extends XDiv implements XIPopupPanel {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    AutoClose: boolean;
-    OnPopupClosed: XPopupClosedEvent | null;
-    ReferenceElement: XElement | null;
-    CallPopupClosed(): void;
-    CanClose(pElement: HTMLElement): boolean;
 }
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
-    static AddElement<T extends Element>(pOwner: XElement | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
+    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XStage extends XDiv {
+    static Instance: XStage;
+    static Run(): void;
+    constructor();
+    Menu: XMenu;
+    TopBar: XTopBar;
+    TabControl: XStageTabControl;
+    SizeChanged(): void;
+    MenuResize(): void;
+}
+declare class XTopBar extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null);
+}
+declare class XType1 {
+    Point: XPoint;
+    LeftX: number;
+    LeftY: number;
+    Used: boolean;
+    EndX: number;
+    StartX: number;
+}
+declare class XEditPosition {
+    constructor(pLocation: XPoint);
+    Used: boolean;
+    Point: XPoint;
+}
+declare class XForm extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Fields: XArray<XIEditor>;
+    SizeChanged(): void;
+    private NomalForm;
+    GerPosition(pRects: any[], pField: XIEditor, pRows: number, pCols: number, pLy: number, pLx: number): XType1;
+    FincX(pHRects: any[], pStartX: number, pEndX: number, pCols: number): XType1;
+}
+declare class XStageTabControlTab extends XTabControlTab {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Form: XForm;
+}
+declare class XStageTabControl extends XTabControl {
+    constructor(pOwner: XElement | HTMLElement | null);
+    CreateTab(): XTabControlTab;
 }

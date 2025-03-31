@@ -4,6 +4,7 @@
     {
         super(pOwner, pClass);
         this.ReferenceElement = this;
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
     }
     AutoClose: boolean = false;
     OnPopupClosed: XPopupClosedEvent | null = null;
@@ -11,6 +12,13 @@
 
     CallPopupClosed(): void
     {
+    }
+
+
+    override Show(pValue: boolean = true)
+    {
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+        super.Show(pValue);
     }
 
     CanClose(pElement: HTMLElement): boolean

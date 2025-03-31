@@ -24,16 +24,30 @@
         this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
         this._ResizeObserver.observe(this.HTML);
     }
-    
+
     public HTML: HTMLElement;
     public Element: HTMLElement | null;
     Owner: XElement | HTMLElement | null;
     private _IsVisible: boolean = true;
     UUID: number = 0;
     private _ResizeObserver: ResizeObserver;
+    OnResize: XMethod<XElement> | null = null;
+    OrderIndex: number = 0;
+
+    get Rect(): XRect
+    {
+        return this.HTML.GetRect();
+    }
+
+    set Rect(pValue: XRect)
+    {
+        this.HTML.SetRect(pValue);
+    }
 
     SizeChanged()
     {
+        if (this.OnResize != null)
+            this.OnResize.apply(this, [this]);
     }
 
     BindTo(pElement: XElement)
@@ -59,14 +73,14 @@
         const spaceRight = viewportWidth - editorRect.left;
 
         if (dropdownRect.width <= spaceRight)
-            left = editorRect.left; 
+            left = editorRect.left;
         else
         {
             const spaceLeft = editorRect.right;
             if (dropdownRect.width <= spaceLeft)
-                left = editorRect.right - dropdownRect.width; 
+                left = editorRect.right - dropdownRect.width;
             else
-                left = Math.max(0, viewportWidth - dropdownRect.width); 
+                left = Math.max(0, viewportWidth - dropdownRect.width);
         }
 
         this.HTML.style.position = 'fixed';

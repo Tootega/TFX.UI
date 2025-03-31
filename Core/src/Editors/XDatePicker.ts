@@ -1,4 +1,5 @@
-﻿class XDatePicker extends XBaseButtonInput
+﻿/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
+class XDatePicker extends XBaseButtonInput
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {

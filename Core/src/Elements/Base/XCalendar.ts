@@ -1,4 +1,5 @@
-﻿class XCalendar extends XPopupElement
+﻿/// <reference path="XPopupElement.ts" />
+class XCalendar extends XPopupElement
 {
 
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
@@ -225,10 +226,4 @@
     {
         return XUtils.AddElement<HTMLElement>(null, "div", null);
     }
-
-    protected override CreateElement(pClass: string | null = null): HTMLElement
-    {
-        return <HTMLElement>this.HTML;
-    }
-
 }

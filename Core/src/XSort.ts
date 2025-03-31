@@ -4,13 +4,13 @@ interface XSortSwap<T> { (pArray: Array<T>, pLeft: number, pRight: number): void
 
 class XSort
 {
-    public static Sort<T>(pArray: Array<T>, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: XElement): Array<T>
+    public static Sort<T>(pArray: Array<T>, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: any): Array<T>
     {
         XSort.QuickSort<T>(pArray, 0, pArray.length - 1, pSwap, pComparer, pOwner);
         return pArray;
     }
 
-    private static QuickSort<T>(map: Array<T>, left: number, right: number, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: XElement)
+    private static QuickSort<T>(map: Array<T>, left: number, right: number, pSwap: XSortSwap<T>, pComparer: XSortCompare<T>, pOwner: any)
     {
         do
         {
