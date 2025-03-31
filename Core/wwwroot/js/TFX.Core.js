@@ -1,263 +1,196 @@
 "use strict";
-class DateEditor {
-    constructor(containerId) {
-        this.selectedDate = null;
-        this.currentPanel = 'days';
-        this.container = document.getElementById(containerId);
-        this.currentViewDate = new Date();
-        this.init();
+class TabControl {
+    constructor(container) {
+        this.tabs = [];
+        this.activeTabIndex = 0;
+        this.container = container;
+        this.injectStyles();
+        this.createStructure();
     }
-    init() {
-        // Criar input e botão
-        this.input = document.createElement('input');
-        this.input.placeholder = 'dd/mm/aaaa';
-        this.input.addEventListener('input', this.handleInput.bind(this));
-        this.input.addEventListener('blur', this.validateDate.bind(this));
-        const button = document.createElement('button');
-        button.innerHTML = '📅';
-        button.addEventListener('click', this.toggleCalendar.bind(this));
-        // Popup do calendário
-        this.calendarPopup = document.createElement('div');
-        this.calendarPopup.className = 'calendar-popup hidden';
-        this.container.append(this.input, button, this.calendarPopup);
-        this.updateCalendar();
-    }
-    handleInput(e) {
-        const value = e.target.value.replace(/\D/g, '');
-        let formatted = '';
-        if (value.length > 2)
-            formatted = `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4, 8)}`;
-        else if (value.length > 4)
-            formatted = `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4, 8)}`;
-        else if (value.length > 2)
-            formatted = `${value.slice(0, 2)}/${value.slice(2)}`;
-        else
-            formatted = value;
-        this.input.value = formatted;
-    }
-    validateDate() {
-        const [d, m, y] = this.input.value.split('/');
-        const date = new Date(`${y}-${m}-${d}`);
-        if (isNaN(date.getTime())) {
-            this.input.classList.add('error');
-        }
-        else {
-            this.selectedDate = date;
-            this.input.classList.remove('error');
-        }
-    }
-    toggleCalendar() {
-        this.calendarPopup.classList.toggle('hidden');
-        this.updateCalendar();
-    }
-    updateCalendar() {
-        this.calendarPopup.innerHTML = '';
-        this.calendarPopup.appendChild(this.createHeader());
-        this.calendarPopup.appendChild(this.createContent());
-    }
-    createHeader() {
-        const header = document.createElement('div');
-        header.className = 'calendar-header';
-        const prevButton = document.createElement('button');
-        prevButton.innerHTML = '◀';
-        prevButton.addEventListener('click', () => this.navigate(-1));
-        const nextButton = document.createElement('button');
-        nextButton.innerHTML = '▶';
-        nextButton.addEventListener('click', () => this.navigate(1));
-        const title = document.createElement('button');
-        title.className = 'calendar-title';
-        title.addEventListener('click', () => {
-            this.currentPanel = this.currentPanel === 'days' ? 'months' : 'years';
-            this.updateCalendar();
-        });
-        // Atualizar título conforme o painel atual
-        if (this.currentPanel === 'days') {
-            title.textContent = this.currentViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        }
-        else if (this.currentPanel === 'months') {
-            title.textContent = this.currentViewDate.getFullYear().toString();
-        }
-        else {
-            const year = this.currentViewDate.getFullYear();
-            title.textContent = `${year - 6} - ${year + 9}`;
-        }
-        header.append(prevButton, title, nextButton);
-        return header;
-    }
-    navigate(direction) {
-        if (this.currentPanel === 'days') {
-            this.currentViewDate.setMonth(this.currentViewDate.getMonth() + direction);
-        }
-        else if (this.currentPanel === 'months') {
-            this.currentViewDate.setFullYear(this.currentViewDate.getFullYear() + direction);
-        }
-        else {
-            this.currentViewDate.setFullYear(this.currentViewDate.getFullYear() + (direction * 16));
-        }
-        this.updateCalendar();
-    }
-    createContent() {
-        const content = document.createElement('div');
-        content.className = 'calendar-content';
-        if (this.currentPanel === 'days') {
-            content.appendChild(this.createDaysGrid());
-        }
-        else if (this.currentPanel === 'months') {
-            content.appendChild(this.createMonthsGrid());
-        }
-        else {
-            content.appendChild(this.createYearsGrid());
-        }
-        return content;
-    }
-    createDaysGrid() {
-        const grid = document.createElement('div');
-        grid.className = 'days-grid';
-        // Dias da semana
-        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
-            const cell = document.createElement('div');
-            cell.textContent = day;
-            cell.className = `day-header ${i === 0 ? 'sunday' : ''} ${i === 6 ? 'saturday' : ''}`;
-            grid.appendChild(cell);
-        });
-        // Dias do mês
-        const firstDay = new Date(this.currentViewDate.getFullYear(), this.currentViewDate.getMonth(), 1);
-        const lastDay = new Date(this.currentViewDate.getFullYear(), this.currentViewDate.getMonth() + 1, 0);
-        let date = new Date(firstDay);
-        date.setDate(date.getDate() - firstDay.getDay());
-        for (let i = 0; i < 42; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'day-cell';
-            const isCurrentMonth = date.getMonth() === this.currentViewDate.getMonth();
-            const isToday = date.toDateString() === new Date().toDateString();
-            const isSelected = this.selectedDate && date.toDateString() === this.selectedDate.toDateString();
-            if (!isCurrentMonth)
-                cell.classList.add('faded');
-            if (isToday)
-                cell.classList.add('current');
-            if (isSelected)
-                cell.classList.add('selected');
-            cell.textContent = date.getDate().toString();
-            cell.addEventListener('click', () => this.selectDate(new Date(date)));
-            if (date.getDay() === 0)
-                cell.classList.add('sunday');
-            if (date.getDay() === 6)
-                cell.classList.add('saturday');
-            grid.appendChild(cell);
-            date.setDate(date.getDate() + 1);
-        }
-        return grid;
-    }
-    selectDate(date) {
-        this.selectedDate = date;
-        this.input.value = date.toLocaleDateString('pt-BR');
-        this.currentViewDate = new Date(date);
-        this.updateCalendar();
-    }
-    createMonthsGrid() {
-        const grid = document.createElement('div');
-        grid.className = 'months-grid';
-        for (let month = 0; month < 12; month++) {
-            const cell = document.createElement('div');
-            cell.className = 'month-cell';
-            cell.textContent = new Date(this.currentViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'short' });
-            if (month === new Date().getMonth() && this.currentViewDate.getFullYear() === new Date().getFullYear()) {
-                cell.classList.add('current');
+    injectStyles() {
+        if (TabControl.stylesInjected)
+            return;
+        const style = document.createElement('style');
+        style.textContent = `
+            .tab-buttons {
+                display: flex;
+                gap: 4px;
+                margin-bottom: -1px;
             }
-            cell.addEventListener('click', () => {
-                this.currentViewDate.setMonth(month);
-                this.currentPanel = 'days';
-                this.updateCalendar();
-            });
-            grid.appendChild(cell);
+
+            .tab-button {
+                padding: 8px 16px;
+                border: 1px solid #ccc;
+                background: #f0f0f0;
+                cursor: pointer;
+                border-radius: 4px 4px 0 0;
+                transition: background 0.2s;
+            }
+
+            .tab-button:hover {
+                background: #e0e0e0;
+            }
+
+            .tab-button.active {
+                background: white;
+                border-bottom-color: white;
+            }
+
+            .tab-content-container {
+                border: 1px solid #ccc;
+                padding: 16px;
+                border-radius: 0 4px 4px 4px;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .tab-overflow-button {
+                position: absolute;
+                right: 0;
+                top: 0;
+                background: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 0 4px 0 0;
+                padding: 8px 12px;
+                cursor: pointer;
+                z-index: 1;
+            }
+
+            .tab-dropdown {
+                position: fixed;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                z-index: 1000;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .tab-dropdown-item {
+                padding: 8px 16px;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            .tab-dropdown-item:hover {
+                background: #f0f0f0;
+            }
+
+            .tab-buttons {
+                position: relative;
+                padding-right: 40px; /* Espaço para o botão de overflow */
+                overflow-x: hidden;
+            }
+        `;
+        document.head.appendChild(style);
+        TabControl.stylesInjected = true;
+    }
+    createStructure() {
+        this.container.innerHTML = '';
+        this.buttonsContainer = document.createElement('div');
+        this.buttonsContainer.className = 'tab-buttons';
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'tab-content-container';
+        this.container.append(this.buttonsContainer, contentContainer);
+        this.createOverflowElements();
+        this.setupResizeObserver();
+    }
+    createOverflowElements() {
+        // Botão de overflow
+        this.overflowButton = document.createElement('button');
+        this.overflowButton.className = 'tab-overflow-button';
+        this.overflowButton.innerHTML = '&#8943;';
+        this.overflowButton.style.display = 'none';
+        this.overflowButton.addEventListener('click', (e) => this.toggleDropdown(e));
+        // Dropdown
+        this.dropdownContainer = document.createElement('div');
+        this.dropdownContainer.className = 'tab-dropdown';
+        this.dropdownContainer.style.display = 'none';
+        this.buttonsContainer.appendChild(this.overflowButton);
+        this.container.appendChild(this.dropdownContainer);
+    }
+    setupResizeObserver() {
+        this.resizeObserver = new ResizeObserver(() => this.checkOverflow());
+        this.resizeObserver.observe(this.buttonsContainer);
+    }
+    checkOverflow() {
+        const tabsWidth = Array.from(this.buttonsContainer.children)
+            .slice(0, -1) // Exclui o botão de overflow
+            .reduce((acc, child) => acc + child.clientWidth, 0);
+        const containerWidth = this.buttonsContainer.clientWidth - this.overflowButton.clientWidth;
+        this.overflowButton.style.display =
+            tabsWidth > containerWidth ? 'block' : 'none';
+    }
+    toggleDropdown(event) {
+        event.stopPropagation();
+        const isVisible = this.dropdownContainer.style.display === 'block';
+        this.dropdownContainer.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+            this.updateDropdownPosition();
+            this.populateDropdown();
+            setTimeout(() => window.addEventListener('click', this.closeDropdown.bind(this)));
         }
-        return grid;
     }
-    createYearsGrid() {
-        const grid = document.createElement('div');
-        grid.className = 'years-grid';
-        const currentYear = this.currentViewDate.getFullYear();
-        const startYear = currentYear - (currentYear % 16) - 1;
-        for (let year = startYear; year < startYear + 16; year++) {
-            const cell = document.createElement('div');
-            cell.className = 'year-cell';
-            cell.textContent = year.toString();
-            const isCurrentDecade = year >= (startYear + 1) && year <= (startYear + 10);
-            if (!isCurrentDecade)
-                cell.classList.add('faded');
-            if (year === new Date().getFullYear())
-                cell.classList.add('current');
-            cell.addEventListener('click', () => {
-                this.currentViewDate.setFullYear(year);
-                this.currentPanel = 'months';
-                this.updateCalendar();
+    updateDropdownPosition() {
+        const rect = this.overflowButton.getBoundingClientRect();
+        this.dropdownContainer.style.left = `${rect.left - rect.width}px`;
+        this.dropdownContainer.style.top = `${rect.bottom}px`;
+    }
+    populateDropdown() {
+        this.dropdownContainer.innerHTML = '';
+        this.tabs.forEach((tab, index) => {
+            const item = document.createElement('div');
+            item.className = 'tab-dropdown-item';
+            item.textContent = tab.title;
+            item.addEventListener('click', () => {
+                this.setActiveTab(index);
+                this.closeDropdown();
             });
-            grid.appendChild(cell);
+            this.dropdownContainer.appendChild(item);
+        });
+    }
+    closeDropdown() {
+        this.dropdownContainer.style.display = 'none';
+        window.removeEventListener('click', this.closeDropdown.bind(this));
+    }
+    addTab(title, content) {
+        const buttonsContainer = this.container.querySelector('.tab-buttons');
+        const contentContainer = this.container.querySelector('.tab-content-container');
+        const button = document.createElement('button');
+        button.className = 'tab-button';
+        button.textContent = title;
+        var idx = this.tabs.length;
+        button.addEventListener('click', () => this.setActiveTab(idx));
+        button.addEventListener('click', () => this.setActiveTab(this.tabs.length));
+        const contentElement = document.createElement('div');
+        contentElement.className = 'tab-content';
+        contentElement.innerHTML = content;
+        buttonsContainer.appendChild(button);
+        contentContainer.appendChild(contentElement);
+        this.tabs.push({ title, content, button, contentElement });
+        if (this.tabs.length === 1) {
+            this.setActiveTab(0);
         }
-        return grid;
+    }
+    setActiveTab(index) {
+        if (index < 0 || index >= this.tabs.length)
+            return;
+        this.tabs.forEach((tab, i) => {
+            const isActive = i === index;
+            tab.button.classList.toggle('active', isActive);
+            tab.contentElement.classList.toggle('active', isActive);
+        });
+        this.activeTabIndex = index;
     }
 }
-// CSS necessário
-const style = document.createElement('style');
-style.textContent = `
-  .calendar-popup {
-    position: absolute;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    width: 300px;
-  }
-
-  .hidden { display: none; }
-
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .days-grid, .months-grid, .years-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-  }
-
-  .months-grid { grid-template-columns: repeat(4, 1fr); }
-  .years-grid { grid-template-columns: repeat(4, 1fr); }
-
-  .day-cell, .month-cell, .year-cell {
-    padding: 5px;
-    text-align: center;
-    cursor: pointer;
-  }
-
-  .day-cell:hover, .month-cell:hover, .year-cell:hover {
-    background: #eee;
-  }
-
-  .faded { color: #999; }
-  .current { color: blue; }
-  .selected { background: #90EE90; }
-  .sunday { color: red; }
-  .saturday { color: blue; }
-  .day-header { color: blue; font-weight: bold; }
-  .error { border-color: red; }
-`;
-class XDefault {
-}
-XDefault.StrNullDate = "1755-01-01T00:00:00+0000";
-XDefault.StrBRNullDate = "01/01/1755 00:00:00";
-XDefault.NullDate = new Date(XDefault.StrNullDate);
-XDefault.NullID = "00000000-0000-0000-0000-000000000000";
-class XLauncher {
-    static Run() {
-        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
-        this.Body = new XDiv(null, "MainDiv");
-        new XMenu(this.Body);
-        //new XDatePicker(this.Body);
-    }
-}
+TabControl.stylesInjected = false;
 var XKey;
 (function (XKey) {
     XKey[XKey["K_CANCEL"] = 3] = "K_CANCEL";
@@ -543,315 +476,92 @@ var Maps = [
     },
     { 'base': 'z', 'letters': /[\u007A\u24E9\uFF5A\u017A\u1E91\u017C\u017E\u1E93\u1E95\u01B6\u0225\u0240\u2C6C\uA763]/g }
 ];
-class XHashSet {
-    constructor() {
-        this.Items = new Object();
-        this.List = new XArray();
+class XDefault {
+}
+XDefault.StrNullDate = "1755-01-01T00:00:00+0000";
+XDefault.StrBRNullDate = "01/01/1755 00:00:00";
+XDefault.NullDate = new Date(XDefault.StrNullDate);
+XDefault.NullID = "00000000-0000-0000-0000-000000000000";
+var XEventType;
+(function (XEventType) {
+    XEventType["MouseMove"] = "mousemove";
+    XEventType["MouseDown"] = "mousedown";
+    XEventType["MouseUp"] = "mouseup";
+    XEventType["MouseEnter"] = "mouseenter";
+    XEventType["MouseLeave"] = "mouseleave";
+    XEventType["Input"] = "input";
+    XEventType["Paste"] = "paste";
+    XEventType["KeyDown"] = "keydown";
+    XEventType["KeyUp"] = "keyup";
+    XEventType["KeyPress"] = "keypress";
+    XEventType["LostFocus"] = "focusout";
+    XEventType["Click"] = "click";
+    XEventType["FocusIn"] = "focusin";
+})(XEventType || (XEventType = {}));
+class XCallOnce {
+    constructor(pUUID, pEvent) {
+        this.UUID = pUUID;
+        this.Event = pEvent;
     }
-    get Count() {
-        if (this.List == null)
-            return 0;
-        return this.List.length;
-    }
-    Add(pItem, pID) {
-        this.Items[pID] = pItem;
-        this.List.Add(pID);
-        return pItem;
-    }
-    Contains(pID) {
-        return this.Items[pID] != null;
-    }
-    Get(pID) {
-        return this.Items[pID];
-    }
-    Remove(pID) {
-        for (var i = 0; i < this.List.length; i++) {
-            var v = this.List[i];
-            if (v.ID == pID) {
-                this.List.Remove(v);
-                break;
-            }
-        }
-        this.Items[pID] = null;
+    Execute() {
+        this.Event.apply(this);
     }
 }
-var XAction;
-(function (XAction) {
-    XAction[XAction["Save"] = 1] = "Save";
-    XAction[XAction["Close"] = 2] = "Close";
-    XAction[XAction["NewTuple"] = 3] = "NewTuple";
-})(XAction || (XAction = {}));
-class XArray extends Array {
-    constructor(pArg) {
-        super();
-        if (pArg != null) {
-            if (pArg.length > 0) {
-                for (var i = 0; i < pArg.length; i++)
-                    this[i] = pArg[i];
-            }
-            else {
-                if (pArg > 0) {
-                    this.length = pArg;
-                    for (var i = 0; i < this.length; i++)
-                        this[i] = null;
-                }
-            }
+class XEventManager {
+    static AddExecOnce(pUUID, pEvent) {
+        let co = new XCallOnce(pUUID, pEvent);
+        XEventManager._CallOnce.Add(co);
+    }
+    static ExecOnce(pUUID) {
+        let co = XEventManager._CallOnce.FirstOrNull(c => c.UUID == pUUID);
+        if (co != null) {
+            XEventManager._CallOnce.Remove(co);
+            co.Execute();
         }
+    }
+    static AddObserver(pContext, pConfig, pEvent) {
+        const observer = new MutationObserver(() => pEvent.apply(pContext));
+        observer.observe(pContext.HTML, pConfig);
+    }
+    static AddEvent(pContext, pElement, pEvent, pMethod, pCheckSource = false) {
+        if (pElement.Method == null)
+            pElement.Method = new Object();
+        XEventManager.RemoveEvent(pContext, pElement, pEvent);
+        pElement.Method[pContext.UUID + "-" + pEvent] = (arg) => {
+            XEventManager.Call(pContext, pMethod, pElement, pCheckSource, arg);
+        };
+        pElement.addEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
+    }
+    static RemoveEvent(pContext, pElement, pEvent) {
+        if (pElement.Method != null && pElement.Method[pContext.UUID + "-" + pEvent] != null) {
+            pElement.removeEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
+            pElement.Method[pContext.UUID + "-" + pEvent] = null;
+        }
+    }
+    static Call(pCallScope, pEvent, pHTM, pCheckSource, pArg) {
+        try {
+            if (!pCheckSource || pHTM == pArg.srcElement)
+                pEvent.apply(pCallScope, [pArg]);
+        }
+        catch (pError) {
+            if (pCallScope.Application != null && pCallScope.Application.ShowError != null)
+                pCallScope.Application.ShowError(pError);
+            else if (window.ShowError != null)
+                window.ShowError(pError);
+            else
+                throw pError;
+        }
+    }
+    static DelayedEvent(pContext, pEvent, pTime = 100) {
+        if (pContext._Timer != null && pContext._Timer != -1)
+            window.clearTimeout(pContext._Timer);
+        pContext._Timer = setTimeout(() => pEvent.apply(pContext, []), pTime);
+    }
+    static SetTiemOut(pContext, pEvent, pTime = 100) {
+        this.DelayedEvent(pContext, pEvent, pTime);
     }
 }
-var XDragType;
-(function (XDragType) {
-    XDragType[XDragType["LeftTop"] = 0] = "LeftTop";
-    XDragType[XDragType["Top"] = 1] = "Top";
-    XDragType[XDragType["RightTop"] = 2] = "RightTop";
-    XDragType[XDragType["Right"] = 3] = "Right";
-    XDragType[XDragType["RightBottom"] = 4] = "RightBottom";
-    XDragType[XDragType["Bottom"] = 5] = "Bottom";
-    XDragType[XDragType["LeftBottom"] = 6] = "LeftBottom";
-    XDragType[XDragType["Left"] = 7] = "Left";
-    XDragType[XDragType["Drag"] = 8] = "Drag";
-    XDragType[XDragType["Error"] = 9] = "Error";
-})(XDragType || (XDragType = {}));
-class XHSLColor {
-    constructor(pH, pS, pL) {
-        this.A = 1;
-        this.H = pH;
-        this.S = pS;
-        this.L = pL;
-    }
-    get RGB() { return XHSLColor.HSLToRGB(this.H, this.S, this.L, this.A); }
-    static StringToRGB(pColor) {
-        var c;
-        if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(pColor)) {
-            c = pColor.substring(1).split('');
-            if (c.length == 3) {
-                c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-            }
-            c = '0x' + c.join('');
-            return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
-        }
-        return [0, 0, 0];
-    }
-    static RGBToHSL(pR, pG, pB) {
-        pR /= 255, pG /= 255, pB /= 255;
-        var max = Math.max(pR, pG, pB);
-        var min = Math.min(pR, pG, pB);
-        var h = 0;
-        var s = 0;
-        var l = (max + min) / 2;
-        if (max == min)
-            h = s = 0;
-        else {
-            var d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            switch (max) {
-                case pR:
-                    h = (pG - pB) / d + (pG < pB ? 6 : 0);
-                    break;
-                case pG:
-                    h = (pB - pR) / d + 2;
-                    break;
-                case pB:
-                    h = (pR - pG) / d + 4;
-                    break;
-            }
-            h /= 6;
-        }
-        return new XHSLColor(h, s, l);
-    }
-    static HSLToRGB(pH, pS, pL, pA) {
-        var r = 0;
-        var g = 0;
-        var b = 0;
-        if (pS == 0)
-            r = g = b = pL;
-        else {
-            var hue2rgb = function hue2rgb(p, q, t) {
-                if (t < 0)
-                    t += 1;
-                if (t > 1)
-                    t -= 1;
-                if (t < 1 / 6)
-                    return p + (q - p) * 6 * t;
-                if (t < 1 / 2)
-                    return q;
-                if (t < 2 / 3)
-                    return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
-            };
-            var q = pL < 0.5 ? pL * (1 + pS) : pL + pS - pL * pS;
-            var p = 2 * pL - q;
-            r = hue2rgb(p, q, pH + 1 / 3);
-            g = hue2rgb(p, q, pH);
-            b = hue2rgb(p, q, pH - 1 / 3);
-        }
-        return "#" + Math.round(r * 255).toString(16).LPad(2, '0') + Math.round(g * 255).toString(16).LPad(2, '0') + Math.round(b * 255).toString(16).LPad(2, '0') + Math.round(pA * 255).toString(16).LPad(2, '0');
-    }
-}
-class XPoint {
-    constructor(pX = Number.NaN, pY = Number.NaN) {
-        this.X = pX;
-        this.Y = pY;
-    }
-    get IsLessZero() {
-        return this.X < 0 || this.Y < 0;
-    }
-    Equals(pOther) {
-        return this.X == pOther.X && this.Y == pOther.Y;
-    }
-    LocationType(pW, pH, pSize = 4, pDragArea = 35) {
-        var x = this.X;
-        var y = this.Y;
-        if (x <= pSize && y <= pSize)
-            return XDragType.LeftTop;
-        else if (x >= pW - pSize && y <= pSize)
-            return XDragType.RightTop;
-        else if (x >= pW - pSize && y >= pH - pSize)
-            return XDragType.RightBottom;
-        else if (x <= pSize && y >= pH - pSize)
-            return XDragType.LeftBottom;
-        else if (y <= pSize)
-            return XDragType.Top;
-        else if (x >= pW - pSize)
-            return XDragType.Right;
-        else if (y >= pH - pSize)
-            return XDragType.Bottom;
-        else if (x <= pSize)
-            return XDragType.Left;
-        else if (y > pSize && y <= pDragArea)
-            return XDragType.Drag;
-        return XDragType.Error;
-    }
-    AsString() {
-        return this.X + " " + this.Y;
-    }
-    toString() {
-        return "X=" + this.X + " Y=" + this.Y;
-    }
-}
-class XRect {
-    static FromPoints(pLeftTop, pRightBottom) {
-        return new XRect(pLeftTop.X, pLeftTop.Y, pRightBottom.X - pLeftTop.X, pRightBottom.Y - pLeftTop.Y);
-    }
-    constructor(pLeft = 0, pTop = 0, pWidth = 0, pHeight = 0) {
-        this.Left = 0;
-        this.Top = 0;
-        this.Width = 0;
-        this.Height = 0;
-        this.Bottom = 0;
-        this.Right = 0;
-        if (pLeft instanceof DOMRect) {
-            let r = pLeft;
-            pLeft = r.left;
-            pTop = r.top;
-            pWidth = r.width;
-            pHeight = r.height;
-        }
-        if (!XUtils.IsNumber(pLeft)) {
-            var pts = pLeft.split(';');
-            pLeft = Number.parseInt(pts[0]);
-            pTop = Number.parseInt(pts[1]);
-            pWidth = Number.parseInt(pts[2]);
-            pHeight = Number.parseInt(pts[3]);
-        }
-        this.SetValue(pLeft, pTop, pWidth, pHeight);
-    }
-    get IsEmpty() { return this.Width <= 0 || this.Height <= 0; }
-    get LeftTop() { return new XPoint(this.Left, this.Top); }
-    get RightTop() { return new XPoint(this.Left + this.Width, this.Top); }
-    get LeftBottom() { return new XPoint(this.Left, this.Top + this.Height); }
-    get RightBottom() { return new XPoint(this.Left + this.Width, this.Top + this.Height); }
-    get X() { return this.Left; }
-    get Y() { return this.Top; }
-    get AsPath() {
-        var d = ["M", this.Left, this.Top, "L", this.Right, this.Top, this.Right, this.Bottom, this.Left, this.Bottom, this.Left, this.Top, "Z"].join(" ");
-        return d;
-    }
-    toString() {
-        return [this.Left, this.Top, this.Width, this.Height].join(" ");
-    }
-    IntersectsWith(pRect) {
-        if (this.IsEmpty || pRect.IsEmpty)
-            return false;
-        return (pRect.Left <= this.Right) && (pRect.Right >= this.Left) && (pRect.Top <= this.Bottom) && (pRect.Bottom >= this.Top);
-    }
-    Clone() {
-        return new XRect(this.Left, this.Top, this.Width, this.Height);
-    }
-    ApplyStyle(pStyle) {
-        pStyle.left = this.Left + "px";
-        pStyle.top = this.Top + "px";
-        pStyle.width = this.Width + "px";
-        pStyle.height = this.Height + "px";
-    }
-    Union(pRect) {
-        if (this.IsEmpty) {
-            this.SetValue(pRect.Left, pRect.Top, pRect.Width, pRect.Height);
-            return;
-        }
-        var l = Math.min(this.Left, pRect.Left);
-        var t = Math.min(this.Top, pRect.Top);
-        var w = Math.max(this.Right, pRect.Right) - l;
-        var h = Math.max(this.Bottom, pRect.Bottom) - t;
-        this.SetValue(l, t, w, h);
-    }
-    SetValue(pLeft, pTop, pWidth, pHeight) {
-        this.Left = pLeft;
-        this.Top = pTop;
-        this.Width = pWidth;
-        this.Height = pHeight;
-        this.Bottom = pTop + pHeight;
-        this.Right = pLeft + pWidth;
-        this.Size = new XSize(pWidth, pHeight);
-    }
-    Inflate(pWidth, pHeight) {
-        var l = this.Left - pWidth;
-        var t = this.Top - pHeight;
-        var w = this.Width + pWidth * 2;
-        var h = this.Height + pHeight * 2;
-        this.SetValue(l, t, w, h);
-    }
-    AsSelectPath(pValue = 2) {
-        var d = ["M", this.Left, this.Top, "L", this.Right, this.Top, this.Right, this.Bottom - pValue, this.Left, this.Bottom - pValue, "Z"].join(" ");
-        return d;
-    }
-    Center() {
-        return new XPoint(this.Left + (this.Width / 2), this.Top + (this.Height / 2));
-    }
-    Contains(pPoint) {
-        return ((pPoint.X >= this.Left) && (pPoint.X - this.Width <= this.Left) && (pPoint.Y >= this.Top) && (pPoint.Y - this.Height <= this.Top));
-    }
-    Postion(pTarget) {
-        if (this.Right < pTarget.Left) {
-            if (this.Top > pTarget.Bottom)
-                return XDragType.RightTop;
-            if (this.Bottom < pTarget.Top)
-                return XDragType.RightBottom;
-            return XDragType.Right;
-        }
-        if (pTarget.Right < this.Left) {
-            if (pTarget.Bottom < this.Top)
-                return XDragType.LeftTop;
-            if (pTarget.Top > this.Bottom)
-                return XDragType.LeftBottom;
-            return XDragType.Left;
-        }
-        if (this.Top < pTarget.Bottom)
-            return XDragType.Bottom;
-        if (this.Bottom > pTarget.Top)
-            return XDragType.Top;
-        return XDragType.Error;
-    }
-}
-class XSize {
-    constructor(pWidth = 0, pHeight = 0) {
-        this.Width = pWidth;
-        this.Height = pHeight;
-    }
-    Equal(pOther) {
-        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
-    }
-}
+XEventManager._CallOnce = new Array();
 class XKeyValue {
 }
 class Guid {
@@ -1902,6 +1612,16 @@ class XCall {
         }
     }
 }
+class XLauncher extends XDiv {
+    static Run() {
+        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        this.Body = new XDiv(null, "");
+        new XTabControl(this.Body);
+    }
+    constructor() {
+        super(document.body, "MainDiv");
+    }
+}
 class XMath {
     //static AddCorner(pCorner: XPoint, pRound: number, pOut1: XPoint, pOut2: XPoint): XArray<XPoint>
     //{
@@ -2070,6 +1790,48 @@ class XMath {
 XMath.m_w = 123456789;
 XMath.m_z = 987654321;
 XMath.mask = 0xffffffff;
+class XPopupManager {
+    static AddAutoEvent(pContext, pMethod, pOnce = true) {
+        var obj = { Context: pContext, Method: pMethod, Once: pOnce };
+        this.AutoEvent.Add(obj);
+    }
+    static Remove(pView) {
+        XPopupManager.PopupList.Remove(pView);
+    }
+    static Show(pView) {
+        pView.Show();
+        //pView.HTML.scrollIntoView();
+    }
+    static Add(pView) {
+        XPopupManager.PopupList.Add(pView);
+    }
+    static HideAll(pArg, pValid = false) {
+        if (pArg != null && this.UseCrl && !pArg.ctrlKey)
+            return;
+        var ar = XPopupManager.AutoEvent.ToArray();
+        for (var i = 0; i < ar.length; i++) {
+            var m = ar[i];
+            if (pArg != null && !m.Context.CanClose(pArg.srcElement))
+                continue;
+            m.Method.apply(m.Context);
+            if (m.Once)
+                XPopupManager.AutoEvent.Remove(m);
+        }
+        for (var i = 0; i < XPopupManager.PopupList.length; i++) {
+            var elm = XPopupManager.PopupList[i];
+            if (!elm.IsVisible)
+                continue;
+            if (pArg == null || elm.CanClose(pArg.srcElement)) {
+                if (!pValid)
+                    elm.CallPopupClosed();
+                elm.IsVisible = false;
+            }
+        }
+    }
+}
+XPopupManager.PopupList = new Array();
+XPopupManager.AutoEvent = new Array();
+XPopupManager.UseCrl = false;
 class XSort {
     static Sort(pArray, pSwap, pComparer, pOwner) {
         XSort.QuickSort(pArray, 0, pArray.length - 1, pSwap, pComparer, pOwner);
@@ -2110,425 +1872,313 @@ class XSort {
         pArray[pRight] = tmp;
     }
 }
-var XEventType;
-(function (XEventType) {
-    XEventType["MouseMove"] = "mousemove";
-    XEventType["MouseDown"] = "mousedown";
-    XEventType["MouseUp"] = "mouseup";
-    XEventType["MouseEnter"] = "mouseenter";
-    XEventType["MouseLeave"] = "mouseleave";
-    XEventType["Input"] = "input";
-    XEventType["Paste"] = "paste";
-    XEventType["KeyDown"] = "keydown";
-    XEventType["KeyUp"] = "keyup";
-    XEventType["KeyPress"] = "keypress";
-    XEventType["LostFocus"] = "focusout";
-    XEventType["Click"] = "click";
-    XEventType["FocusIn"] = "focusin";
-})(XEventType || (XEventType = {}));
-class XCallOnce {
-    constructor(pUUID, pEvent) {
-        this.UUID = pUUID;
-        this.Event = pEvent;
-    }
-    Execute() {
-        this.Event.apply(this);
-    }
-}
-class XEventManager {
-    static AddExecOnce(pUUID, pEvent) {
-        let co = new XCallOnce(pUUID, pEvent);
-        XEventManager._CallOnce.Add(co);
-    }
-    static ExecOnce(pUUID) {
-        let co = XEventManager._CallOnce.FirstOrNull(c => c.UUID == pUUID);
-        if (co != null) {
-            XEventManager._CallOnce.Remove(co);
-            co.Execute();
-        }
-    }
-    static AddObserver(pContext, pConfig, pEvent) {
-        const observer = new MutationObserver(() => pEvent.apply(pContext));
-        observer.observe(pContext.HTML, pConfig);
-    }
-    static AddEvent(pContext, pElement, pEvent, pMethod, pCheckSource = false) {
-        if (pElement.Method == null)
-            pElement.Method = new Object();
-        XEventManager.RemoveEvent(pContext, pElement, pEvent);
-        pElement.Method[pContext.UUID + "-" + pEvent] = (arg) => {
-            XEventManager.Call(pContext, pMethod, pElement, pCheckSource, arg);
-        };
-        pElement.addEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
-    }
-    static RemoveEvent(pContext, pElement, pEvent) {
-        if (pElement.Method != null && pElement.Method[pContext.UUID + "-" + pEvent] != null) {
-            pElement.removeEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
-            pElement.Method[pContext.UUID + "-" + pEvent] = null;
-        }
-    }
-    static Call(pCallScope, pEvent, pHTM, pCheckSource, pArg) {
-        try {
-            if (!pCheckSource || pHTM == pArg.srcElement)
-                pEvent.apply(pCallScope, [pArg]);
-        }
-        catch (pError) {
-            if (pCallScope.Application != null && pCallScope.Application.ShowError != null)
-                pCallScope.Application.ShowError(pError);
-            else if (window.ShowError != null)
-                window.ShowError(pError);
-            else
-                throw pError;
-        }
-    }
-    static DelayedEvent(pContext, pEvent, pTime = 100) {
-        if (pContext._Timer != null && pContext._Timer != -1)
-            window.clearTimeout(pContext._Timer);
-        pContext._Timer = setTimeout(() => pEvent.apply(pContext, []), pTime);
-    }
-    static SetTiemOut(pContext, pEvent, pTime = 100) {
-        this.DelayedEvent(pContext, pEvent, pTime);
-    }
-}
-XEventManager._CallOnce = new XArray();
-class XPopupManager {
-    static AddAutoEvent(pContext, pMethod, pOnce = true) {
-        var obj = { Context: pContext, Method: pMethod, Once: pOnce };
-        this.AutoEvent.Add(obj);
-    }
-    static Remove(pView) {
-        XPopupManager.PopupList.Remove(pView);
-    }
-    static Show(pView) {
-        pView.Show();
-        //pView.HTML.scrollIntoView();
-    }
-    static Add(pView) {
-        XPopupManager.PopupList.Add(pView);
-    }
-    static HideAll(pArg, pValid = false) {
-        if (pArg != null && this.UseCrl && !pArg.ctrlKey)
-            return;
-        var ar = XPopupManager.AutoEvent.ToArray();
-        for (var i = 0; i < ar.length; i++) {
-            var m = ar[i];
-            if (pArg != null && !m.Context.CanClose(pArg.srcElement))
-                continue;
-            m.Method.apply(m.Context);
-            if (m.Once)
-                XPopupManager.AutoEvent.Remove(m);
-        }
-        for (var i = 0; i < XPopupManager.PopupList.length; i++) {
-            var elm = XPopupManager.PopupList[i];
-            if (!elm.IsVisible)
-                continue;
-            if (pArg == null || elm.CanClose(pArg.srcElement)) {
-                if (!pValid)
-                    elm.CallPopupClosed();
-                elm.IsVisible = false;
+class XArray extends Array {
+    constructor(pArg) {
+        super();
+        if (pArg != null) {
+            if (pArg.length > 0) {
+                for (var i = 0; i < pArg.length; i++)
+                    this[i] = pArg[i];
+            }
+            else {
+                if (pArg > 0) {
+                    this.length = pArg;
+                    for (var i = 0; i < this.length; i++)
+                        this[i] = null;
+                }
             }
         }
     }
 }
-XPopupManager.PopupList = new XArray();
-XPopupManager.AutoEvent = new XArray();
-XPopupManager.UseCrl = false;
-class XElement {
-    constructor(pOwner, pClass = null) {
-        this._IsVisible = true;
-        this.Owner = pOwner;
-        this.HTML = this.CreateContainer();
-        if (pClass == null)
-            pClass = this.constructor.name;
-        this.Element = null;
-        this.CreateChildren();
-        this.HTML.className = pClass;
-        if (pOwner instanceof XElement)
-            pOwner.HTML.appendChild(this.HTML);
-        if (pOwner instanceof HTMLElement)
-            pOwner.appendChild(this.HTML);
+class XHashSet {
+    constructor() {
+        this.Items = new Object();
+        this.List = new XArray();
     }
-    BindTo(pElement) {
-        const editorRect = pElement.HTML.getBoundingClientRect();
-        const dropdownRect = this.HTML.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        let top;
-        const spaceBelow = viewportHeight - editorRect.bottom;
-        const spaceAbove = editorRect.top;
-        if (dropdownRect.height <= spaceBelow)
-            top = editorRect.bottom;
-        else if (dropdownRect.height <= spaceAbove)
-            top = editorRect.top - dropdownRect.height;
-        else
-            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
-        let left;
-        const spaceRight = viewportWidth - editorRect.left;
-        if (dropdownRect.width <= spaceRight)
-            left = editorRect.left;
+    get Count() {
+        if (this.List == null)
+            return 0;
+        return this.List.length;
+    }
+    Add(pItem, pID) {
+        this.Items[pID] = pItem;
+        this.List.Add(pID);
+        return pItem;
+    }
+    Contains(pID) {
+        return this.Items[pID] != null;
+    }
+    Get(pID) {
+        return this.Items[pID];
+    }
+    Remove(pID) {
+        for (var i = 0; i < this.List.length; i++) {
+            var v = this.List[i];
+            if (v.ID == pID) {
+                this.List.Remove(v);
+                break;
+            }
+        }
+        this.Items[pID] = null;
+    }
+}
+var XAction;
+(function (XAction) {
+    XAction[XAction["Save"] = 1] = "Save";
+    XAction[XAction["Close"] = 2] = "Close";
+    XAction[XAction["NewTuple"] = 3] = "NewTuple";
+})(XAction || (XAction = {}));
+var XDragType;
+(function (XDragType) {
+    XDragType[XDragType["LeftTop"] = 0] = "LeftTop";
+    XDragType[XDragType["Top"] = 1] = "Top";
+    XDragType[XDragType["RightTop"] = 2] = "RightTop";
+    XDragType[XDragType["Right"] = 3] = "Right";
+    XDragType[XDragType["RightBottom"] = 4] = "RightBottom";
+    XDragType[XDragType["Bottom"] = 5] = "Bottom";
+    XDragType[XDragType["LeftBottom"] = 6] = "LeftBottom";
+    XDragType[XDragType["Left"] = 7] = "Left";
+    XDragType[XDragType["Drag"] = 8] = "Drag";
+    XDragType[XDragType["Error"] = 9] = "Error";
+})(XDragType || (XDragType = {}));
+class XHSLColor {
+    constructor(pH, pS, pL) {
+        this.A = 1;
+        this.H = pH;
+        this.S = pS;
+        this.L = pL;
+    }
+    get RGB() { return XHSLColor.HSLToRGB(this.H, this.S, this.L, this.A); }
+    static StringToRGB(pColor) {
+        var c;
+        if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(pColor)) {
+            c = pColor.substring(1).split('');
+            if (c.length == 3) {
+                c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+            }
+            c = '0x' + c.join('');
+            return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+        }
+        return [0, 0, 0];
+    }
+    static RGBToHSL(pR, pG, pB) {
+        pR /= 255, pG /= 255, pB /= 255;
+        var max = Math.max(pR, pG, pB);
+        var min = Math.min(pR, pG, pB);
+        var h = 0;
+        var s = 0;
+        var l = (max + min) / 2;
+        if (max == min)
+            h = s = 0;
         else {
-            const spaceLeft = editorRect.right;
-            if (dropdownRect.width <= spaceLeft)
-                left = editorRect.right - dropdownRect.width;
-            else
-                left = Math.max(0, viewportWidth - dropdownRect.width);
+            var d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case pR:
+                    h = (pG - pB) / d + (pG < pB ? 6 : 0);
+                    break;
+                case pG:
+                    h = (pB - pR) / d + 2;
+                    break;
+                case pB:
+                    h = (pR - pG) / d + 4;
+                    break;
+            }
+            h /= 6;
         }
-        this.HTML.style.position = 'fixed';
-        this.HTML.style.top = `${top}px`;
-        this.HTML.style.left = `${left}px`;
+        return new XHSLColor(h, s, l);
     }
-    CheckClose(pElement) {
-        return true;
-    }
-    get IsDrawed() {
-        var elm = this.HTML;
-        while (elm !== null && elm !== document.body) {
-            if (elm.parentElement == document.body)
-                return true;
-            var style = window.getComputedStyle(elm);
-            if (style.display == "none")
-                return false;
-            elm = elm.parentElement;
+    static HSLToRGB(pH, pS, pL, pA) {
+        var r = 0;
+        var g = 0;
+        var b = 0;
+        if (pS == 0)
+            r = g = b = pL;
+        else {
+            var hue2rgb = function hue2rgb(p, q, t) {
+                if (t < 0)
+                    t += 1;
+                if (t > 1)
+                    t -= 1;
+                if (t < 1 / 6)
+                    return p + (q - p) * 6 * t;
+                if (t < 1 / 2)
+                    return q;
+                if (t < 2 / 3)
+                    return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            var q = pL < 0.5 ? pL * (1 + pS) : pL + pS - pL * pS;
+            var p = 2 * pL - q;
+            r = hue2rgb(p, q, pH + 1 / 3);
+            g = hue2rgb(p, q, pH);
+            b = hue2rgb(p, q, pH - 1 / 3);
         }
-        return false;
+        return "#" + Math.round(r * 255).toString(16).LPad(2, '0') + Math.round(g * 255).toString(16).LPad(2, '0') + Math.round(b * 255).toString(16).LPad(2, '0') + Math.round(pA * 255).toString(16).LPad(2, '0');
     }
-    OnHide() {
+}
+class XPoint {
+    constructor(pX = Number.NaN, pY = Number.NaN) {
+        this.X = pX;
+        this.Y = pY;
     }
-    OnShow() {
+    get IsLessZero() {
+        return this.X < 0 || this.Y < 0;
     }
-    Show(pValue = true) {
-        var old = this.IsDrawed;
-        this._IsVisible = pValue;
-        if (pValue === true) {
-            this.HTML.style.visibility = 'visible';
-            this.OnShow();
+    Equals(pOther) {
+        return this.X == pOther.X && this.Y == pOther.Y;
+    }
+    LocationType(pW, pH, pSize = 4, pDragArea = 35) {
+        var x = this.X;
+        var y = this.Y;
+        if (x <= pSize && y <= pSize)
+            return XDragType.LeftTop;
+        else if (x >= pW - pSize && y <= pSize)
+            return XDragType.RightTop;
+        else if (x >= pW - pSize && y >= pH - pSize)
+            return XDragType.RightBottom;
+        else if (x <= pSize && y >= pH - pSize)
+            return XDragType.LeftBottom;
+        else if (y <= pSize)
+            return XDragType.Top;
+        else if (x >= pW - pSize)
+            return XDragType.Right;
+        else if (y >= pH - pSize)
+            return XDragType.Bottom;
+        else if (x <= pSize)
+            return XDragType.Left;
+        else if (y > pSize && y <= pDragArea)
+            return XDragType.Drag;
+        return XDragType.Error;
+    }
+    AsString() {
+        return this.X + " " + this.Y;
+    }
+    toString() {
+        return "X=" + this.X + " Y=" + this.Y;
+    }
+}
+class XRect {
+    static FromPoints(pLeftTop, pRightBottom) {
+        return new XRect(pLeftTop.X, pLeftTop.Y, pRightBottom.X - pLeftTop.X, pRightBottom.Y - pLeftTop.Y);
+    }
+    constructor(pLeft = 0, pTop = 0, pWidth = 0, pHeight = 0) {
+        this.Left = 0;
+        this.Top = 0;
+        this.Width = 0;
+        this.Height = 0;
+        this.Bottom = 0;
+        this.Right = 0;
+        if (pLeft instanceof DOMRect) {
+            let r = pLeft;
+            pLeft = r.left;
+            pTop = r.top;
+            pWidth = r.width;
+            pHeight = r.height;
         }
-        else if (pValue === false) {
-            this.HTML.style.visibility = 'hidden';
-            this.OnHide();
+        if (!XUtils.IsNumber(pLeft)) {
+            var pts = pLeft.split(';');
+            pLeft = Number.parseInt(pts[0]);
+            pTop = Number.parseInt(pts[1]);
+            pWidth = Number.parseInt(pts[2]);
+            pHeight = Number.parseInt(pts[3]);
         }
-        if (pValue == old)
+        this.SetValue(pLeft, pTop, pWidth, pHeight);
+    }
+    get IsEmpty() { return this.Width <= 0 || this.Height <= 0; }
+    get LeftTop() { return new XPoint(this.Left, this.Top); }
+    get RightTop() { return new XPoint(this.Left + this.Width, this.Top); }
+    get LeftBottom() { return new XPoint(this.Left, this.Top + this.Height); }
+    get RightBottom() { return new XPoint(this.Left + this.Width, this.Top + this.Height); }
+    get X() { return this.Left; }
+    get Y() { return this.Top; }
+    get AsPath() {
+        var d = ["M", this.Left, this.Top, "L", this.Right, this.Top, this.Right, this.Bottom, this.Left, this.Bottom, this.Left, this.Top, "Z"].join(" ");
+        return d;
+    }
+    toString() {
+        return [this.Left, this.Top, this.Width, this.Height].join(" ");
+    }
+    IntersectsWith(pRect) {
+        if (this.IsEmpty || pRect.IsEmpty)
+            return false;
+        return (pRect.Left <= this.Right) && (pRect.Right >= this.Left) && (pRect.Top <= this.Bottom) && (pRect.Bottom >= this.Top);
+    }
+    Clone() {
+        return new XRect(this.Left, this.Top, this.Width, this.Height);
+    }
+    ApplyStyle(pStyle) {
+        pStyle.left = this.Left + "px";
+        pStyle.top = this.Top + "px";
+        pStyle.width = this.Width + "px";
+        pStyle.height = this.Height + "px";
+    }
+    Union(pRect) {
+        if (this.IsEmpty) {
+            this.SetValue(pRect.Left, pRect.Top, pRect.Width, pRect.Height);
             return;
+        }
+        var l = Math.min(this.Left, pRect.Left);
+        var t = Math.min(this.Top, pRect.Top);
+        var w = Math.max(this.Right, pRect.Right) - l;
+        var h = Math.max(this.Bottom, pRect.Bottom) - t;
+        this.SetValue(l, t, w, h);
     }
-    SetContent(pValue) {
-        if (this.HTML != null)
-            this.HTML.innerText = pValue;
+    SetValue(pLeft, pTop, pWidth, pHeight) {
+        this.Left = pLeft;
+        this.Top = pTop;
+        this.Width = pWidth;
+        this.Height = pHeight;
+        this.Bottom = pTop + pHeight;
+        this.Right = pLeft + pWidth;
+        this.Size = new XSize(pWidth, pHeight);
     }
-    CreateChildren() {
+    Inflate(pWidth, pHeight) {
+        var l = this.Left - pWidth;
+        var t = this.Top - pHeight;
+        var w = this.Width + pWidth * 2;
+        var h = this.Height + pHeight * 2;
+        this.SetValue(l, t, w, h);
     }
-    CreateContainer() {
-        throw new Error("Method not implemented.");
+    AsSelectPath(pValue = 2) {
+        var d = ["M", this.Left, this.Top, "L", this.Right, this.Top, this.Right, this.Bottom - pValue, this.Left, this.Bottom - pValue, "Z"].join(" ");
+        return d;
     }
-    CanClose(pSource) {
-        return true;
+    Center() {
+        return new XPoint(this.Left + (this.Width / 2), this.Top + (this.Height / 2));
     }
-    get IsVisible() {
-        if (!this._IsVisible)
-            return this._IsVisible;
-        return this.IsDrawed;
+    Contains(pPoint) {
+        return ((pPoint.X >= this.Left) && (pPoint.X - this.Width <= this.Left) && (pPoint.Y >= this.Top) && (pPoint.Y - this.Height <= this.Top));
     }
-    set IsVisible(pValue) {
-        this.Show(pValue);
+    Postion(pTarget) {
+        if (this.Right < pTarget.Left) {
+            if (this.Top > pTarget.Bottom)
+                return XDragType.RightTop;
+            if (this.Bottom < pTarget.Top)
+                return XDragType.RightBottom;
+            return XDragType.Right;
+        }
+        if (pTarget.Right < this.Left) {
+            if (pTarget.Bottom < this.Top)
+                return XDragType.LeftTop;
+            if (pTarget.Top > this.Bottom)
+                return XDragType.LeftBottom;
+            return XDragType.Left;
+        }
+        if (this.Top < pTarget.Bottom)
+            return XDragType.Bottom;
+        if (this.Bottom > pTarget.Top)
+            return XDragType.Top;
+        return XDragType.Error;
     }
 }
-class XDiv extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
+class XSize {
+    constructor(pWidth = 0, pHeight = 0) {
+        this.Width = pWidth;
+        this.Height = pHeight;
     }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-}
-class XBaseInput extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "InputContainer");
-        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
-    }
-}
-class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Button = new XBaseButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
-    }
-    OnClick(pArg) {
-    }
-}
-class XPopupElement extends XDiv {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.AutoClose = false;
-        this.OnPopupClosed = null;
-        this.ReferenceElement = null;
-    }
-    CallPopupClosed() {
-    }
-    CanClose(pElement) {
-        if (this.ReferenceElement != null)
-            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
-        return true;
-    }
-}
-class XCalendar extends XPopupElement {
-    constructor(pOwner, pClass = null) {
-        super(pOwner, pClass);
-        this.CurrentPanel = 'days';
-        this.OnSelectdate = null;
-        this.Header = new XDiv(this.HTML, "XCalendar-Header");
-        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
-        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
-        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
-        this.DaysGrid = new XDiv(this, "XDaysGrid");
-        this.MonthsGrid = new XDiv(this, "XMonthsGrid");
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid = new XDiv(this, "XYearsGrid");
-        this.YearsGrid.IsVisible = false;
-        this.ViewDate = new Date();
-        this.SelectedDate = new Date();
-        this.UpdateCalendar();
-        this.CenterButton.HTML.addEventListener('click', () => {
-            this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
-            this.UpdateCalendar();
-        });
-        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
-        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
-    }
-    OnShow(pValue = true) {
-        this.CurrentPanel = 'days';
-        this.UpdateCalendar();
-    }
-    OnHide() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-    }
-    CallPopupClosed() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-    }
-    ShowYears() {
-        this.YearsGrid.IsVisible = true;
-        this.YearsGrid.HTML.innerHTML = "";
-        const currentYear = this.ViewDate.getFullYear();
-        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
-        const decadeEnd = decadeStart + 10;
-        const gridStartYear = decadeStart - (decadeStart % 16);
-        for (let year = gridStartYear; year < gridStartYear + 16; year++) {
-            const cell = document.createElement('div');
-            cell.className = 'YearCell';
-            cell.textContent = year.toString();
-            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
-            if (!isCurrentDecade)
-                cell.classList.add('Faded');
-            if (year === new Date().getFullYear())
-                cell.classList.add('Current');
-            cell.addEventListener('click', () => {
-                this.ViewDate.setFullYear(year);
-                this.CurrentPanel = 'months';
-                this.UpdateCalendar();
-            });
-            this.YearsGrid.HTML.appendChild(cell);
-        }
-    }
-    ShowMonths() {
-        this.MonthsGrid.IsVisible = true;
-        this.MonthsGrid.HTML.innerHTML = "";
-        for (let month = 0; month < 12; month++) {
-            const cell = document.createElement('div');
-            cell.className = 'MonthCell';
-            cell.textContent = new Date(this.ViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'long' });
-            if (month === new Date().getMonth() && this.ViewDate.getFullYear() === new Date().getFullYear())
-                cell.classList.add('Current');
-            cell.addEventListener('click', () => {
-                this.ViewDate.setMonth(month);
-                this.CurrentPanel = 'days';
-                this.UpdateCalendar();
-            });
-            this.MonthsGrid.HTML.appendChild(cell);
-        }
-    }
-    ShowDays() {
-        this.DaysGrid.IsVisible = true;
-        this.DaysGrid.HTML.innerHTML = '';
-        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
-            const cell = document.createElement('div');
-            cell.textContent = day;
-            cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
-            this.DaysGrid.HTML.appendChild(cell);
-        });
-        const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
-        const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
-        let date = new Date(firstDay);
-        date.setDate(date.getDate() - firstDay.getDay());
-        for (let i = 0; i < 42; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'DayCell';
-            const isCurrentMonth = date.getMonth() === this.ViewDate.getMonth();
-            const isToday = date.toDateString() === new Date().toDateString();
-            const isSelected = this.SelectedDate && date.toDateString() === this.SelectedDate.toDateString();
-            if (!isCurrentMonth)
-                cell.classList.add('Faded');
-            if (isToday)
-                cell.classList.add('Current');
-            if (isSelected)
-                cell.classList.add('Selected');
-            cell.textContent = date.getDate().toString();
-            let daydate = new Date(date);
-            cell.addEventListener('click', () => this.SelectDate(daydate));
-            if (date.getDay() === 0)
-                cell.classList.add('Sunday');
-            if (date.getDay() === 6)
-                cell.classList.add('Saturday');
-            this.DaysGrid.HTML.appendChild(cell);
-            date.setDate(date.getDate() + 1);
-        }
-    }
-    SelectDate(pDate) {
-        this.SelectedDate = pDate;
-        this.ViewDate = new Date(pDate);
-        this.UpdateCalendar();
-        if (this.OnSelectdate != null)
-            this.OnSelectdate.apply(this, [pDate]);
-    }
-    Navigate(pDirection) {
-        switch (this.CurrentPanel) {
-            case 'days':
-                this.ViewDate.setMonth(this.ViewDate.getMonth() + pDirection);
-                break;
-            case 'months':
-                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + pDirection);
-                break;
-            default:
-                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + (pDirection * 16));
-                break;
-        }
-        this.UpdateCalendar();
-    }
-    UpdateCalendar() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-        switch (this.CurrentPanel) {
-            case 'days':
-                this.ShowDays();
-                this.CenterButton.SetContent(this.ViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
-                break;
-            case 'months':
-                this.ShowMonths();
-                this.CenterButton.SetContent(this.ViewDate.getFullYear().toString());
-                break;
-            default:
-                this.ShowYears();
-                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
-                this.CenterButton.SetContent(`${year} - ${year + 15}`);
-                break;
-        }
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-    CreateElement(pClass = null) {
-        return this.HTML;
+    Equal(pOther) {
+        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
     }
 }
 class XDatePicker extends XBaseButtonInput {
@@ -2772,31 +2422,477 @@ class XMenu extends XDiv {
         }
     }
 }
-/// <reference path="DateEditor.ts" />
-/// <reference path="XDefault.ts" />
-/// <reference path="XConst.ts" />
-/// <reference path="XTypes.ts" />
-/// <reference path="XInterfaces.ts" />
-/// <reference path="XExtensions.ts" />
-/// <reference path="XMath.ts" />
-/// <reference path="XSort.ts" />
-/// <reference path="XEventManager.ts" />
-/// <reference path="XPopupManager.ts" />
-/// <reference path="Elements/Base/XElement.ts" />
-/// <reference path="Elements/Base/XDiv.ts" />
-/// <reference path="Elements/Base/XBaseInput.ts" />
-/// <reference path="Elements/Base/XBaseButtonInput.ts" />
-/// <reference path="Elements/Base/XPopupElement.ts" />
-/// <reference path="Elements/Base/XCalendar.ts" />
-/// <reference path="Editors/XDatePicker.ts" />
-/// <reference path="Elements/XMenu.ts" />
-/// <reference path="XLauncher.ts" />
-/// <reference path="DateEditor.ts" />
+class XTabControlButton extends XBaseTextButton {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlButton");
+        this.TabControl = null;
+        this.Tab = null;
+        XEventManager.AddEvent(this, this.HTML, XEventType.Click, () => {
+            var _a;
+            (_a = this.TabControl) === null || _a === void 0 ? void 0 : _a.SelectTab(this);
+        });
+    }
+}
+class XTabControlHeader extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlHeader");
+        this.DropdownButton = null;
+    }
+    SizeChanged() {
+        if (this.DropdownButton != null)
+            this.DropdownButton.IsVisible = this.HTML.scrollWidth > this.HTML.offsetWidth;
+    }
+}
+class XTabControlTab extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlTab");
+        this.Button = null;
+    }
+}
+class XTabControlContainer extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlContainer");
+    }
+}
+class XTabControlDropdown extends XPopupElement {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlDropdown");
+    }
+}
+class XTabControlButtonList extends XBaseTextButton {
+    constructor(pOwner) {
+        super(pOwner, "XTabControlButtonList");
+        this.IsVisible = false;
+    }
+}
+class XTabControl extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTabControl");
+        this.ActiveTab = null;
+        this.Tabs = new XArray();
+        this.Header = new XTabControlHeader(this);
+        this.Container = new XTabControlContainer(this);
+        this.Dropdown = new XTabControlDropdown(this);
+        XPopupManager.Add(this.Dropdown);
+        this.Dropdown.IsVisible = true;
+        this.ButtonList = new XTabControlButtonList(this);
+        this.ButtonList.Title = "Abas";
+        this.Header.DropdownButton = this.ButtonList;
+        this.ButtonList.HTML.addEventListener('click', () => {
+            this.PopulateDropdown();
+        });
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+        this.AddTab("X21");
+        this.AddTab("X21 skjldjlksd");
+        this.AddTab("X21 sdkljdflks");
+    }
+    PopulateDropdown() {
+        this.Dropdown.HTML.innerHTML = '';
+        this.Tabs.forEach((tab, index) => {
+            var _a, _b;
+            const item = new XTabControlButton(this.Dropdown);
+            item.HTML.className = "XTabControlButtonL";
+            if (tab.Button != null) {
+                if ((_a = tab === null || tab === void 0 ? void 0 : tab.Button) === null || _a === void 0 ? void 0 : _a.HTML.classList.contains('Active'))
+                    item.HTML.classList.add('Active');
+                item.TabControl = tab.Button.TabControl;
+                item.Tab = tab.Button.Tab;
+                item.Title = (_b = tab.Button) === null || _b === void 0 ? void 0 : _b.Title;
+            }
+        });
+        this.Dropdown.IsVisible = true;
+        const orect = this.HTML.getBoundingClientRect();
+        const rect = this.ButtonList.HTML.getBoundingClientRect();
+        this.Dropdown.HTML.style.right = `${orect.width - rect.left - rect.width}px`;
+        this.Dropdown.HTML.style.top = `${rect.bottom}px`;
+    }
+    SelectTab(pButton) {
+        var _a, _b, _c;
+        if (pButton == null)
+            return;
+        this.Tabs.ForEach(t => {
+            var _a, _b, _c;
+            (_a = t.Button) === null || _a === void 0 ? void 0 : _a.HTML.classList.remove('Active');
+            (_c = (_b = t.Button) === null || _b === void 0 ? void 0 : _b.Tab) === null || _c === void 0 ? void 0 : _c.HTML.classList.remove('Active');
+        });
+        (_b = (_a = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _a === void 0 ? void 0 : _a.Button) === null || _b === void 0 ? void 0 : _b.HTML.classList.add('Active');
+        pButton.HTML.classList.add('Active');
+        (_c = pButton.Tab) === null || _c === void 0 ? void 0 : _c.HTML.classList.add('Active');
+        this.Dropdown.IsVisible = false;
+        this.ActiveTab = pButton.Tab;
+    }
+    AddTab(pTitle) {
+        var _a;
+        var btn = new XTabControlButton(this.Header);
+        btn.Title = pTitle;
+        btn.TabControl = this;
+        var tab = new XTabControlTab(this.Container);
+        tab.HTML.innerText = new Date().ToString();
+        tab.Button = btn;
+        btn.Tab = tab;
+        this.Tabs.Add(tab);
+        if (this.ActiveTab == null)
+            this.SelectTab((_a = this.Tabs.FirstOrNull()) === null || _a === void 0 ? void 0 : _a.Button);
+    }
+}
+class XBaseButton extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+}
+class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    OnClick(pArg) {
+    }
+}
+class XBaseInput extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
+        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
+    }
+}
+class XBaseTextButton extends XBaseButton {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.Text = XUtils.AddElement(this, "span");
+    }
+    get Title() {
+        return this.Text.innerHTML;
+    }
+    set Title(pValue) {
+        this.Text.innerHTML = pValue;
+    }
+}
+class XCalendar extends XPopupElement {
+    constructor(pOwner, pClass = null) {
+        super(pOwner, pClass);
+        this.CurrentPanel = 'days';
+        this.OnSelectdate = null;
+        this.Header = new XDiv(this.HTML, "XCalendar-Header");
+        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
+        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
+        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
+        this.DaysGrid = new XDiv(this, "XDaysGrid");
+        this.MonthsGrid = new XDiv(this, "XMonthsGrid");
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid = new XDiv(this, "XYearsGrid");
+        this.YearsGrid.IsVisible = false;
+        this.ViewDate = new Date();
+        this.SelectedDate = new Date();
+        this.UpdateCalendar();
+        this.CenterButton.HTML.addEventListener('click', () => {
+            this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
+            this.UpdateCalendar();
+        });
+        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
+        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
+    }
+    OnShow(pValue = true) {
+        this.CurrentPanel = 'days';
+        this.UpdateCalendar();
+    }
+    OnHide() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+    CallPopupClosed() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+    ShowYears() {
+        this.YearsGrid.IsVisible = true;
+        this.YearsGrid.HTML.innerHTML = "";
+        const currentYear = this.ViewDate.getFullYear();
+        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
+        const decadeEnd = decadeStart + 10;
+        const gridStartYear = decadeStart - (decadeStart % 16);
+        for (let year = gridStartYear; year < gridStartYear + 16; year++) {
+            const cell = document.createElement('div');
+            cell.className = 'YearCell';
+            cell.textContent = year.toString();
+            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
+            if (!isCurrentDecade)
+                cell.classList.add('Faded');
+            if (year === new Date().getFullYear())
+                cell.classList.add('Current');
+            cell.addEventListener('click', () => {
+                this.ViewDate.setFullYear(year);
+                this.CurrentPanel = 'months';
+                this.UpdateCalendar();
+            });
+            this.YearsGrid.HTML.appendChild(cell);
+        }
+    }
+    ShowMonths() {
+        this.MonthsGrid.IsVisible = true;
+        this.MonthsGrid.HTML.innerHTML = "";
+        for (let month = 0; month < 12; month++) {
+            const cell = document.createElement('div');
+            cell.className = 'MonthCell';
+            cell.textContent = new Date(this.ViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'long' });
+            if (month === new Date().getMonth() && this.ViewDate.getFullYear() === new Date().getFullYear())
+                cell.classList.add('Current');
+            cell.addEventListener('click', () => {
+                this.ViewDate.setMonth(month);
+                this.CurrentPanel = 'days';
+                this.UpdateCalendar();
+            });
+            this.MonthsGrid.HTML.appendChild(cell);
+        }
+    }
+    ShowDays() {
+        this.DaysGrid.IsVisible = true;
+        this.DaysGrid.HTML.innerHTML = '';
+        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
+            const cell = document.createElement('div');
+            cell.textContent = day;
+            cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
+            this.DaysGrid.HTML.appendChild(cell);
+        });
+        const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
+        const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
+        let date = new Date(firstDay);
+        date.setDate(date.getDate() - firstDay.getDay());
+        for (let i = 0; i < 42; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'DayCell';
+            const isCurrentMonth = date.getMonth() === this.ViewDate.getMonth();
+            const isToday = date.toDateString() === new Date().toDateString();
+            const isSelected = this.SelectedDate && date.toDateString() === this.SelectedDate.toDateString();
+            if (!isCurrentMonth)
+                cell.classList.add('Faded');
+            if (isToday)
+                cell.classList.add('Current');
+            if (isSelected)
+                cell.classList.add('Selected');
+            cell.textContent = date.getDate().toString();
+            let daydate = new Date(date);
+            cell.addEventListener('click', () => this.SelectDate(daydate));
+            if (date.getDay() === 0)
+                cell.classList.add('Sunday');
+            if (date.getDay() === 6)
+                cell.classList.add('Saturday');
+            this.DaysGrid.HTML.appendChild(cell);
+            date.setDate(date.getDate() + 1);
+        }
+    }
+    SelectDate(pDate) {
+        this.SelectedDate = pDate;
+        this.ViewDate = new Date(pDate);
+        this.UpdateCalendar();
+        if (this.OnSelectdate != null)
+            this.OnSelectdate.apply(this, [pDate]);
+    }
+    Navigate(pDirection) {
+        switch (this.CurrentPanel) {
+            case 'days':
+                this.ViewDate.setMonth(this.ViewDate.getMonth() + pDirection);
+                break;
+            case 'months':
+                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + pDirection);
+                break;
+            default:
+                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + (pDirection * 16));
+                break;
+        }
+        this.UpdateCalendar();
+    }
+    UpdateCalendar() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+        switch (this.CurrentPanel) {
+            case 'days':
+                this.ShowDays();
+                this.CenterButton.SetContent(this.ViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+                break;
+            case 'months':
+                this.ShowMonths();
+                this.CenterButton.SetContent(this.ViewDate.getFullYear().toString());
+                break;
+            default:
+                this.ShowYears();
+                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
+                this.CenterButton.SetContent(`${year} - ${year + 15}`);
+                break;
+        }
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+    CreateElement(pClass = null) {
+        return this.HTML;
+    }
+}
+class XDiv extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+}
+class XElement {
+    static NextID() {
+        return this._ID++;
+    }
+    constructor(pOwner, pClass = null) {
+        this._IsVisible = true;
+        this.UUID = 0;
+        this.UUID = XElement.NextID();
+        this.Owner = pOwner;
+        this.HTML = this.CreateContainer();
+        if (pClass == null)
+            pClass = this.constructor.name;
+        this.Element = null;
+        this.CreateChildren();
+        this.HTML.className = pClass;
+        if (pOwner instanceof XElement)
+            pOwner.HTML.appendChild(this.HTML);
+        if (pOwner instanceof HTMLElement)
+            pOwner.appendChild(this.HTML);
+        this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
+        this._ResizeObserver.observe(this.HTML);
+    }
+    SizeChanged() {
+    }
+    BindTo(pElement) {
+        const editorRect = pElement.HTML.getBoundingClientRect();
+        const dropdownRect = this.HTML.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let top;
+        const spaceBelow = viewportHeight - editorRect.bottom;
+        const spaceAbove = editorRect.top;
+        if (dropdownRect.height <= spaceBelow)
+            top = editorRect.bottom;
+        else if (dropdownRect.height <= spaceAbove)
+            top = editorRect.top - dropdownRect.height;
+        else
+            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
+        let left;
+        const spaceRight = viewportWidth - editorRect.left;
+        if (dropdownRect.width <= spaceRight)
+            left = editorRect.left;
+        else {
+            const spaceLeft = editorRect.right;
+            if (dropdownRect.width <= spaceLeft)
+                left = editorRect.right - dropdownRect.width;
+            else
+                left = Math.max(0, viewportWidth - dropdownRect.width);
+        }
+        this.HTML.style.position = 'fixed';
+        this.HTML.style.top = `${top}px`;
+        this.HTML.style.left = `${left}px`;
+    }
+    CheckClose(pElement) {
+        return true;
+    }
+    get IsDrawed() {
+        var elm = this.HTML;
+        while (elm !== null && elm !== document.body) {
+            if (elm.parentElement == document.body)
+                return true;
+            var style = window.getComputedStyle(elm);
+            if (style.display == "none")
+                return false;
+            elm = elm.parentElement;
+        }
+        return false;
+    }
+    OnHide() {
+    }
+    OnShow() {
+    }
+    Show(pValue = true) {
+        var old = this.IsDrawed;
+        this._IsVisible = pValue;
+        if (pValue === true) {
+            this.HTML.style.visibility = 'visible';
+            this.OnShow();
+        }
+        else if (pValue === false) {
+            this.HTML.style.visibility = 'hidden';
+            this.OnHide();
+        }
+        if (pValue == old)
+            return;
+    }
+    SetContent(pValue) {
+        if (this.HTML != null)
+            this.HTML.innerText = pValue;
+    }
+    CreateChildren() {
+    }
+    CreateContainer() {
+        throw new Error("Method not implemented.");
+    }
+    CanClose(pSource) {
+        return true;
+    }
+    get IsVisible() {
+        if (!this._IsVisible)
+            return this._IsVisible;
+        return this.IsDrawed;
+    }
+    set IsVisible(pValue) {
+        this.Show(pValue);
+    }
+}
+XElement._ID = 0;
+class XPopupElement extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.AutoClose = false;
+        this.OnPopupClosed = null;
+        this.ReferenceElement = null;
+        this.ReferenceElement = this;
+    }
+    CallPopupClosed() {
+    }
+    CanClose(pElement) {
+        if (this.ReferenceElement != null)
+            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
+        return true;
+    }
+}
 class XUtils {
     static IsNumber(pValue) {
         return !isNaN(parseFloat(pValue)) && isFinite(pValue);
     }
-    static AddElement(pOwner, pType, pClass, pInsert = false) {
+    static AddElement(pOwner, pType, pClass = null, pInsert = false) {
         var own;
         if (pOwner == null)
             own = document.body;
@@ -2818,15 +2914,26 @@ class XUtils {
         return elm;
     }
 }
-class XBaseButton extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-    CreateElement(pClass = null) {
-        return this.HTML;
-    }
-}
+/// <reference path="src/XDefault.ts" />
+/// <reference path="src/XConst.ts" />
+/// <reference path="src/XInterfaces.ts" />
+/// <reference path="src/XExtensions.ts" />
+/// <reference path="src/XMath.ts" />
+/// <reference path="src/XSort.ts" />
+/// <reference path="src/XTypes.ts" />
+/// <reference path="src/XPopupManager.ts" />
+/// <reference path="src/XEventManager.ts" />
+/// <reference path="src/Elements/Base/XElement.ts" />
+/// <reference path="src/Elements/Base/XDiv.ts" />
+/// <reference path="src/Elements/Base/XBaseButton.ts" />
+/// <reference path="src/Elements/Base/XBaseTextButton.ts" />
+/// <reference path="src/Elements/Base/XBaseInput.ts" />
+/// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
+/// <reference path="src/Elements/Base/XPopupElement.ts" />
+/// <reference path="src/Elements/Base/XCalendar.ts" />
+/// <reference path="src/Editors/XDatePicker.ts" />
+/// <reference path="src/Elements/XMenu.ts" />
+/// <reference path="src/Elements/XTabControl.ts" />
+/// <reference path="src/XLauncher.ts" />
+/// <reference path="src/DateEditor.ts" />
 //# sourceMappingURL=TFX.Core.js.map

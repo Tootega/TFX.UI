@@ -3,6 +3,7 @@
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
     {
         super(pOwner, pClass);
+        this.ReferenceElement = this;
     }
     AutoClose: boolean = false;
     OnPopupClosed: XPopupClosedEvent | null = null;
