@@ -1,196 +1,4 @@
 "use strict";
-class TabControl {
-    constructor(container) {
-        this.tabs = [];
-        this.activeTabIndex = 0;
-        this.container = container;
-        this.injectStyles();
-        this.createStructure();
-    }
-    injectStyles() {
-        if (TabControl.stylesInjected)
-            return;
-        const style = document.createElement('style');
-        style.textContent = `
-            .tab-buttons {
-                display: flex;
-                gap: 4px;
-                margin-bottom: -1px;
-            }
-
-            .tab-button {
-                padding: 8px 16px;
-                border: 1px solid #ccc;
-                background: #f0f0f0;
-                cursor: pointer;
-                border-radius: 4px 4px 0 0;
-                transition: background 0.2s;
-            }
-
-            .tab-button:hover {
-                background: #e0e0e0;
-            }
-
-            .tab-button.active {
-                background: white;
-                border-bottom-color: white;
-            }
-
-            .tab-content-container {
-                border: 1px solid #ccc;
-                padding: 16px;
-                border-radius: 0 4px 4px 4px;
-            }
-
-            .tab-content {
-                display: none;
-            }
-
-            .tab-content.active {
-                display: block;
-            }
-
-            .tab-overflow-button {
-                position: absolute;
-                right: 0;
-                top: 0;
-                background: #f0f0f0;
-                border: 1px solid #ccc;
-                border-radius: 0 4px 0 0;
-                padding: 8px 12px;
-                cursor: pointer;
-                z-index: 1;
-            }
-
-            .tab-dropdown {
-                position: fixed;
-                background: white;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                z-index: 1000;
-                max-height: 300px;
-                overflow-y: auto;
-            }
-
-            .tab-dropdown-item {
-                padding: 8px 16px;
-                cursor: pointer;
-                white-space: nowrap;
-            }
-
-            .tab-dropdown-item:hover {
-                background: #f0f0f0;
-            }
-
-            .tab-buttons {
-                position: relative;
-                padding-right: 40px; /* Espaço para o botão de overflow */
-                overflow-x: hidden;
-            }
-        `;
-        document.head.appendChild(style);
-        TabControl.stylesInjected = true;
-    }
-    createStructure() {
-        this.container.innerHTML = '';
-        this.buttonsContainer = document.createElement('div');
-        this.buttonsContainer.className = 'tab-buttons';
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'tab-content-container';
-        this.container.append(this.buttonsContainer, contentContainer);
-        this.createOverflowElements();
-        this.setupResizeObserver();
-    }
-    createOverflowElements() {
-        // Botão de overflow
-        this.overflowButton = document.createElement('button');
-        this.overflowButton.className = 'tab-overflow-button';
-        this.overflowButton.innerHTML = '&#8943;';
-        this.overflowButton.style.display = 'none';
-        this.overflowButton.addEventListener('click', (e) => this.toggleDropdown(e));
-        // Dropdown
-        this.dropdownContainer = document.createElement('div');
-        this.dropdownContainer.className = 'tab-dropdown';
-        this.dropdownContainer.style.display = 'none';
-        this.buttonsContainer.appendChild(this.overflowButton);
-        this.container.appendChild(this.dropdownContainer);
-    }
-    setupResizeObserver() {
-        this.resizeObserver = new ResizeObserver(() => this.checkOverflow());
-        this.resizeObserver.observe(this.buttonsContainer);
-    }
-    checkOverflow() {
-        const tabsWidth = Array.from(this.buttonsContainer.children)
-            .slice(0, -1) // Exclui o botão de overflow
-            .reduce((acc, child) => acc + child.clientWidth, 0);
-        const containerWidth = this.buttonsContainer.clientWidth - this.overflowButton.clientWidth;
-        this.overflowButton.style.display =
-            tabsWidth > containerWidth ? 'block' : 'none';
-    }
-    toggleDropdown(event) {
-        event.stopPropagation();
-        const isVisible = this.dropdownContainer.style.display === 'block';
-        this.dropdownContainer.style.display = isVisible ? 'none' : 'block';
-        if (!isVisible) {
-            this.updateDropdownPosition();
-            this.populateDropdown();
-            setTimeout(() => window.addEventListener('click', this.closeDropdown.bind(this)));
-        }
-    }
-    updateDropdownPosition() {
-        const rect = this.overflowButton.getBoundingClientRect();
-        this.dropdownContainer.style.left = `${rect.left - rect.width}px`;
-        this.dropdownContainer.style.top = `${rect.bottom}px`;
-    }
-    populateDropdown() {
-        this.dropdownContainer.innerHTML = '';
-        this.tabs.forEach((tab, index) => {
-            const item = document.createElement('div');
-            item.className = 'tab-dropdown-item';
-            item.textContent = tab.title;
-            item.addEventListener('click', () => {
-                this.setActiveTab(index);
-                this.closeDropdown();
-            });
-            this.dropdownContainer.appendChild(item);
-        });
-    }
-    closeDropdown() {
-        this.dropdownContainer.style.display = 'none';
-        window.removeEventListener('click', this.closeDropdown.bind(this));
-    }
-    addTab(title, content) {
-        const buttonsContainer = this.container.querySelector('.tab-buttons');
-        const contentContainer = this.container.querySelector('.tab-content-container');
-        const button = document.createElement('button');
-        button.className = 'tab-button';
-        button.textContent = title;
-        var idx = this.tabs.length;
-        button.addEventListener('click', () => this.setActiveTab(idx));
-        button.addEventListener('click', () => this.setActiveTab(this.tabs.length));
-        const contentElement = document.createElement('div');
-        contentElement.className = 'tab-content';
-        contentElement.innerHTML = content;
-        buttonsContainer.appendChild(button);
-        contentContainer.appendChild(contentElement);
-        this.tabs.push({ title, content, button, contentElement });
-        if (this.tabs.length === 1) {
-            this.setActiveTab(0);
-        }
-    }
-    setActiveTab(index) {
-        if (index < 0 || index >= this.tabs.length)
-            return;
-        this.tabs.forEach((tab, i) => {
-            const isActive = i === index;
-            tab.button.classList.toggle('active', isActive);
-            tab.contentElement.classList.toggle('active', isActive);
-        });
-        this.activeTabIndex = index;
-    }
-}
-TabControl.stylesInjected = false;
 var XKey;
 (function (XKey) {
     XKey[XKey["K_CANCEL"] = 3] = "K_CANCEL";
@@ -482,6 +290,8 @@ XDefault.StrNullDate = "1755-01-01T00:00:00+0000";
 XDefault.StrBRNullDate = "01/01/1755 00:00:00";
 XDefault.NullDate = new Date(XDefault.StrNullDate);
 XDefault.NullID = "00000000-0000-0000-0000-000000000000";
+XDefault.DefaultColCount = 32;
+XDefault.DefaultRowHeight = 37;
 var XEventType;
 (function (XEventType) {
     XEventType["MouseMove"] = "mousemove";
@@ -924,6 +734,39 @@ Array.prototype._Comparer = function (pLeft, pRigh) {
     else if (r < l)
         return 1;
     return 0;
+};
+HTMLElement.prototype.SetRect = function (pRect) {
+    this.style.left = `${pRect.Left}px`;
+    this.style.top = `${pRect.Top}px`;
+    this.style.width = `${pRect.Width}px`;
+    this.style.height = `${pRect.Height}px`;
+};
+HTMLElement.prototype.StyleStrValue = function (pItemName) {
+    var styleValue = "";
+    if (document.defaultView && document.defaultView.getComputedStyle)
+        styleValue = document.defaultView.getComputedStyle(this, "").getPropertyValue(pItemName);
+    //else
+    //    if (this.currentStyle)
+    //    {
+    //        pItemName = pItemName.replace(/\-(\w)/g, (strMatch, p1) => p1.toUpperCase());
+    //        styleValue = this.currentStyle[pItemName];
+    //    }
+    return styleValue;
+};
+HTMLElement.prototype.StyleValue = function (pItemName) {
+    return parseInt(this.StyleStrValue(pItemName));
+};
+HTMLElement.prototype.GetRect = function (pInternal = false) {
+    let or = this.getBoundingClientRect();
+    if (pInternal) {
+        let r = new XRect(or);
+        let bl = this.StyleValue("border-left");
+        let bt = this.StyleValue("border-top");
+        let br = this.StyleValue("border-right");
+        let bb = this.StyleValue("border-bottom");
+        return new XRect(r.Left - bl, r.Top - bt, r.Width - bl - br, r.Height - bt - bb);
+    }
+    return new XRect(or);
 };
 HTMLElement.prototype.GetRectRelative = function (pRelative) {
     let or = this.getBoundingClientRect();
@@ -1612,16 +1455,6 @@ class XCall {
         }
     }
 }
-class XLauncher extends XDiv {
-    static Run() {
-        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
-        this.Body = new XDiv(null, "");
-        new XTabControl(this.Body);
-    }
-    constructor() {
-        super(document.body, "MainDiv");
-    }
-}
 class XMath {
     //static AddCorner(pCorner: XPoint, pRound: number, pOut1: XPoint, pOut2: XPoint): XArray<XPoint>
     //{
@@ -1791,6 +1624,10 @@ XMath.m_w = 123456789;
 XMath.m_z = 987654321;
 XMath.mask = 0xffffffff;
 class XPopupManager {
+    static ZIndex() {
+        this._ZIndex++;
+        return this._ZIndex.toString();
+    }
     static AddAutoEvent(pContext, pMethod, pOnce = true) {
         var obj = { Context: pContext, Method: pMethod, Once: pOnce };
         this.AutoEvent.Add(obj);
@@ -1829,6 +1666,7 @@ class XPopupManager {
         }
     }
 }
+XPopupManager._ZIndex = 999;
 XPopupManager.PopupList = new Array();
 XPopupManager.AutoEvent = new Array();
 XPopupManager.UseCrl = false;
@@ -2181,6 +2019,155 @@ class XSize {
         return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
     }
 }
+class XElement {
+    static NextID() {
+        return this._ID++;
+    }
+    constructor(pOwner, pClass = null) {
+        this._IsVisible = true;
+        this.UUID = 0;
+        this.OnResize = null;
+        this.OrderIndex = 0;
+        this.UUID = XElement.NextID();
+        this.Owner = pOwner;
+        this.HTML = this.CreateContainer();
+        if (pClass == null)
+            pClass = this.constructor.name;
+        this.Element = null;
+        this.CreateChildren();
+        this.HTML.className = pClass;
+        if (pOwner instanceof XElement)
+            pOwner.HTML.appendChild(this.HTML);
+        if (pOwner instanceof HTMLElement)
+            pOwner.appendChild(this.HTML);
+        this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
+        this._ResizeObserver.observe(this.HTML);
+    }
+    get Rect() {
+        return this.HTML.GetRect();
+    }
+    set Rect(pValue) {
+        this.HTML.SetRect(pValue);
+    }
+    SizeChanged() {
+        if (this.OnResize != null)
+            this.OnResize.apply(this, [this]);
+    }
+    BindTo(pElement) {
+        const editorRect = pElement.HTML.getBoundingClientRect();
+        const dropdownRect = this.HTML.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let top;
+        const spaceBelow = viewportHeight - editorRect.bottom;
+        const spaceAbove = editorRect.top;
+        if (dropdownRect.height <= spaceBelow)
+            top = editorRect.bottom;
+        else if (dropdownRect.height <= spaceAbove)
+            top = editorRect.top - dropdownRect.height;
+        else
+            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
+        let left;
+        const spaceRight = viewportWidth - editorRect.left;
+        if (dropdownRect.width <= spaceRight)
+            left = editorRect.left;
+        else {
+            const spaceLeft = editorRect.right;
+            if (dropdownRect.width <= spaceLeft)
+                left = editorRect.right - dropdownRect.width;
+            else
+                left = Math.max(0, viewportWidth - dropdownRect.width);
+        }
+        this.HTML.style.position = 'fixed';
+        this.HTML.style.top = `${top}px`;
+        this.HTML.style.left = `${left}px`;
+    }
+    CheckClose(pElement) {
+        return true;
+    }
+    get IsDrawed() {
+        var elm = this.HTML;
+        while (elm !== null && elm !== document.body) {
+            if (elm.parentElement == document.body)
+                return true;
+            var style = window.getComputedStyle(elm);
+            if (style.display == "none")
+                return false;
+            elm = elm.parentElement;
+        }
+        return false;
+    }
+    OnHide() {
+    }
+    OnShow() {
+    }
+    Show(pValue = true) {
+        var old = this.IsDrawed;
+        this._IsVisible = pValue;
+        if (pValue === true) {
+            this.HTML.style.visibility = 'visible';
+            this.OnShow();
+        }
+        else if (pValue === false) {
+            this.HTML.style.visibility = 'hidden';
+            this.OnHide();
+        }
+        if (pValue == old)
+            return;
+    }
+    SetContent(pValue) {
+        if (this.HTML != null)
+            this.HTML.innerText = pValue;
+    }
+    CreateChildren() {
+    }
+    CreateContainer() {
+        throw new Error("Method not implemented.");
+    }
+    CanClose(pSource) {
+        return true;
+    }
+    get IsVisible() {
+        if (!this._IsVisible)
+            return this._IsVisible;
+        return this.IsDrawed;
+    }
+    set IsVisible(pValue) {
+        this.Show(pValue);
+    }
+}
+XElement._ID = 0;
+/// <reference path="XElement.ts" />
+class XDiv extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+}
+/// <reference path="XDiv.ts" />
+class XBaseInput extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
+        this.Rows = 0;
+        this.Cols = 0;
+        this.NewLine = false;
+        this.OrderIndex = -1;
+        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
+    }
+}
+/// <reference path="XBaseInput.ts" />
+class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    OnClick(pArg) {
+    }
+}
+/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
 class XDatePicker extends XBaseButtonInput {
     constructor(pOwner) {
         super(pOwner);
@@ -2422,6 +2409,50 @@ class XMenu extends XDiv {
         }
     }
 }
+class XBaseButton extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+}
+/// <reference path="XBaseButton.ts" />
+class XBaseTextButton extends XBaseButton {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.Text = XUtils.AddElement(this, "span");
+    }
+    get Title() {
+        return this.Text.innerHTML;
+    }
+    set Title(pValue) {
+        this.Text.innerHTML = pValue;
+    }
+}
+class XPopupElement extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.AutoClose = false;
+        this.OnPopupClosed = null;
+        this.ReferenceElement = null;
+        this.ReferenceElement = this;
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+    }
+    CallPopupClosed() {
+    }
+    Show(pValue = true) {
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+        super.Show(pValue);
+    }
+    CanClose(pElement) {
+        if (this.ReferenceElement != null)
+            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
+        return true;
+    }
+}
+/// <reference path="Base/XBaseTextButton.ts" />
+/// <reference path="Base/XPopupElement.ts" />
 class XTabControlButton extends XBaseTextButton {
     constructor(pOwner) {
         super(pOwner, "XTabControlButton");
@@ -2524,13 +2555,9 @@ class XTabControl extends XDiv {
             }
         });
         this.Dropdown.IsVisible = true;
-        const orect = this.HTML.getBoundingClientRect();
-        const rect = this.ButtonList.HTML.getBoundingClientRect();
-        this.Dropdown.HTML.style.right = `${orect.width - rect.left - rect.width}px`;
-        this.Dropdown.HTML.style.top = `${rect.bottom}px`;
     }
     SelectTab(pButton) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         if (pButton == null)
             return;
         this.Tabs.ForEach(t => {
@@ -2541,6 +2568,15 @@ class XTabControl extends XDiv {
         (_b = (_a = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _a === void 0 ? void 0 : _a.Button) === null || _b === void 0 ? void 0 : _b.HTML.classList.add('Active');
         pButton.HTML.classList.add('Active');
         (_c = pButton.Tab) === null || _c === void 0 ? void 0 : _c.HTML.classList.add('Active');
+        var rbtn = (_e = (_d = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _d === void 0 ? void 0 : _d.Button) === null || _e === void 0 ? void 0 : _e.HTML.getBoundingClientRect();
+        var rctn = this.Header.HTML.getBoundingClientRect();
+        var offw = (_k = (_j = (_h = (_g = (_f = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _f === void 0 ? void 0 : _f.Button) === null || _g === void 0 ? void 0 : _g.HTML) === null || _h === void 0 ? void 0 : _h.previousElementSibling) === null || _j === void 0 ? void 0 : _j.offsetWidth) !== null && _k !== void 0 ? _k : 0;
+        if (rbtn != null) {
+            if (rbtn.left < rctn.left)
+                this.Header.HTML.scrollLeft -= (rctn.left - rbtn.left) + offw;
+            else if (rbtn.right > rctn.right)
+                this.Header.HTML.scrollLeft += (rbtn.right - rctn.right) + offw;
+        }
         this.Dropdown.IsVisible = false;
         this.ActiveTab = pButton.Tab;
     }
@@ -2549,50 +2585,19 @@ class XTabControl extends XDiv {
         var btn = new XTabControlButton(this.Header);
         btn.Title = pTitle;
         btn.TabControl = this;
-        var tab = new XTabControlTab(this.Container);
-        tab.HTML.innerText = new Date().ToString();
+        var tab = this.CreateTab();
         tab.Button = btn;
         btn.Tab = tab;
         this.Tabs.Add(tab);
         if (this.ActiveTab == null)
             this.SelectTab((_a = this.Tabs.FirstOrNull()) === null || _a === void 0 ? void 0 : _a.Button);
     }
-}
-class XBaseButton extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
+    CreateTab() {
+        return new XTabControlTab(this.Container);
+        ;
     }
 }
-class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Button = new XBaseButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
-    }
-    OnClick(pArg) {
-    }
-}
-class XBaseInput extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "InputContainer");
-        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
-    }
-}
-class XBaseTextButton extends XBaseButton {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.Text = XUtils.AddElement(this, "span");
-    }
-    get Title() {
-        return this.Text.innerHTML;
-    }
-    set Title(pValue) {
-        this.Text.innerHTML = pValue;
-    }
-}
+/// <reference path="XPopupElement.ts" />
 class XCalendar extends XPopupElement {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
@@ -2752,141 +2757,6 @@ class XCalendar extends XPopupElement {
     CreateContainer() {
         return XUtils.AddElement(null, "div", null);
     }
-    CreateElement(pClass = null) {
-        return this.HTML;
-    }
-}
-class XDiv extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-}
-class XElement {
-    static NextID() {
-        return this._ID++;
-    }
-    constructor(pOwner, pClass = null) {
-        this._IsVisible = true;
-        this.UUID = 0;
-        this.UUID = XElement.NextID();
-        this.Owner = pOwner;
-        this.HTML = this.CreateContainer();
-        if (pClass == null)
-            pClass = this.constructor.name;
-        this.Element = null;
-        this.CreateChildren();
-        this.HTML.className = pClass;
-        if (pOwner instanceof XElement)
-            pOwner.HTML.appendChild(this.HTML);
-        if (pOwner instanceof HTMLElement)
-            pOwner.appendChild(this.HTML);
-        this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
-        this._ResizeObserver.observe(this.HTML);
-    }
-    SizeChanged() {
-    }
-    BindTo(pElement) {
-        const editorRect = pElement.HTML.getBoundingClientRect();
-        const dropdownRect = this.HTML.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        let top;
-        const spaceBelow = viewportHeight - editorRect.bottom;
-        const spaceAbove = editorRect.top;
-        if (dropdownRect.height <= spaceBelow)
-            top = editorRect.bottom;
-        else if (dropdownRect.height <= spaceAbove)
-            top = editorRect.top - dropdownRect.height;
-        else
-            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
-        let left;
-        const spaceRight = viewportWidth - editorRect.left;
-        if (dropdownRect.width <= spaceRight)
-            left = editorRect.left;
-        else {
-            const spaceLeft = editorRect.right;
-            if (dropdownRect.width <= spaceLeft)
-                left = editorRect.right - dropdownRect.width;
-            else
-                left = Math.max(0, viewportWidth - dropdownRect.width);
-        }
-        this.HTML.style.position = 'fixed';
-        this.HTML.style.top = `${top}px`;
-        this.HTML.style.left = `${left}px`;
-    }
-    CheckClose(pElement) {
-        return true;
-    }
-    get IsDrawed() {
-        var elm = this.HTML;
-        while (elm !== null && elm !== document.body) {
-            if (elm.parentElement == document.body)
-                return true;
-            var style = window.getComputedStyle(elm);
-            if (style.display == "none")
-                return false;
-            elm = elm.parentElement;
-        }
-        return false;
-    }
-    OnHide() {
-    }
-    OnShow() {
-    }
-    Show(pValue = true) {
-        var old = this.IsDrawed;
-        this._IsVisible = pValue;
-        if (pValue === true) {
-            this.HTML.style.visibility = 'visible';
-            this.OnShow();
-        }
-        else if (pValue === false) {
-            this.HTML.style.visibility = 'hidden';
-            this.OnHide();
-        }
-        if (pValue == old)
-            return;
-    }
-    SetContent(pValue) {
-        if (this.HTML != null)
-            this.HTML.innerText = pValue;
-    }
-    CreateChildren() {
-    }
-    CreateContainer() {
-        throw new Error("Method not implemented.");
-    }
-    CanClose(pSource) {
-        return true;
-    }
-    get IsVisible() {
-        if (!this._IsVisible)
-            return this._IsVisible;
-        return this.IsDrawed;
-    }
-    set IsVisible(pValue) {
-        this.Show(pValue);
-    }
-}
-XElement._ID = 0;
-class XPopupElement extends XDiv {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.AutoClose = false;
-        this.OnPopupClosed = null;
-        this.ReferenceElement = null;
-        this.ReferenceElement = this;
-    }
-    CallPopupClosed() {
-    }
-    CanClose(pElement) {
-        if (this.ReferenceElement != null)
-            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
-        return true;
-    }
 }
 class XUtils {
     static IsNumber(pValue) {
@@ -2914,13 +2784,40 @@ class XUtils {
         return elm;
     }
 }
+/// <reference path="../Elements/Base/XDiv.ts" />
+class XStage extends XDiv {
+    static Run() {
+        window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        this.Instance = new XStage();
+    }
+    constructor() {
+        super(document.body, "MainDiv");
+        this.Menu = new XMenu(this);
+        this.TopBar = new XTopBar(this);
+        this.Menu.OnResize = () => this.MenuResize();
+        this.TabControl = new XStageTabControl(this);
+        this.TabControl.Dropdown.HTML.classList.add("Main");
+    }
+    SizeChanged() {
+        this.MenuResize();
+    }
+    MenuResize() {
+        var r = this.Menu.HTML.GetRect();
+        this.TabControl.HTML.style.left = `${r.Width}px`;
+        this.TabControl.HTML.style.width = `${this.Rect.Width - r.Width - 1}px`;
+        this.TopBar.HTML.style.left = `${r.Width}px`;
+        this.TopBar.HTML.style.width = `${this.Rect.Width - r.Width - 1}px`;
+    }
+}
 /// <reference path="src/XDefault.ts" />
 /// <reference path="src/XConst.ts" />
 /// <reference path="src/XInterfaces.ts" />
 /// <reference path="src/XExtensions.ts" />
 /// <reference path="src/XMath.ts" />
 /// <reference path="src/XSort.ts" />
+/// <reference path="src/Utils/XUtils.ts" />
 /// <reference path="src/XTypes.ts" />
+/// <reference path="src/Elements/Base/XElement.ts" />
 /// <reference path="src/XPopupManager.ts" />
 /// <reference path="src/XEventManager.ts" />
 /// <reference path="src/Elements/Base/XElement.ts" />
@@ -2931,9 +2828,178 @@ class XUtils {
 /// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="src/Elements/Base/XPopupElement.ts" />
 /// <reference path="src/Elements/Base/XCalendar.ts" />
-/// <reference path="src/Editors/XDatePicker.ts" />
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
-/// <reference path="src/XLauncher.ts" />
-/// <reference path="src/DateEditor.ts" />
+/// <reference path="src/Editors/XDatePicker.ts" />
+/// <reference path="src/Stage/XStage.ts" />
+class XTopBar extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTopBar");
+    }
+}
+class XType1 {
+    constructor() {
+        this.Point = new XPoint();
+        this.LeftX = 0;
+        this.LeftY = 0;
+        this.Used = false;
+        this.EndX = -1;
+        this.StartX = -1;
+    }
+}
+class XEditPosition {
+    constructor(pLocation) {
+        this.Used = false;
+        this.Point = pLocation;
+    }
+}
+class XForm extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XForm");
+        this.Fields = new XArray();
+        var edt;
+        edt = new XDatePicker(this);
+        edt.Rows = 1;
+        edt.Cols = 8;
+        this.Fields.Add(edt);
+        edt = new XDatePicker(this);
+        edt.Rows = 1;
+        edt.Cols = 3;
+        this.Fields.Add(edt);
+        edt = new XDatePicker(this);
+        edt.Rows = 1;
+        edt.Cols = 5;
+        this.Fields.Add(edt);
+        this.Fields.Add(edt);
+        edt = new XDatePicker(this);
+        edt.Rows = 1;
+        edt.Cols = 5;
+        this.Fields.Add(edt);
+        this.Fields.Add(edt);
+        edt = new XDatePicker(this);
+        edt.Rows = 1;
+        edt.Cols = 5;
+        this.Fields.Add(edt);
+    }
+    SizeChanged() {
+        this.NomalForm(this.Rect);
+    }
+    NomalForm(pConstraint) {
+        var rects = new Array();
+        var sw = pConstraint.Width / XDefault.DefaultColCount;
+        var sh = XDefault.DefaultRowHeight;
+        var mh = 0;
+        for (var y = 0; y < 64; y++) {
+            var rcts = new Array(XDefault.DefaultColCount);
+            for (var x = 0; x < XDefault.DefaultColCount; x++)
+                rcts[x] = new XEditPosition(new XPoint(x * sw, y * sh));
+            rects.Add(rcts);
+        }
+        var cnt = 0;
+        var ordered = this.Fields.OrderBy(c => c.OrderIndex);
+        for (var i = 0; i < ordered.length; i++) {
+            var fld = this.Fields[i];
+            fld.OrderIndex = ++cnt;
+        }
+        var lx = 0;
+        var ly = 0;
+        for (var i = 0; i < ordered.length; i++) {
+            var child = this.Fields[i];
+            var ret = this.GerPosition(rects, child, child.Rows, child.Cols, ly, lx);
+            lx = ret.LeftX;
+            ly = ret.LeftY;
+            if (child.NewLine)
+                lx = XDefault.DefaultColCount;
+            var r = new XRect(ret.Point.X + 2, ret.Point.Y, Math.max(sw, child.Cols * sw) - 2, Math.max(sh, child.Rows * XDefault.DefaultRowHeight));
+            child.Rect = r;
+            if (r.Bottom > mh)
+                mh = r.Bottom;
+        }
+    }
+    GerPosition(pRects, pField, pRows, pCols, pLy, pLx) {
+        var sx = -1;
+        var sy = -1;
+        var ey = -1;
+        var ex = -1;
+        var ret = new XType1();
+        for (var i = pLy; i < pRects.length; i++) {
+            var rs = pRects[i];
+            if (sy == -1)
+                sy = i;
+            if (i > pLy)
+                sx = Math.max(0, sx);
+            else
+                sx = Math.max(pLx, sx);
+            var ret = this.FincX(rs, sx, ex, pCols);
+            sx = ret.StartX;
+            ex = ret.EndX;
+            if (ret.Used) {
+                if (pRows == (i - sy) + 1) {
+                    ey = i;
+                    break;
+                }
+            }
+            else
+                sy = -1;
+        }
+        if (sy != -1 && sx != -1 && ey != -1 && ex != -1) {
+            var rx = pRects[sy][sx];
+            for (var y = sy; y <= ey; y++)
+                for (var x = sx; x <= ex; x++)
+                    pRects[y][x].Used = true;
+            pLx = ex;
+            pLy = sy;
+            ret.Point = rx.Point;
+            ret.LeftX = pLx;
+            ret.LeftY = pLy;
+            return ret;
+        }
+        ret.Point = new XPoint(-1, -1);
+        ret.LeftX = pLx;
+        ret.LeftY = pLy;
+        return ret;
+    }
+    FincX(pHRects, pStartX, pEndX, pCols) {
+        var start = pStartX != -1 ? pStartX : 0;
+        var ret = new XType1();
+        ret.Used = false;
+        for (var x = start; x < pHRects.length; x++) {
+            var r = pHRects[x];
+            if (r.Used) {
+                if (pStartX != -1)
+                    pStartX = -1;
+                continue;
+            }
+            if (pStartX == -1)
+                pStartX = x;
+            if (pCols == (x - pStartX) + 1) {
+                pEndX = x;
+                ret.EndX = pEndX;
+                ret.StartX = pStartX;
+                ret.Used = true;
+                return ret;
+            }
+        }
+        pEndX = pStartX = -1;
+        ret.EndX = pEndX;
+        ret.StartX = pStartX;
+        return ret;
+    }
+}
+class XStageTabControlTab extends XTabControlTab {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Form = new XForm(this);
+    }
+}
+class XStageTabControl extends XTabControl {
+    constructor(pOwner) {
+        super(pOwner);
+        this.HTML.classList.add("Main");
+    }
+    CreateTab() {
+        return new XStageTabControlTab(this.Container);
+        ;
+    }
+}
 //# sourceMappingURL=TFX.Core.js.map

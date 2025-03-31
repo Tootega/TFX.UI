@@ -52,7 +52,7 @@ class XEventManager
     }
 
 
-    static AddObserver(pContext: XElement, pConfig: any, pEvent: any)
+    static AddObserver(pContext: any, pConfig: any, pEvent: any)
     {
         const observer = new MutationObserver(() => pEvent.apply(pContext));
         observer.observe(pContext.HTML, pConfig);

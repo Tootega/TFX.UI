@@ -285,11 +285,11 @@ class XRect
         this.SetValue(pLeft, pTop, pWidth, pHeight);
     }
 
-    Left: number=0;
-    Top: number=0;
-    Width: number=0;
-    Height: number=0;
-    Bottom: number=0;
+    Left: number = 0;
+    Top: number = 0;
+    Width: number = 0;
+    Height: number = 0;
+    Bottom: number = 0;
     Right: number = 0;
     Size: XSize | undefined;
 

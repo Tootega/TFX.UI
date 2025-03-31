@@ -2,11 +2,18 @@
 
 class XPopupManager
 {
+    static _ZIndex: number = 999;
+    static ZIndex(): string
+    {
+        this._ZIndex++;
+        return this._ZIndex.toString();
+    }
+
     private static PopupList: Array<XIPopupPanel> = new Array<XIPopupPanel>();
-    private static AutoEvent: XArray<{ Context: XElement, Method: XEvent, Once: boolean }> = new Array<{ Context: XElement, Method: XEvent, Once: boolean }>();
+    private static AutoEvent: XArray<{ Context: any, Method: XEvent, Once: boolean }> = new Array<{ Context: any, Method: XEvent, Once: boolean }>();
     static UseCrl: boolean = false;
 
-    static AddAutoEvent(pContext: XElement, pMethod: any, pOnce: boolean = true)
+    static AddAutoEvent(pContext: any, pMethod: any, pOnce: boolean = true)
     {
         var obj = { Context: pContext, Method: pMethod, Once: pOnce };
         this.AutoEvent.Add(obj);

@@ -1,4 +1,5 @@
-﻿class XBaseTextButton extends XBaseButton 
+﻿/// <reference path="XBaseButton.ts" />
+class XBaseTextButton extends XBaseButton
 {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
     {

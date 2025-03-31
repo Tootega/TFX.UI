@@ -563,7 +563,53 @@ interface HTMLElement
     Swap(pLeft: number, pRight: number): any;
     GetRectRelative(pRelative: HTMLElement): XRect;
     GetRect(pInternal?: boolean): XRect;
+    StyleValue(pItemName: string): number;
+    StyleStrValue(pItemName: string): string;
+    SetRect(pRect: XRect):void;
 }
+
+HTMLElement.prototype.SetRect = function (pRect: XRect): void
+{
+    this.style.left = `${pRect.Left}px`;
+    this.style.top = `${pRect.Top}px`;
+    this.style.width = `${pRect.Width}px`;
+    this.style.height = `${pRect.Height}px`;
+}
+
+HTMLElement.prototype.StyleStrValue = function (pItemName: string): string
+{
+    var styleValue = "";
+    if (document.defaultView && document.defaultView.getComputedStyle)
+        styleValue = document.defaultView.getComputedStyle(this, "").getPropertyValue(pItemName);
+    //else
+    //    if (this.currentStyle)
+    //    {
+    //        pItemName = pItemName.replace(/\-(\w)/g, (strMatch, p1) => p1.toUpperCase());
+    //        styleValue = this.currentStyle[pItemName];
+    //    }
+    return styleValue;
+};
+
+HTMLElement.prototype.StyleValue = function (pItemName: string): number
+{
+    return parseInt(this.StyleStrValue(pItemName));
+};
+
+HTMLElement.prototype.GetRect = function (pInternal: boolean = false): XRect
+{
+    let or = this.getBoundingClientRect();
+    if (pInternal)
+    {
+        let r = new XRect(or)
+        let bl = this.StyleValue("border-left");
+        let bt = this.StyleValue("border-top");
+        let br = this.StyleValue("border-right");
+        let bb = this.StyleValue("border-bottom");
+        return new XRect(r.Left - bl, r.Top - bt, r.Width - bl - br, r.Height - bt - bb);
+    }
+    return new XRect(or);
+}
+
 
 HTMLElement.prototype.GetRectRelative = function (pRelative: HTMLElement): XRect
 {

@@ -1,4 +1,5 @@
-﻿
+﻿/// <reference path="Base/XBaseTextButton.ts" />
+/// <reference path="Base/XPopupElement.ts" />
 class XTabControlButton extends XBaseTextButton
 {
     constructor(pOwner: XElement | HTMLElement | null)
@@ -136,10 +137,6 @@ class XTabControl extends XDiv
 
         });
         this.Dropdown.IsVisible = true;
-        const orect = this.HTML.getBoundingClientRect();
-        const rect = this.ButtonList.HTML.getBoundingClientRect();
-        this.Dropdown.HTML.style.right = `${orect.width - rect.left - rect.width}px`;
-        this.Dropdown.HTML.style.top = `${rect.bottom}px`;
     }
 
 
@@ -155,6 +152,17 @@ class XTabControl extends XDiv
         pButton?.Tab?.Button?.HTML.classList.add('Active');
         pButton.HTML.classList.add('Active');
         pButton.Tab?.HTML.classList.add('Active');
+        var rbtn = pButton?.Tab?.Button?.HTML.getBoundingClientRect();
+        var rctn = this.Header.HTML.getBoundingClientRect();
+        var offw = (<HTMLElement>pButton?.Tab?.Button?.HTML?.previousElementSibling)?.offsetWidth ?? 0;
+        if (rbtn != null)
+        {
+            if (rbtn.left < rctn.left)
+                this.Header.HTML.scrollLeft -= (rctn.left - rbtn.left) + offw;
+            else
+                if (rbtn.right > rctn.right)
+                    this.Header.HTML.scrollLeft += (rbtn.right - rctn.right) + offw;
+        }
         this.Dropdown.IsVisible = false;
         this.ActiveTab = pButton.Tab;
     }
@@ -164,13 +172,17 @@ class XTabControl extends XDiv
         var btn = new XTabControlButton(this.Header);
         btn.Title = pTitle;
         btn.TabControl = this;
-        var tab = new XTabControlTab(this.Container);
-        tab.HTML.innerText = new Date().ToString();
+        var tab = this.CreateTab();
         tab.Button = btn;
         btn.Tab = tab;
         this.Tabs.Add(tab);
         if (this.ActiveTab == null)
             this.SelectTab(<any>this.Tabs.FirstOrNull()?.Button);
+    }
+
+    CreateTab(): XTabControlTab
+    {
+        return new XTabControlTab(this.Container);;
     }
 }
 

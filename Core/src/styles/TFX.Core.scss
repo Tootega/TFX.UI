@@ -3,6 +3,7 @@
 @import "XEditor.scss";
 @import "XMenu.scss";
 @import "XTabControl.scss";
+@import "XStage.scss";
 
 html {
     min-height: 100%;
@@ -63,23 +64,27 @@ html {
 
 .InputContainer {
     position: absolute;
-    display: inline-block;
+    display: block;
 }
 
 .MainDiv {
     position: absolute;
     width: 100%;
     height: 100%;
+    min-height: var(--body-mh);
+    min-width: var(--body-mw);
 }
 
 .XBaseInput {
+    position: absolute;
     padding: var(--ip-padding);
-    width: 300px;
     height: var(--ip-height);
     border-radius: 5px;
     border: 2px solid #74ddff;
     outline: none;
     padding-right: 32px;
+    right: 0;
+    left: 0;
 }
 
 .XBaseButtonInput {

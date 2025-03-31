@@ -5,4 +5,6 @@
     static NullDate: Date = new Date(XDefault.StrNullDate);
     static IsDebug: boolean;
     static NullID = "00000000-0000-0000-0000-000000000000";
+    static DefaultColCount: number = 32;
+    static DefaultRowHeight: number = 37;
 }
