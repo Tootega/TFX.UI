@@ -1,4 +1,5 @@
-﻿
+﻿/// <reference path="Base/XDiv.ts" />
+
 class XMenuButtonItem extends XDiv
 {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any)

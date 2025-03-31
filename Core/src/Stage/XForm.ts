@@ -25,155 +25,135 @@ class XForm extends XDiv
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XForm");
-        var edt: any;
-        edt = new XDatePicker(this);
+        var edt: XIEditor | any;
+        edt = new XDatePickerEditor(this);
         edt.Rows = 1;
-        edt.Cols = 8;
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
+        edt.Cols = 9;
+        edt.OrderIndex = 1;
+        this.Fields.Add(<any>edt);
+        
+        edt = new XMemoEditor(this);
+        edt.Rows = 4;
+        edt.Cols = 9;
+        edt.OrderIndex = 2;
+        this.Fields.Add(<any>edt);
+
+        edt = new XNormalEditor(this);
         edt.Rows = 1;
-        edt.Cols = 3;
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+
+        edt = new XIntegerEditor(this);
         edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+        edt = new XIntegerEditor(this);
         edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "-##.##0";
+        this.Fields.Add(<any>edt);
+        edt = new XIntegerEditor(this);
         edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "####0";
+        this.Fields.Add(<any>edt);
+
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "####0";
+        this.Fields.Add(<any>edt);
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.AllowNegative = true;
+        edt.MaxIntegerDigits = 4;
+        edt.DecimalDigits = 2;
+        this.Fields.Add(<any>edt);
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.AllowNegative = true;
+        edt.MaxIntegerDigits = 4;
+        edt.DecimalDigits = 2;
+        this.Fields.Add(<any>edt);        
     }
 
     Fields: XArray<XIEditor> = new XArray<XIEditor>();
 
     override SizeChanged()
     {
-        this.NomalForm(this.Rect);
+        this.ResizeChildren();
+        //this.OrganizeChildren(this.Rect);
     }
 
-    private NomalForm(pConstraint: XRect)
-    {
-        var rects = new Array<XEditPosition[]>();
-        var sw = pConstraint.Width / XDefault.DefaultColCount;
-        var sh = XDefault.DefaultRowHeight;
-        var mh = 0;
-        for (var y = 0; y < 64; y++)
-        {
-            var rcts: XEditPosition[] = new Array(XDefault.DefaultColCount);
-            for (var x = 0; x < XDefault.DefaultColCount; x++)
-                rcts[x] = new XEditPosition(new XPoint(x * sw, y * sh));
-            rects.Add(rcts);
-        }
-        var cnt = 0;
-        var ordered = this.Fields.OrderBy(c => c.OrderIndex)
-        for (var i = 0; i < ordered.length; i++)
-        {
-            var fld = this.Fields[i];
-            fld.OrderIndex = ++cnt;
-        }
-        var lx = 0;
-        var ly = 0;
-        for (var i = 0; i < ordered.length; i++)
-        {
-            var child = this.Fields[i];
-            var ret = this.GerPosition(rects, child, child.Rows, child.Cols, ly, lx);
-            lx = ret.LeftX;
-            ly = ret.LeftY;
-            if (child.NewLine)
-                lx = XDefault.DefaultColCount;
-            var r = new XRect(ret.Point.X + 2, ret.Point.Y, Math.max(sw, child.Cols * sw) - 2, Math.max(sh, child.Rows * XDefault.DefaultRowHeight));
-            child.Rect = r;
-            if (r.Bottom > mh)
-                mh = r.Bottom;
-        }
-    }
 
-    GerPosition(pRects: any[], pField: XIEditor, pRows: number, pCols: number, pLy: number, pLx: number): XType1
+    ResizeChildren()
     {
-        var sx = -1;
-        var sy = -1;
-        var ey = -1;
-        var ex = -1;
-        var ret = new XType1();
-        for (var i = pLy; i < pRects.length; i++)
-        {
-            var rs = pRects[i];
-            if (sy == -1)
-                sy = i;
-            if (i > pLy)
-                sx = Math.max(0, sx);
-            else
-                sx = Math.max(pLx, sx);
-            var ret = this.FincX(rs, sx, ex, pCols);
-            sx = ret.StartX;
-            ex = ret.EndX;
-            if (ret.Used)
-            {
-                if (pRows == (i - sy) + 1)
-                {
-                    ey = i;
-                    break;
-                }
-            }
-            else
-                sy = -1;
-        }
-        if (sy != -1 && sx != -1 && ey != -1 && ex != -1)
-        {
-            var rx = pRects[sy][sx];
-            for (var y = sy; y <= ey; y++)
-                for (var x = sx; x <= ex; x++)
-                    pRects[y][x].Used = true;
-            pLx = ex;
-            pLy = sy;
-            ret.Point = rx.Point;
-            ret.LeftX = pLx;
-            ret.LeftY = pLy;
-            return ret;
-        }
+        const cols = XDefault.DefaultColCount;
+        const rows = 80;
+        const cellw = this.HTML.GetRect(true).Width / cols;
+        const cellh = XDefault.DefaultRowHeight;
 
-        ret.Point = new XPoint(-1, -1);
-        ret.LeftX = pLx;
-        ret.LeftY = pLy;
-        return ret;
-    }
+        const ordered = this.Fields.OrderBy(c => c.OrderIndex);
 
-    FincX(pHRects: any[], pStartX: number, pEndX: number, pCols: number): XType1
-    {
-        var start = pStartX != -1 ? pStartX : 0;
-        var ret = new XType1();
-        ret.Used = false;
-        for (var x = start; x < pHRects.length; x++)
+        const grid: boolean[][] = Array.from({ length: rows }, () => new Array(cols).fill(false));
+
+        for (const child of ordered)
         {
-            var r = pHRects[x];
-            if (r.Used)
-            {
-                if (pStartX != -1)
-                    pStartX = -1;
+            const ccols = child.Cols;
+            const crows = child.Rows;
+
+            if (ccols > cols || crows > rows)
                 continue;
-            }
-            if (pStartX == -1)
-                pStartX = x;
-            if (pCols == (x - pStartX) + 1)
+
+            let placed = false;
+
+            for (let row = 0; row <= rows - crows; row++)
             {
-                pEndX = x;
-                ret.EndX = pEndX;
-                ret.StartX = pStartX;
-                ret.Used = true;
-                return ret;
+                for (let col = 0; col <= cols - ccols; col++)
+                {
+                    let fplace = true;
+                    for (let r = row; r < row + crows; r++)
+                    {
+                        for (let c = col; c < col + ccols; c++)
+                        {
+                            if (grid[r][c])
+                            {
+                                fplace = false;
+                                break;
+                            }
+                        }
+                        if (!fplace)
+                            break;
+                    }
+
+                    if (fplace)
+                    {
+                        for (let r = row; r < row + crows; r++)
+                            for (let c = col; c < col + ccols; c++)
+                                grid[r][c] = true;
+
+                        const x = col * cellw;
+                        const y = row * cellh;
+                        var r = new XRect(x, y, ccols * cellw, crows * cellh);
+                        r.Inflate(-2, -2);
+                        child.Rect = r;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (placed)
+                    break;
             }
         }
-        pEndX = pStartX = -1;
-        ret.EndX = pEndX;
-        ret.StartX = pStartX;
-        return ret;
     }
-
 }
 

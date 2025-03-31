@@ -1,6 +1,11 @@
 @import url(Variables.scss);
 @import url(TFX.Core.scss);
 
+.XDiv {
+    position: absolute;
+    background-color: #ffd800;
+}
+
 .XTopBar {
     position: absolute;
     background-color: #5a96d1;
@@ -20,6 +25,9 @@
 }
 
 .XForm {
+/*    display: grid;
+    grid-template-columns: repeat(32, 1fr);
+    grid-template-rows: repeat(32, 41px);*/
     position: absolute;
     border: 2px solid #a0c3e6;
     border-radius: 10px;

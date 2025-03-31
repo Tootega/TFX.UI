@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>TFX Core</title>
+    <script src="js/TFX.Core.js"></script>
+    <style>
+        .numeric-input {
+            font-family: 'Courier New', monospace;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+            outline: none;
+            text-align: right;
+        }
+
+            .numeric-input:focus {
+                border-color: #2196F3;
+                box-shadow: 0 0 3px #2196F3;
+            }
+    </style>
+</head>
+<body>
+    <input type="text" class="numeric-input">
+
+    <script>
+
+
+        // Inicialização
+        const input = document.querySelector('.numeric-input');
+        new NumericInput(input, {
+            allowNegative: true,
+            maxIntegerDigits: 4,
+            decimalDigits: 2
+        });
+    </script>
+</body>

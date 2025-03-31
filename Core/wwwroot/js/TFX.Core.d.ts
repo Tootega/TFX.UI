@@ -1,3 +1,19 @@
+declare class NumericInput {
+    private input;
+    private allowNegative;
+    private maxIntegerDigits;
+    private decimalDigits;
+    constructor(input: HTMLInputElement, options?: {
+        allowNegative?: boolean;
+        maxIntegerDigits?: number;
+        decimalDigits?: number;
+    });
+    private handleInput;
+    private handleKeydown;
+    private processValue;
+    private formatValue;
+    private adjustCursorPosition;
+}
 declare enum XKey {
     K_CANCEL = 3,
     K_HELP = 6,
@@ -146,7 +162,8 @@ declare enum XEventType {
     KeyPress = "keypress",
     LostFocus = "focusout",
     Click = "click",
-    FocusIn = "focusin"
+    FocusIn = "focusin",
+    Blur = "blur"
 }
 declare class XCallOnce {
     constructor(pUUID: string, pEvent: any);
@@ -547,6 +564,8 @@ declare class XElement {
     private _ResizeObserver;
     OnResize: XMethod<XElement> | null;
     OrderIndex: number;
+    Rows: number;
+    Cols: number;
     get Rect(): XRect;
     set Rect(pValue: XRect);
     SizeChanged(): void;
@@ -566,31 +585,6 @@ declare class XElement {
 declare class XDiv extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     protected CreateContainer(): HTMLElement;
-}
-declare class XBaseInput extends XDiv implements XIEditor {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Input: HTMLInputElement;
-    Rows: number;
-    Cols: number;
-    NewLine: boolean;
-    OrderIndex: number;
-}
-declare class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Button: XBaseButton;
-    OnClick(pArg: KeyboardEvent): void;
-}
-declare class XDatePicker extends XBaseButtonInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Calendar: XCalendar;
-    SelectedDate: Date;
-    Selected(pDate: Date): void;
-    FormatDate(data: Date, formato: string): string;
-    private HandleInput;
-    private formatDateSection;
-    private formatTimeSection;
-    private ValidateDate;
-    OnClick(pArg: KeyboardEvent): void;
 }
 declare class XMenuButtonItem extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any);
@@ -677,6 +671,19 @@ declare class XTabControl extends XDiv {
     AddTab(pTitle: string): void;
     CreateTab(): XTabControlTab;
 }
+declare class XBaseInput extends XDiv implements XIEditor {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Input: HTMLInputElement;
+    protected ELMTitle: XDiv;
+    NewLine: boolean;
+    OrderIndex: number;
+    CreateInput(): HTMLInputElement;
+}
+declare class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Button: XBaseButton;
+    OnClick(pArg: KeyboardEvent): void;
+}
 declare class XCalendar extends XPopupElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
     protected Header: XDiv;
@@ -701,23 +708,6 @@ declare class XCalendar extends XPopupElement {
     UpdateCalendar(): void;
     protected CreateContainer(): HTMLElement;
 }
-declare class XUtils {
-    static IsNumber(pValue: any): boolean;
-    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
-}
-declare class XStage extends XDiv {
-    static Instance: XStage;
-    static Run(): void;
-    constructor();
-    Menu: XMenu;
-    TopBar: XTopBar;
-    TabControl: XStageTabControl;
-    SizeChanged(): void;
-    MenuResize(): void;
-}
-declare class XTopBar extends XDiv {
-    constructor(pOwner: XElement | HTMLElement | null);
-}
 declare class XType1 {
     Point: XPoint;
     LeftX: number;
@@ -735,9 +725,17 @@ declare class XForm extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
     Fields: XArray<XIEditor>;
     SizeChanged(): void;
-    private NomalForm;
-    GerPosition(pRects: any[], pField: XIEditor, pRows: number, pCols: number, pLy: number, pLx: number): XType1;
-    FincX(pHRects: any[], pStartX: number, pEndX: number, pCols: number): XType1;
+    ResizeChildren(): void;
+}
+declare class XStage extends XDiv {
+    static Instance: XStage;
+    static Run(): void;
+    constructor();
+    Menu: XMenu;
+    TopBar: XTopBar;
+    TabControl: XStageTabControl;
+    SizeChanged(): void;
+    MenuResize(): void;
 }
 declare class XStageTabControlTab extends XTabControlTab {
     constructor(pOwner: XElement | HTMLElement | null);
@@ -746,4 +744,59 @@ declare class XStageTabControlTab extends XTabControlTab {
 declare class XStageTabControl extends XTabControl {
     constructor(pOwner: XElement | HTMLElement | null);
     CreateTab(): XTabControlTab;
+}
+declare class XTopBar extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null);
+}
+declare class XUtils {
+    static IsNumber(pValue: any): boolean;
+    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XDatePickerEditor extends XBaseButtonInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Calendar: XCalendar;
+    SelectedDate: Date;
+    Selected(pDate: Date): void;
+    FormatDate(data: Date, formato: string): string;
+    private HandleInput;
+    private formatDateSection;
+    private formatTimeSection;
+    private ValidateDate;
+    OnClick(pArg: KeyboardEvent): void;
+}
+declare class XMemoEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    CreateInput(): HTMLInputElement;
+}
+declare class XNormalEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+}
+declare class XIntegerEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Mask: string;
+    AllowNegative: boolean;
+    MaxDigits: number;
+    HasSeparator: boolean;
+    IsFixedMask: boolean;
+    Init(): void;
+    SetupEventListeners(): void;
+    GandleInput(pArg: any): void;
+    handleKeyDown(e: any): void;
+    ToggleSign(): void;
+    HandleBlur(): void;
+    GetRawValue(pValue: string): string;
+    ProcessValue(pValue: string): string;
+    FormatNumber(pValue: string): string;
+    InsertSeparators(pDigits: string): any;
+}
+declare class XDecimalEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    AllowNegative: boolean;
+    MaxIntegerDigits: number;
+    DecimalDigits: number;
+    private HandleInput;
+    private HandleKeydown;
+    private ProcessValue;
+    private FormatValue;
+    private AdjustCursorPosition;
 }

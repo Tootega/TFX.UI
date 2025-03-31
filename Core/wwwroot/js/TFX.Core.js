@@ -1,4 +1,100 @@
 "use strict";
+class NumericInput {
+    constructor(input, options) {
+        var _a, _b, _c;
+        this.input = input;
+        this.allowNegative = (_a = options === null || options === void 0 ? void 0 : options.allowNegative) !== null && _a !== void 0 ? _a : false;
+        this.maxIntegerDigits = (_b = options === null || options === void 0 ? void 0 : options.maxIntegerDigits) !== null && _b !== void 0 ? _b : 4;
+        this.decimalDigits = (_c = options === null || options === void 0 ? void 0 : options.decimalDigits) !== null && _c !== void 0 ? _c : 2;
+        this.input.addEventListener('input', this.handleInput.bind(this));
+        this.input.addEventListener('keydown', this.handleKeydown.bind(this));
+        this.input.value = this.formatValue(this.processValue(''));
+    }
+    handleInput(event) {
+        const position = this.input.selectionStart;
+        const value = this.input.value;
+        const processed = this.processValue(value);
+        const formatted = this.formatValue(processed);
+        if (this.input.value !== formatted) {
+            this.input.value = formatted;
+            this.adjustCursorPosition(position, value, formatted);
+        }
+    }
+    handleKeydown(e) {
+        // Toggle negativo com '-'
+        if (e.key === '-') {
+            e.preventDefault();
+            if (this.allowNegative) {
+                const processed = this.processValue(this.input.value);
+                processed.isNegative = !processed.isNegative;
+                this.input.value = this.formatValue(processed);
+            }
+        }
+        // Seleção com Ctrl+Home/End
+        else if (e.ctrlKey && (e.key === 'Home' || e.key === 'End')) {
+            e.preventDefault();
+            this.input.setSelectionRange(0, this.input.value.length);
+        }
+        // Impedir múltiplas vírgulas
+        else if (e.key === ',' && this.input.value.includes(',')) {
+            e.preventDefault();
+        }
+    }
+    processValue(value) {
+        let rawValue = value.replace(/[^\d-,]/g, '');
+        let isNegative = false;
+        // Tratamento de sinal negativo
+        if (this.allowNegative) {
+            isNegative = rawValue.startsWith('-');
+            rawValue = rawValue.replace(/-/g, '');
+        }
+        // Separação parte inteira e decimal
+        const [integer = '0', decimal = ''] = rawValue.split(',');
+        // Processamento parte inteira
+        const integerClean = integer
+            .replace(/\D/g, '')
+            .replace(/^0+/, '')
+            .substring(0, this.maxIntegerDigits) || '0';
+        // Processamento parte decimal (mantém últimos dígitos)
+        const decimalClean = decimal
+            .replace(/\D/g, '')
+            .slice(-this.decimalDigits)
+            .RPad(this.decimalDigits, '0');
+        return {
+            isNegative: isNegative && this.allowNegative,
+            integerPart: integerClean || '0',
+            decimalPart: decimalClean
+        };
+    }
+    formatValue(processed) {
+        // Formatação de milhares
+        const formattedInteger = processed.integerPart
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/(\d{3})(?=\d)/g, '$1.')
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/^\./, '') || '0';
+        const sign = processed.isNegative ? '-' : '';
+        return `${sign}${formattedInteger},${processed.decimalPart}`;
+    }
+    adjustCursorPosition(oldPos, oldValue, newValue) {
+        if (oldPos === null)
+            return;
+        const commaIndex = newValue.indexOf(',');
+        const isDecimal = oldPos > oldValue.indexOf(',');
+        // Mantém posição relativa na parte decimal
+        if (isDecimal && commaIndex !== -1) {
+            const decimalCursor = Math.min(oldPos - oldValue.indexOf(',') - 1 + commaIndex + 1, newValue.length);
+            this.input.setSelectionRange(decimalCursor, decimalCursor);
+        }
+        else {
+            this.input.setSelectionRange(oldPos, oldPos);
+        }
+    }
+}
 var XKey;
 (function (XKey) {
     XKey[XKey["K_CANCEL"] = 3] = "K_CANCEL";
@@ -291,7 +387,7 @@ XDefault.StrBRNullDate = "01/01/1755 00:00:00";
 XDefault.NullDate = new Date(XDefault.StrNullDate);
 XDefault.NullID = "00000000-0000-0000-0000-000000000000";
 XDefault.DefaultColCount = 32;
-XDefault.DefaultRowHeight = 37;
+XDefault.DefaultRowHeight = 59;
 var XEventType;
 (function (XEventType) {
     XEventType["MouseMove"] = "mousemove";
@@ -307,6 +403,7 @@ var XEventType;
     XEventType["LostFocus"] = "focusout";
     XEventType["Click"] = "click";
     XEventType["FocusIn"] = "focusin";
+    XEventType["Blur"] = "blur";
 })(XEventType || (XEventType = {}));
 class XCallOnce {
     constructor(pUUID, pEvent) {
@@ -2028,6 +2125,8 @@ class XElement {
         this.UUID = 0;
         this.OnResize = null;
         this.OrderIndex = 0;
+        this.Rows = 0;
+        this.Cols = 0;
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer();
@@ -2146,140 +2245,7 @@ class XDiv extends XElement {
         return XUtils.AddElement(null, "div", null);
     }
 }
-/// <reference path="XDiv.ts" />
-class XBaseInput extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "InputContainer");
-        this.Rows = 0;
-        this.Cols = 0;
-        this.NewLine = false;
-        this.OrderIndex = -1;
-        this.Input = XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
-    }
-}
-/// <reference path="XBaseInput.ts" />
-class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Button = new XBaseButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
-    }
-    OnClick(pArg) {
-    }
-}
-/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
-class XDatePicker extends XBaseButtonInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.SelectedDate = new Date();
-        this.Input.className = "XDatePicker";
-        this.Calendar = new XCalendar(pOwner);
-        this.Calendar.IsVisible = false;
-        this.Calendar.OnSelectdate = (d) => this.Selected(d);
-        this.Calendar.ReferenceElement = this;
-        XPopupManager.Add(this.Calendar);
-        this.Input.placeholder = 'dd/mm/aaaa hh:MM:ss';
-        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
-    }
-    Selected(pDate) {
-        this.SelectedDate = pDate;
-        this.Calendar.IsVisible = false;
-        this.Input.value = this.FormatDate(pDate, this.Input.placeholder);
-    }
-    FormatDate(data, formato) {
-        const completarComZero = (valor) => {
-            return valor < 10 ? `0${valor}` : valor.toString();
-        };
-        // Extrai componentes da data
-        const dia = completarComZero(data.getDate());
-        const mes = completarComZero(data.getMonth() + 1); // +1 pois meses são 0-based
-        const ano = data.getFullYear().toString();
-        const horas = completarComZero(data.getHours());
-        const minutos = completarComZero(data.getMinutes());
-        const segundos = completarComZero(data.getSeconds());
-        // Detecta partes do formato
-        const partes = formato.split(' ');
-        const formatoData = partes.find(p => p.toLowerCase().includes('dd')) || null;
-        const formatoHora = partes.find(p => p.toLowerCase().includes('hh')) || null;
-        // Monta a string
-        let resultado = '';
-        // Formata a data se necessário
-        if (formatoData) {
-            resultado = `${dia}/${mes}/${ano}`;
-        }
-        // Formata a hora se necessário
-        if (formatoHora) {
-            const separador = resultado ? ' ' : ''; // Espaço se já tiver data
-            let horaFormatada = `${horas}:${minutos}`;
-            // Adiciona segundos se necessário
-            if (formatoHora.toLowerCase().includes('ss')) {
-                horaFormatada += `:${segundos}`;
-            }
-            resultado += separador + horaFormatada;
-        }
-        return resultado;
-    }
-    HandleInput(pEvent) {
-        this.ValidateDate();
-        const input = pEvent.target;
-        const value = input.value.replace(/\D/g, '');
-        const placeholder = this.Input.placeholder;
-        const [datePart, timePart] = placeholder.includes(' ') ?
-            placeholder.split(' ') : [placeholder.startsWith('dd')
-                ? placeholder : null, placeholder.startsWith('hh') ? placeholder : null];
-        let formatted = '';
-        let remainingDigits = value;
-        if (datePart === null || datePart === void 0 ? void 0 : datePart.startsWith('dd/mm/aaaa')) {
-            const dateDigits = remainingDigits.slice(0, 8);
-            formatted = this.formatDateSection(dateDigits);
-            remainingDigits = remainingDigits.slice(8);
-        }
-        if (timePart === null || timePart === void 0 ? void 0 : timePart.startsWith('hh')) {
-            if (formatted !== '' && X.Length(formatted) == X.Length(datePart))
-                formatted += ' ';
-            formatted += this.formatTimeSection(remainingDigits, timePart === 'hh:MM:ss' ? 6 : 4);
-        }
-        if (pEvent.inputType == "deleteContentBackward")
-            formatted = formatted.trim();
-        input.value = formatted;
-    }
-    formatDateSection(pDigits) {
-        let formatted = '';
-        for (let i = 0; i < pDigits.length; i++) {
-            if (i === 2 || i === 4)
-                formatted += '/';
-            formatted += pDigits[i];
-        }
-        return formatted;
-    }
-    formatTimeSection(pDigits, pMax) {
-        let formatted = '';
-        for (let i = 0; i < Math.min(pDigits.length, pMax); i++) {
-            if (i === 2 || i === 4)
-                formatted += ':';
-            formatted += pDigits[i];
-        }
-        return formatted;
-    }
-    ValidateDate() {
-        this.Input.classList.remove('Error');
-        if (X.IsEmpty(this.Input.value))
-            return;
-        if (!Date.IsDateOrTime(this.Input.value))
-            this.Input.classList.add('Error');
-        else {
-            const [d, m, y] = this.Input.value.split('/');
-            const date = new Date(`${y}-${m}-${d}`);
-            if (this.Calendar.IsVisible)
-                this.Calendar.SelectDate(date);
-        }
-    }
-    OnClick(pArg) {
-        this.Calendar.BindTo(this);
-        this.Calendar.Show();
-        this.Calendar.SelectedDate = this.SelectedDate;
-    }
-}
+/// <reference path="Base/XDiv.ts" />
 class XMenuButtonItem extends XDiv {
     constructor(pOwner, pItem) {
         super(pOwner, "hover-item");
@@ -2597,6 +2563,30 @@ class XTabControl extends XDiv {
         ;
     }
 }
+/// <reference path="XDiv.ts" />
+class XBaseInput extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
+        this.NewLine = false;
+        this.OrderIndex = -1;
+        this.Input = this.CreateInput();
+        this.ELMTitle = new XDiv(this, "InputTitle");
+        this.ELMTitle.HTML.innerText = new Date().toLocaleTimeString();
+    }
+    CreateInput() {
+        return XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
+    }
+}
+/// <reference path="XBaseInput.ts" />
+class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    OnClick(pArg) {
+    }
+}
 /// <reference path="XPopupElement.ts" />
 class XCalendar extends XPopupElement {
     constructor(pOwner, pClass = null) {
@@ -2758,30 +2748,129 @@ class XCalendar extends XPopupElement {
         return XUtils.AddElement(null, "div", null);
     }
 }
-class XUtils {
-    static IsNumber(pValue) {
-        return !isNaN(parseFloat(pValue)) && isFinite(pValue);
+class XType1 {
+    constructor() {
+        this.Point = new XPoint();
+        this.LeftX = 0;
+        this.LeftY = 0;
+        this.Used = false;
+        this.EndX = -1;
+        this.StartX = -1;
     }
-    static AddElement(pOwner, pType, pClass = null, pInsert = false) {
-        var own;
-        if (pOwner == null)
-            own = document.body;
-        else if (pOwner instanceof HTMLElement)
-            own = pOwner;
-        else
-            own = pOwner.HTML;
-        var elm = document.createElement(pType);
-        if (pClass != null)
-            elm.className = pClass;
-        if (pInsert && own.childNodes.length > 0)
-            own.insertBefore(elm, elm.childNodes[0]);
-        else
-            own.appendChild(elm);
-        if (pOwner == null)
-            elm.Owner = pOwner;
-        else if (pOwner instanceof XElement)
-            elm.Owner = pOwner;
-        return elm;
+}
+class XEditPosition {
+    constructor(pLocation) {
+        this.Used = false;
+        this.Point = pLocation;
+    }
+}
+class XForm extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XForm");
+        this.Fields = new XArray();
+        var edt;
+        edt = new XDatePickerEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 9;
+        edt.OrderIndex = 1;
+        this.Fields.Add(edt);
+        edt = new XMemoEditor(this);
+        edt.Rows = 4;
+        edt.Cols = 9;
+        edt.OrderIndex = 2;
+        this.Fields.Add(edt);
+        edt = new XNormalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(edt);
+        edt = new XIntegerEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(edt);
+        edt = new XIntegerEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "-##.##0";
+        this.Fields.Add(edt);
+        edt = new XIntegerEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "####0";
+        this.Fields.Add(edt);
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.Mask = "####0";
+        this.Fields.Add(edt);
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.AllowNegative = true;
+        edt.MaxIntegerDigits = 4;
+        edt.DecimalDigits = 2;
+        this.Fields.Add(edt);
+        edt = new XDecimalEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        edt.AllowNegative = true;
+        edt.MaxIntegerDigits = 4;
+        edt.DecimalDigits = 2;
+        this.Fields.Add(edt);
+    }
+    SizeChanged() {
+        this.ResizeChildren();
+        //this.OrganizeChildren(this.Rect);
+    }
+    ResizeChildren() {
+        const cols = XDefault.DefaultColCount;
+        const rows = 80;
+        const cellw = this.HTML.GetRect(true).Width / cols;
+        const cellh = XDefault.DefaultRowHeight;
+        const ordered = this.Fields.OrderBy(c => c.OrderIndex);
+        const grid = Array.from({ length: rows }, () => new Array(cols).fill(false));
+        for (const child of ordered) {
+            const ccols = child.Cols;
+            const crows = child.Rows;
+            if (ccols > cols || crows > rows)
+                continue;
+            let placed = false;
+            for (let row = 0; row <= rows - crows; row++) {
+                for (let col = 0; col <= cols - ccols; col++) {
+                    let fplace = true;
+                    for (let r = row; r < row + crows; r++) {
+                        for (let c = col; c < col + ccols; c++) {
+                            if (grid[r][c]) {
+                                fplace = false;
+                                break;
+                            }
+                        }
+                        if (!fplace)
+                            break;
+                    }
+                    if (fplace) {
+                        for (let r = row; r < row + crows; r++)
+                            for (let c = col; c < col + ccols; c++)
+                                grid[r][c] = true;
+                        const x = col * cellw;
+                        const y = row * cellh;
+                        var r = new XRect(x, y, ccols * cellw, crows * cellh);
+                        r.Inflate(-2, -2);
+                        child.Rect = r;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (placed)
+                    break;
+            }
+        }
     }
 }
 /// <reference path="../Elements/Base/XDiv.ts" />
@@ -2809,6 +2898,183 @@ class XStage extends XDiv {
         this.TopBar.HTML.style.width = `${this.Rect.Width - r.Width - 1}px`;
     }
 }
+class XStageTabControlTab extends XTabControlTab {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Form = new XForm(this);
+    }
+}
+class XStageTabControl extends XTabControl {
+    constructor(pOwner) {
+        super(pOwner);
+        this.HTML.classList.add("Main");
+    }
+    CreateTab() {
+        return new XStageTabControlTab(this.Container);
+        ;
+    }
+}
+class XTopBar extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "XTopBar");
+    }
+}
+class XUtils {
+    static IsNumber(pValue) {
+        return !isNaN(parseFloat(pValue)) && isFinite(pValue);
+    }
+    static AddElement(pOwner, pType, pClass = null, pInsert = false) {
+        var own;
+        if (pOwner == null)
+            own = document.body;
+        else if (pOwner instanceof HTMLElement)
+            own = pOwner;
+        else
+            own = pOwner.HTML;
+        var elm = document.createElement(pType);
+        if (pClass != null)
+            elm.className = pClass;
+        if (pInsert && own.childNodes.length > 0)
+            own.insertBefore(elm, elm.childNodes[0]);
+        else
+            own.appendChild(elm);
+        if (pOwner == null)
+            elm.Owner = pOwner;
+        else if (pOwner instanceof XElement)
+            elm.Owner = pOwner;
+        return elm;
+    }
+}
+/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
+class XDatePickerEditor extends XBaseButtonInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.SelectedDate = new Date();
+        this.Input.className = "XDatePickerEditor";
+        this.Calendar = new XCalendar(pOwner);
+        this.Calendar.IsVisible = false;
+        this.Calendar.OnSelectdate = (d) => this.Selected(d);
+        this.Calendar.ReferenceElement = this;
+        XPopupManager.Add(this.Calendar);
+        this.Input.placeholder = 'dd/mm/aaaa';
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
+    }
+    Selected(pDate) {
+        this.SelectedDate = pDate;
+        this.Calendar.IsVisible = false;
+        this.Input.value = this.FormatDate(pDate, this.Input.placeholder);
+    }
+    FormatDate(data, formato) {
+        const completarComZero = (valor) => {
+            return valor < 10 ? `0${valor}` : valor.toString();
+        };
+        // Extrai componentes da data
+        const dia = completarComZero(data.getDate());
+        const mes = completarComZero(data.getMonth() + 1); // +1 pois meses são 0-based
+        const ano = data.getFullYear().toString();
+        const horas = completarComZero(data.getHours());
+        const minutos = completarComZero(data.getMinutes());
+        const segundos = completarComZero(data.getSeconds());
+        // Detecta partes do formato
+        const partes = formato.split(' ');
+        const formatoData = partes.find(p => p.toLowerCase().includes('dd')) || null;
+        const formatoHora = partes.find(p => p.toLowerCase().includes('hh')) || null;
+        // Monta a string
+        let resultado = '';
+        // Formata a data se necessário
+        if (formatoData) {
+            resultado = `${dia}/${mes}/${ano}`;
+        }
+        // Formata a hora se necessário
+        if (formatoHora) {
+            const separador = resultado ? ' ' : ''; // Espaço se já tiver data
+            let horaFormatada = `${horas}:${minutos}`;
+            // Adiciona segundos se necessário
+            if (formatoHora.toLowerCase().includes('ss')) {
+                horaFormatada += `:${segundos}`;
+            }
+            resultado += separador + horaFormatada;
+        }
+        return resultado;
+    }
+    HandleInput(pEvent) {
+        this.ValidateDate();
+        const input = pEvent.target;
+        const value = input.value.replace(/\D/g, '');
+        const placeholder = this.Input.placeholder;
+        const [datePart, timePart] = placeholder.includes(' ') ?
+            placeholder.split(' ') : [placeholder.startsWith('dd')
+                ? placeholder : null, placeholder.startsWith('hh') ? placeholder : null];
+        let formatted = '';
+        let remainingDigits = value;
+        if (datePart === null || datePart === void 0 ? void 0 : datePart.startsWith('dd/mm/aaaa')) {
+            const dateDigits = remainingDigits.slice(0, 8);
+            formatted = this.formatDateSection(dateDigits);
+            remainingDigits = remainingDigits.slice(8);
+        }
+        if (timePart === null || timePart === void 0 ? void 0 : timePart.startsWith('hh')) {
+            if (formatted !== '' && X.Length(formatted) == X.Length(datePart))
+                formatted += ' ';
+            formatted += this.formatTimeSection(remainingDigits, timePart === 'hh:MM:ss' ? 6 : 4);
+        }
+        if (pEvent.inputType == "deleteContentBackward")
+            formatted = formatted.trim();
+        input.value = formatted;
+    }
+    formatDateSection(pDigits) {
+        let formatted = '';
+        for (let i = 0; i < pDigits.length; i++) {
+            if (i === 2 || i === 4)
+                formatted += '/';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    formatTimeSection(pDigits, pMax) {
+        let formatted = '';
+        for (let i = 0; i < Math.min(pDigits.length, pMax); i++) {
+            if (i === 2 || i === 4)
+                formatted += ':';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    ValidateDate() {
+        this.Input.classList.remove('Error');
+        if (X.IsEmpty(this.Input.value))
+            return;
+        if (!Date.IsDateOrTime(this.Input.value))
+            this.Input.classList.add('Error');
+        else {
+            const [d, m, y] = this.Input.value.split('/');
+            const date = new Date(`${y}-${m}-${d}`);
+            if (this.Calendar.IsVisible)
+                this.Calendar.SelectDate(date);
+        }
+    }
+    OnClick(pArg) {
+        this.Calendar.BindTo(this);
+        this.Calendar.Show();
+        this.Calendar.SelectedDate = this.SelectedDate;
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XMemoEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XMemoEditor";
+    }
+    CreateInput() {
+        return XUtils.AddElement(this.HTML, "textarea", "XBaseButtonInput");
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XNormalEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XNormalEditor";
+    }
+}
 /// <reference path="src/XDefault.ts" />
 /// <reference path="src/XConst.ts" />
 /// <reference path="src/XInterfaces.ts" />
@@ -2830,176 +3096,174 @@ class XStage extends XDiv {
 /// <reference path="src/Elements/Base/XCalendar.ts" />
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
-/// <reference path="src/Editors/XDatePicker.ts" />
+/// <reference path="src/Editors/XDatePickerEditor.ts" />
+/// <reference path="src/Editors/XMemoEditor.ts" />
+/// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
-class XTopBar extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "XTopBar");
-    }
-}
-class XType1 {
-    constructor() {
-        this.Point = new XPoint();
-        this.LeftX = 0;
-        this.LeftY = 0;
-        this.Used = false;
-        this.EndX = -1;
-        this.StartX = -1;
-    }
-}
-class XEditPosition {
-    constructor(pLocation) {
-        this.Used = false;
-        this.Point = pLocation;
-    }
-}
-class XForm extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "XForm");
-        this.Fields = new XArray();
-        var edt;
-        edt = new XDatePicker(this);
-        edt.Rows = 1;
-        edt.Cols = 8;
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
-        edt.Rows = 1;
-        edt.Cols = 3;
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
-        edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
-        edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
-        this.Fields.Add(edt);
-        edt = new XDatePicker(this);
-        edt.Rows = 1;
-        edt.Cols = 5;
-        this.Fields.Add(edt);
-    }
-    SizeChanged() {
-        this.NomalForm(this.Rect);
-    }
-    NomalForm(pConstraint) {
-        var rects = new Array();
-        var sw = pConstraint.Width / XDefault.DefaultColCount;
-        var sh = XDefault.DefaultRowHeight;
-        var mh = 0;
-        for (var y = 0; y < 64; y++) {
-            var rcts = new Array(XDefault.DefaultColCount);
-            for (var x = 0; x < XDefault.DefaultColCount; x++)
-                rcts[x] = new XEditPosition(new XPoint(x * sw, y * sh));
-            rects.Add(rcts);
-        }
-        var cnt = 0;
-        var ordered = this.Fields.OrderBy(c => c.OrderIndex);
-        for (var i = 0; i < ordered.length; i++) {
-            var fld = this.Fields[i];
-            fld.OrderIndex = ++cnt;
-        }
-        var lx = 0;
-        var ly = 0;
-        for (var i = 0; i < ordered.length; i++) {
-            var child = this.Fields[i];
-            var ret = this.GerPosition(rects, child, child.Rows, child.Cols, ly, lx);
-            lx = ret.LeftX;
-            ly = ret.LeftY;
-            if (child.NewLine)
-                lx = XDefault.DefaultColCount;
-            var r = new XRect(ret.Point.X + 2, ret.Point.Y, Math.max(sw, child.Cols * sw) - 2, Math.max(sh, child.Rows * XDefault.DefaultRowHeight));
-            child.Rect = r;
-            if (r.Bottom > mh)
-                mh = r.Bottom;
-        }
-    }
-    GerPosition(pRects, pField, pRows, pCols, pLy, pLx) {
-        var sx = -1;
-        var sy = -1;
-        var ey = -1;
-        var ex = -1;
-        var ret = new XType1();
-        for (var i = pLy; i < pRects.length; i++) {
-            var rs = pRects[i];
-            if (sy == -1)
-                sy = i;
-            if (i > pLy)
-                sx = Math.max(0, sx);
-            else
-                sx = Math.max(pLx, sx);
-            var ret = this.FincX(rs, sx, ex, pCols);
-            sx = ret.StartX;
-            ex = ret.EndX;
-            if (ret.Used) {
-                if (pRows == (i - sy) + 1) {
-                    ey = i;
-                    break;
-                }
-            }
-            else
-                sy = -1;
-        }
-        if (sy != -1 && sx != -1 && ey != -1 && ex != -1) {
-            var rx = pRects[sy][sx];
-            for (var y = sy; y <= ey; y++)
-                for (var x = sx; x <= ex; x++)
-                    pRects[y][x].Used = true;
-            pLx = ex;
-            pLy = sy;
-            ret.Point = rx.Point;
-            ret.LeftX = pLx;
-            ret.LeftY = pLy;
-            return ret;
-        }
-        ret.Point = new XPoint(-1, -1);
-        ret.LeftX = pLx;
-        ret.LeftY = pLy;
-        return ret;
-    }
-    FincX(pHRects, pStartX, pEndX, pCols) {
-        var start = pStartX != -1 ? pStartX : 0;
-        var ret = new XType1();
-        ret.Used = false;
-        for (var x = start; x < pHRects.length; x++) {
-            var r = pHRects[x];
-            if (r.Used) {
-                if (pStartX != -1)
-                    pStartX = -1;
-                continue;
-            }
-            if (pStartX == -1)
-                pStartX = x;
-            if (pCols == (x - pStartX) + 1) {
-                pEndX = x;
-                ret.EndX = pEndX;
-                ret.StartX = pStartX;
-                ret.Used = true;
-                return ret;
-            }
-        }
-        pEndX = pStartX = -1;
-        ret.EndX = pEndX;
-        ret.StartX = pStartX;
-        return ret;
-    }
-}
-class XStageTabControlTab extends XTabControlTab {
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XIntegerEditor extends XBaseInput {
     constructor(pOwner) {
         super(pOwner);
-        this.Form = new XForm(this);
+        this.Mask = "#.##0";
+        this.AllowNegative = false;
+        this.Input.className = "XIntegerEditor";
+        this.AllowNegative = this.Mask.startsWith('-');
+        this.MaxDigits = this.Mask.replace(/[^#0]/g, '').length;
+        this.HasSeparator = this.Mask.includes('.');
+        this.IsFixedMask = !this.Mask.includes('#') && /^[-]?0+$/.test(this.Mask);
+        this.Init();
+    }
+    Init() {
+        this.Input.value = this.FormatNumber('0');
+        this.SetupEventListeners();
+    }
+    SetupEventListeners() {
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.GandleInput);
+        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.handleKeyDown);
+        XEventManager.AddEvent(this, this.Input, XEventType.Blur, this.HandleBlur);
+    }
+    GandleInput(pArg) {
+        const rawValue = this.GetRawValue(this.Input.value);
+        const processed = this.ProcessValue(rawValue);
+        this.Input.value = this.FormatNumber(processed);
+    }
+    handleKeyDown(e) {
+        if ([8, 46, 9, 27, 13, 37, 38, 39, 40, 36, 35].Contains(e.keyCode))
+            return;
+        if ((e.ctrlKey || e.metaKey) && [67, 86, 88, 65].Contains(e.keyCode))
+            return;
+        const isNegativeSign = e.key === '-' && this.AllowNegative;
+        const isNumber = e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode >= 96 && e.keyCode <= 105;
+        if (isNegativeSign) {
+            e.preventDefault();
+            this.ToggleSign();
+            return;
+        }
+        if (!isNumber) {
+            e.preventDefault();
+        }
+    }
+    ToggleSign() {
+        const current = this.GetRawValue(this.Input.value);
+        const newValue = current.startsWith('-') ? current.slice(1) : `-${current}`;
+        this.Input.value = this.FormatNumber(newValue);
+    }
+    HandleBlur() {
+        const rawValue = this.GetRawValue(this.Input.value);
+        if (rawValue === '-' || rawValue === '') {
+            this.Input.value = '0';
+        }
+        else {
+            this.Input.value = this.FormatNumber(rawValue);
+        }
+    }
+    GetRawValue(pValue) {
+        return pValue.replace(/[^0-9-]/g, '');
+    }
+    ProcessValue(pValue) {
+        let isNegative = this.AllowNegative && pValue.startsWith('-');
+        let digits = pValue.replace(/-/g, '').replace(/^0+/, '') || '0';
+        digits = digits.slice(0, this.MaxDigits);
+        if (this.IsFixedMask) {
+            digits = digits.RPad(this.MaxDigits, '0');
+        }
+        return (isNegative ? '-' : '') + digits;
+    }
+    FormatNumber(pValue) {
+        const isNegative = pValue.startsWith('-');
+        let digits = isNegative ? pValue.slice(1) : pValue;
+        digits = digits.replace(/[^0-9]/g, '');
+        if (this.HasSeparator) {
+            digits = this.InsertSeparators(digits);
+        }
+        if (this.IsFixedMask) {
+            digits = digits.LPad(this.MaxDigits, '0');
+        }
+        return (isNegative ? '-' : '') + digits;
+    }
+    InsertSeparators(pDigits) {
+        var _a, _b, _c, _d;
+        return (_d = (_c = (_b = (_a = pDigits === null || pDigits === void 0 ? void 0 : pDigits.split('')) === null || _a === void 0 ? void 0 : _a.reverse()) === null || _b === void 0 ? void 0 : _b.join('')) === null || _c === void 0 ? void 0 : _c.match(/.{1,3}/g)) === null || _d === void 0 ? void 0 : _d.join('.').split('').reverse().join('').replace(/^\./, '');
     }
 }
-class XStageTabControl extends XTabControl {
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XDecimalEditor extends XBaseInput {
     constructor(pOwner) {
         super(pOwner);
-        this.HTML.classList.add("Main");
+        this.Input.className = "XDecimalEditor";
+        this.AllowNegative = false;
+        this.MaxIntegerDigits = 4;
+        this.DecimalDigits = 2;
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
+        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.HandleKeydown);
+        this.Input.value = this.FormatValue(this.ProcessValue(''));
     }
-    CreateTab() {
-        return new XStageTabControlTab(this.Container);
-        ;
+    HandleInput(event) {
+        const position = this.Input.selectionStart;
+        const value = this.Input.value;
+        const processed = this.ProcessValue(value);
+        const formatted = this.FormatValue(processed);
+        if (this.Input.value !== formatted) {
+            this.Input.value = formatted;
+            this.AdjustCursorPosition(position, value, formatted);
+        }
+    }
+    HandleKeydown(pArg) {
+        if (pArg.key === '-') {
+            pArg.preventDefault();
+            if (this.AllowNegative) {
+                const processed = this.ProcessValue(this.Input.value);
+                processed.isNegative = !processed.isNegative;
+                this.Input.value = this.FormatValue(processed);
+            }
+        }
+        else if (pArg.ctrlKey && (pArg.key === 'Home' || pArg.key === 'End')) {
+            pArg.preventDefault();
+            this.Input.setSelectionRange(0, this.Input.value.length);
+        }
+        else if (pArg.key === ',' && this.Input.value.includes(','))
+            pArg.preventDefault();
+    }
+    ProcessValue(value) {
+        let rawValue = value.replace(/[^\d-,]/g, '');
+        let isNegative = false;
+        if (this.AllowNegative) {
+            isNegative = rawValue.startsWith('-');
+            rawValue = rawValue.replace(/-/g, '');
+        }
+        const [integer = '0', decimal = ''] = rawValue.split(',');
+        const integerClean = integer.replace(/\D/g, '').replace(/^0+/, '').substring(0, this.MaxIntegerDigits) || '0';
+        const decimalClean = decimal.replace(/\D/g, '').slice(-this.DecimalDigits).RPad(this.DecimalDigits, '0');
+        return {
+            isNegative: isNegative && this.AllowNegative,
+            integerPart: integerClean || '0',
+            decimalPart: decimalClean
+        };
+    }
+    FormatValue(processed) {
+        const formattedInteger = processed.integerPart
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/(\d{3})(?=\d)/g, '$1.')
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/^\./, '') || '0';
+        const sign = processed.isNegative ? '-' : '';
+        return `${sign}${formattedInteger},${processed.decimalPart}`;
+    }
+    AdjustCursorPosition(oldPos, oldValue, newValue) {
+        if (oldPos === null)
+            return;
+        const commaIndex = newValue.indexOf(',');
+        const isDecimal = oldPos > oldValue.indexOf(',');
+        if (isDecimal && commaIndex !== -1) {
+            const decimalCursor = Math.min(oldPos - oldValue.indexOf(',') - 1 + commaIndex + 1, newValue.length);
+            this.Input.setSelectionRange(decimalCursor, decimalCursor);
+        }
+        else
+            this.Input.setSelectionRange(oldPos, oldPos);
     }
 }
 //# sourceMappingURL=TFX.Core.js.map
