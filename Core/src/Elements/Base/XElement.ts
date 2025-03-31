@@ -1,7 +1,15 @@
 ﻿class XElement
 {
+    static _ID = 0;
+
+    static NextID(): number
+    {
+        return this._ID++
+    }
+
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
     {
+        this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer();
         if (pClass == null)
@@ -13,12 +21,20 @@
             pOwner.HTML.appendChild(this.HTML);
         if (pOwner instanceof HTMLElement)
             pOwner.appendChild(this.HTML);
+        this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
+        this._ResizeObserver.observe(this.HTML);
     }
-
+    
     public HTML: HTMLElement;
     public Element: HTMLElement | null;
     Owner: XElement | HTMLElement | null;
     private _IsVisible: boolean = true;
+    UUID: number = 0;
+    private _ResizeObserver: ResizeObserver;
+
+    SizeChanged()
+    {
+    }
 
     BindTo(pElement: XElement)
     {
@@ -82,6 +98,7 @@
     OnHide()
     {
     }
+
     OnShow()
     {
     }

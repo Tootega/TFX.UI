@@ -1,7 +1,7 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "types": [ "node", "undici-types" ],
+    //"types": [ "node", "undici-types" ],
     "target": "ES2018",
     "module": "system",
     "outFile": "./wwwroot/js/TFX.Core.js",
@@ -11,5 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "lib": [ "DOM", "ES6" ]
   },
-  "include": [ "src/**/*.ts" ]
+  "include": [
+    "src/**/*.ts",
+    "./_references.ts"
+  ]
 }

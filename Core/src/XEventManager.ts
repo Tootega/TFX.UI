@@ -32,8 +32,8 @@ class XCallOnce
 }
 class XEventManager
 {
-
-    private static _CallOnce = new XArray<XCallOnce>();
+        
+    private static _CallOnce = new Array<XCallOnce>();
 
     static AddExecOnce(pUUID: string, pEvent: any)
     {

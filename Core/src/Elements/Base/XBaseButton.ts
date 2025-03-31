@@ -9,9 +9,4 @@
     {
         return XUtils.AddElement<HTMLElement>(null, "div", null);
     }
-
-    protected override CreateElement(pClass: string | null = null): HTMLElement
-    {
-        return <HTMLElement>this.HTML;
-    }
 }

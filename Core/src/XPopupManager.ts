@@ -2,8 +2,8 @@
 
 class XPopupManager
 {
-    private static PopupList: Array<XIPopupPanel> = new XArray<XIPopupPanel>();
-    private static AutoEvent: XArray<{ Context: XElement, Method: XEvent, Once: boolean }> = new XArray<{ Context: XElement, Method: XEvent, Once: boolean }>();
+    private static PopupList: Array<XIPopupPanel> = new Array<XIPopupPanel>();
+    private static AutoEvent: XArray<{ Context: XElement, Method: XEvent, Once: boolean }> = new Array<{ Context: XElement, Method: XEvent, Once: boolean }>();
     static UseCrl: boolean = false;
 
     static AddAutoEvent(pContext: XElement, pMethod: any, pOnce: boolean = true)

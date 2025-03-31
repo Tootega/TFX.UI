@@ -1,4 +1,30 @@
-﻿class XHashSet<T, I>
+﻿
+class XArray<T> extends Array<T>
+{
+    constructor(pArg?: number | T[] | any)
+    {
+        super();
+        if (pArg != null)
+        {
+            if (pArg.length > 0)
+            {
+                for (var i = 0; i < pArg.length; i++)
+                    this[i] = pArg[i];
+            }
+            else
+            {
+                if (pArg > 0)
+                {
+                    this.length = pArg;
+                    for (var i = 0; i < this.length; i++)
+                        this[i] = <T>null;
+                }
+            }
+        }
+    }
+}
+
+class XHashSet<T, I>
 {
     public Items: any = new Object();
     public List = new XArray<any>();
@@ -60,31 +86,6 @@ interface XEvent { (): void; }
 interface XOwnerEvent<T> { (pSender: T): void; }
 
 interface XValue<T> { (pValue: T): any; }
-
-class XArray<T> extends Array<T>
-{
-    constructor(pArg?: number | T[] | any)
-    {
-        super();
-        if (pArg != null)
-        {
-            if (pArg.length > 0)
-            {
-                for (var i = 0; i < pArg.length; i++)
-                    this[i] = pArg[i];
-            }
-            else
-            {
-                if (pArg > 0)
-                {
-                    this.length = pArg;
-                    for (var i = 0; i < this.length; i++)
-                        this[i] = <T>null;
-                }
-            }
-        }
-    }
-}
 
 enum XDragType
 {

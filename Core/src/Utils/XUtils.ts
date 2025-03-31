@@ -5,7 +5,7 @@ class XUtils
         return !isNaN(parseFloat(pValue)) && isFinite(pValue);
     }
 
-    public static AddElement<T extends Element>(pOwner: XElement | HTMLElement | null, pType: string, pClass: string | null, pInsert: boolean = false): T
+    public static AddElement<T extends Element>(pOwner: XElement | HTMLElement | null, pType: string, pClass: string | null = null, pInsert: boolean = false): T
     {
         var own: Element;
         if (pOwner == null)
