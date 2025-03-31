@@ -31,7 +31,7 @@
   --body-mw: 1400px;
   --ip-border: 2px solid;
   --ip-border-color-err: #fe4e00ff;
-  --ip-padding: 5px 0px 5px 5px;
+  --ip-padding: 5px 4px 5px 5px;
   --ip-height: 23px;
   --bg-hv-XLookupButton: #1eacff43;
   --bg-XButtonIcon: #007bff;
@@ -179,8 +179,104 @@
   background-color: #ffcccc;
 }
 
-.XDatePicker {
+.XDatePickerEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
   outline: none;
+  padding-right: 32px;
+  height: calc(100% - 34px);
+  width: calc(100% - 41px);
+  top: 20px;
+  outline: none;
+}
+
+.XDatePickerEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.XMemoEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
+  outline: none;
+  height: calc(100% - 34px);
+  width: calc(100% - 13px);
+  resize: none;
+  top: 20px;
+}
+
+.XMemoEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.XNormalEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
+  outline: none;
+  height: calc(100% - 34px);
+  width: calc(100% - 13px);
+  resize: none;
+  top: 20px;
+}
+
+.XNormalEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.XIntegerEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
+  outline: none;
+  height: calc(100% - 34px);
+  width: calc(100% - 13px);
+  resize: none;
+  top: 20px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.XIntegerEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.XDecimalEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
+  outline: none;
+  height: calc(100% - 34px);
+  width: calc(100% - 13px);
+  resize: none;
+  top: 20px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.XDecimalEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 .XMenu {
@@ -488,6 +584,11 @@
   overflow-x: hidden;
 }
 
+.XDiv {
+  position: absolute;
+  background-color: #ffd800;
+}
+
 .XTopBar {
   position: absolute;
   background-color: #5a96d1;
@@ -507,6 +608,9 @@
 }
 
 .XForm {
+  /*    display: grid;
+      grid-template-columns: repeat(32, 1fr);
+      grid-template-rows: repeat(32, 41px);*/
   position: absolute;
   border: 2px solid #a0c3e6;
   border-radius: 10px;
@@ -575,6 +679,15 @@ html {
 .InputContainer {
   position: absolute;
   display: block;
+  background-color: transparent;
+}
+
+.InputTitle {
+  position: absolute;
+  display: block;
+  background-color: transparent;
+  left: 1px;
+  top: 1px;
 }
 
 .MainDiv {
@@ -585,7 +698,7 @@ html {
   min-width: var(--body-mw);
 }
 
-.XBaseInput, .XBaseButtonInput, .XDatePicker {
+.XBaseInput, .XBaseButtonInput {
   position: absolute;
   padding: var(--ip-padding);
   height: var(--ip-height);
@@ -595,12 +708,13 @@ html {
   padding-right: 32px;
   right: 0;
   left: 0;
+  outline: none;
 }
 
 .XLookupButton {
   position: absolute;
   right: 3px;
-  top: 3PX;
+  top: 23PX;
   bottom: 3px;
   width: 28px;
   background-color: var(--bg-XLookupButton);

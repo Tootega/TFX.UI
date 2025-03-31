@@ -21,7 +21,9 @@
 
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
-/// <reference path="src/Editors/XDatePicker.ts" />
+/// <reference path="src/Editors/XDatePickerEditor.ts" />
+/// <reference path="src/Editors/XMemoEditor.ts" />
+/// <reference path="src/Editors/XNormalEditor.ts" />
 
 /// <reference path="src/Stage/XStage.ts" />
 

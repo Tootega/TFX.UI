@@ -65,6 +65,15 @@ html {
 .InputContainer {
     position: absolute;
     display: block;
+    background-color: transparent;
+}
+
+.InputTitle {
+    position: absolute;
+    display: block;
+    background-color: transparent;
+    left: 1px;
+    top: 1px;
 }
 
 .MainDiv {
@@ -85,6 +94,7 @@ html {
     padding-right: 32px;
     right: 0;
     left: 0;
+    outline: none;
 }
 
 .XBaseButtonInput {
@@ -94,7 +104,7 @@ html {
 .XLookupButton {
     position: absolute;
     right: 3px;
-    top: 3PX;
+    top: 23PX;
     bottom: 3px;
     width: 28px;
     background-color: var(--bg-XLookupButton);

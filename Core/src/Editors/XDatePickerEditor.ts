@@ -1,16 +1,16 @@
 ﻿/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
-class XDatePicker extends XBaseButtonInput
+class XDatePickerEditor extends XBaseButtonInput
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner);
-        this.Input.className = "XDatePicker";
+        this.Input.className = "XDatePickerEditor";
         this.Calendar = new XCalendar(pOwner);
         this.Calendar.IsVisible = false;
         this.Calendar.OnSelectdate = (d) => this.Selected(d);
         this.Calendar.ReferenceElement = this;
         XPopupManager.Add(this.Calendar);
-        this.Input.placeholder = 'dd/mm/aaaa hh:MM:ss';
+        this.Input.placeholder = 'dd/mm/aaaa';
         XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
 
     }

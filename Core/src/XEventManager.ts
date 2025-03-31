@@ -13,6 +13,7 @@
     LostFocus = "focusout",
     Click = "click",
     FocusIn = "focusin",
+    Blur = "blur",
 }
 
 class XCallOnce
@@ -32,7 +33,7 @@ class XCallOnce
 }
 class XEventManager
 {
-        
+
     private static _CallOnce = new Array<XCallOnce>();
 
     static AddExecOnce(pUUID: string, pEvent: any)

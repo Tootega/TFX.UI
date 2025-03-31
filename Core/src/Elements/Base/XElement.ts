@@ -33,7 +33,8 @@
     private _ResizeObserver: ResizeObserver;
     OnResize: XMethod<XElement> | null = null;
     OrderIndex: number = 0;
-
+    Rows: number = 0;
+    Cols: number = 0;
     get Rect(): XRect
     {
         return this.HTML.GetRect();
