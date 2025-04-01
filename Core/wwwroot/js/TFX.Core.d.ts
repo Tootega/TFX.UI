@@ -745,30 +745,6 @@ declare class XTabControl extends XDiv {
     AddTab(pTitle: string): void;
     CreateTab(): XTabControlTab;
 }
-declare class XCalendar extends XPopupElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
-    protected Header: XDiv;
-    protected LeftArrow: XBaseButton;
-    protected CenterButton: XBaseButton;
-    protected RightArrow: XBaseButton;
-    protected DaysGrid: XDiv;
-    protected MonthsGrid: XDiv;
-    protected YearsGrid: XDiv;
-    private CurrentPanel;
-    private ViewDate;
-    SelectedDate: Date;
-    OnSelectdate: XMethod<Date> | null;
-    OnShow(pValue?: boolean): void;
-    OnHide(): void;
-    CallPopupClosed(): void;
-    private ShowYears;
-    private ShowMonths;
-    private ShowDays;
-    SelectDate(pDate: Date): void;
-    private Navigate;
-    UpdateCalendar(): void;
-    protected CreateContainer(): HTMLElement;
-}
 declare class XType1 {
     Point: XPoint;
     LeftX: number;
@@ -813,6 +789,30 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XCalendar extends XPopupElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    protected Header: XDiv;
+    protected LeftArrow: XBaseButton;
+    protected CenterButton: XBaseButton;
+    protected RightArrow: XBaseButton;
+    protected DaysGrid: XDiv;
+    protected MonthsGrid: XDiv;
+    protected YearsGrid: XDiv;
+    private CurrentPanel;
+    private ViewDate;
+    SelectedDate: Date;
+    OnSelectdate: XMethod<Date> | null;
+    OnShow(pValue?: boolean): void;
+    OnHide(): void;
+    CallPopupClosed(): void;
+    private ShowYears;
+    private ShowMonths;
+    private ShowDays;
+    SelectDate(pDate: Date): void;
+    private Navigate;
+    UpdateCalendar(): void;
+    protected CreateContainer(): HTMLElement;
 }
 interface XColumnConfig {
     field: string;
