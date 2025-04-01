@@ -3399,19 +3399,44 @@ class XDataGridEditor extends XBaseInput {
         table.appendChild(thead);
     }
     createHeaderTh(colConfig) {
-        var _a;
         const th = document.createElement('th');
         th.textContent = colConfig.field;
         th.style.width = `${colConfig.width}px`;
-        if (colConfig.field !== '#') {
-            th.draggable = true;
-            th.addEventListener('dragstart', (e) => this.handleDragStart(e, colConfig));
-            th.addEventListener('dragover', (e) => this.handleDragOver(e, colConfig));
-            // Indicador de ordenação
-            if (((_a = this.sortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.field) {
-                th.textContent += this.sortState.direction === 'asc' ? ' ▲' : ' ▼';
+        th.style.userSelect = 'none';
+        th.draggable = true;
+        // Drag para reordenar colunas
+        th.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', colConfig.field);
+            th.classList.add('dragging');
+        });
+        th.addEventListener('dragend', () => {
+            th.classList.remove('dragging');
+        });
+        th.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!th.classList.contains('drag-over')) {
+                th.classList.add('drag-over');
             }
-        }
+        });
+        th.addEventListener('dragleave', () => {
+            th.classList.remove('drag-over');
+        });
+        th.addEventListener('drop', (e) => {
+            e.preventDefault();
+            th.classList.remove('drag-over');
+            const draggedField = e.dataTransfer.getData('text/plain');
+            const visibleColumns = this.getVisibleColumns();
+            const draggedIndex = visibleColumns.findIndex(c => c.field === draggedField);
+            const targetIndex = visibleColumns.findIndex(c => c.field === colConfig.field);
+            if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex)
+                return;
+            // Reordenar colunas originais mantendo a referência
+            const originalDraggedIndex = this.columns.findIndex(c => c.field === draggedField);
+            const originalTargetIndex = this.columns.findIndex(c => c.field === colConfig.field);
+            [this.columns[originalDraggedIndex], this.columns[originalTargetIndex]] =
+                [this.columns[originalTargetIndex], this.columns[originalDraggedIndex]];
+            this.render();
+        });
         // Redimensionador
         const resizer = document.createElement('div');
         resizer.className = 'resizer';
@@ -3428,6 +3453,7 @@ class XDataGridEditor extends XBaseInput {
         let startX = 0;
         let startWidth = 0;
         resizer.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); // Impede interferência com drag
             isResizing = true;
             startX = e.clientX;
             startWidth = th.offsetWidth;
@@ -3435,7 +3461,7 @@ class XDataGridEditor extends XBaseInput {
             document.addEventListener('mouseup', () => {
                 isResizing = false;
                 document.removeEventListener('mousemove', handleMouseMove);
-            });
+            }, { once: true });
         });
         const handleMouseMove = (e) => {
             if (!isResizing)
@@ -3443,25 +3469,19 @@ class XDataGridEditor extends XBaseInput {
             const newWidth = startWidth + (e.clientX - startX);
             th.style.width = `${newWidth}px`;
             colConfig.width = newWidth;
-            document.querySelectorAll(`td[data-field="${colConfig.field}"]`).forEach(td => {
-                td.style.width = `${newWidth}px`;
-            });
+            this.updateColumnWidths(colConfig.field, newWidth);
         };
     }
-    handleDragStart(e, colConfig) {
-        e.dataTransfer.setData('text/plain', colConfig.field);
+    updateColumnWidths(field, width) {
+        const index = this.columns.findIndex(c => c.field === field);
+        if (index > -1) {
+            this.columns[index].width = width;
+            document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
+                .forEach(el => el.style.width = `${width}px`);
+        }
     }
-    handleDragOver(e, targetColConfig) {
-        e.preventDefault();
-        const draggedField = e.dataTransfer.getData('text/plain');
-        const draggedIndex = this.columns.findIndex(c => c.field === draggedField);
-        const targetIndex = this.columns.findIndex(c => c.field === targetColConfig.field);
-        if (draggedIndex === -1 || targetIndex === -1)
-            return;
-        const temp = this.columns[draggedIndex];
-        this.columns[draggedIndex] = this.columns[targetIndex];
-        this.columns[targetIndex] = temp;
-        this.render();
+    getVisibleColumns() {
+        return [this.rowNumberColumn, ...this.columns.filter(c => c.visible)];
     }
     sortData(field) {
         var _a;

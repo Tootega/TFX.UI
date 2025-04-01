@@ -827,8 +827,8 @@ declare class XDataGridEditor extends XBaseInput {
     private buildHeader;
     private createHeaderTh;
     private addResizerEvents;
-    private handleDragStart;
-    private handleDragOver;
+    private updateColumnWidths;
+    private getVisibleColumns;
     private sortData;
     private addColumnVisibilityToggle;
     private buildBody;
