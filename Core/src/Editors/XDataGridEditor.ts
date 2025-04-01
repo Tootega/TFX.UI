@@ -13,7 +13,7 @@ class XDataGridEditor extends XBaseInput
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner);
-        for (let i = 0; i < 1000; i++)
+        for (let i = 0; i < 100; i++)
         {
             const row: any = {
                 id: i,
