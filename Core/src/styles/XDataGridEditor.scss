@@ -31,23 +31,21 @@ table {
 
 thead {
     position: sticky;
-    top: 0;
+    top: 0px;
     z-index: 2;
 }
 
 th, td {
-    //border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
     position: relative;
-    min-width: 100px;
+    //min-width: 100px;
     white-space:nowrap;
 }
 
 th {
     background-color: #f2f2f2;
     user-select: none;
-    top: -5px;
     padding: 10px 0px 13px 5px;
     position: relative;
 }
@@ -55,9 +53,6 @@ th {
 th.dragging {
     cursor: grabbing;
     opacity: 0.8;
-}
-th:hover .resizer {
-    background: #999;
 }
 th:active {
     cursor: grabbing;
@@ -69,10 +64,13 @@ th:active {
     top: 0;
     width: 5px;
     height: 100%;
-    background: #ccc;
+    background-color: transparent;
     cursor: col-resize;
+    border-right: 1px solid #7c4141;
 }
-
+.resizer:hover {
+    background-color: #abc;
+}
 .menu-button {
     position: absolute;
     right: 19px;

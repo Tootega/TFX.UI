@@ -319,7 +319,6 @@
 
 .XDataGridEditor {
   position: absolute;
-  padding: var(--ip-padding);
   height: var(--ip-height);
   border-radius: 5px;
   border: 2px solid #74ddff;
@@ -667,13 +666,7 @@
 }
 
 .XForm {
-  /*    display: grid;
-  grid-template-columns: repeat(32, 1fr);
-  grid-template-rows: repeat(32, 41px);*/
   position: absolute;
-  /*    border: 2px solid #a0c3e6;
-      border-radius: 10px;
-  background-color: #e9f4ff;*/
   width: calc(100% - 2px);
   height: calc(100% - 3px);
 }
@@ -712,7 +705,7 @@ table {
 
 thead {
   position: sticky;
-  top: 0;
+  top: 0px;
   z-index: 2;
 }
 
@@ -720,14 +713,12 @@ th, td {
   padding: 8px;
   text-align: left;
   position: relative;
-  min-width: 100px;
   white-space: nowrap;
 }
 
 th {
   background-color: #f2f2f2;
   user-select: none;
-  top: -5px;
   padding: 10px 0px 13px 5px;
   position: relative;
 }
@@ -735,10 +726,6 @@ th {
 th.dragging {
   cursor: grabbing;
   opacity: 0.8;
-}
-
-th:hover .resizer {
-  background: #999;
 }
 
 th:active {
@@ -751,8 +738,13 @@ th:active {
   top: 0;
   width: 5px;
   height: 100%;
-  background: #ccc;
+  background-color: transparent;
   cursor: col-resize;
+  border-right: 1px solid #7c4141;
+}
+
+.resizer:hover {
+  background-color: #abc;
 }
 
 .menu-button {
