@@ -1356,7 +1356,6 @@ Date.FromBRDateTime = function (pValue: string): XDateTimeResult
     }
 }
 
-
 class X
 {
     static DataIsEmpty(pValue: string): boolean

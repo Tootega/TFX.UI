@@ -24,6 +24,7 @@
 /// <reference path="src/Editors/XDatePickerEditor.ts" />
 /// <reference path="src/Editors/XMemoEditor.ts" />
 /// <reference path="src/Editors/XNormalEditor.ts" />
+/// <reference path="src/Editors/XDataGridEditor.ts" />
 
 /// <reference path="src/Stage/XStage.ts" />
 

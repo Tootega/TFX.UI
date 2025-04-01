@@ -2031,6 +2031,7 @@ class XElement {
         this.OrderIndex = 0;
         this.Rows = 0;
         this.Cols = 0;
+        this.Children = new XArray();
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer();
@@ -2045,6 +2046,11 @@ class XElement {
             pOwner.appendChild(this.HTML);
         this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
         this._ResizeObserver.observe(this.HTML);
+        if (pOwner instanceof XElement)
+            pOwner.AddChildren(this);
+    }
+    AddChildren(pElement) {
+        this.Children.Add(pElement);
     }
     get Rect() {
         return this.HTML.GetRect();
@@ -2147,6 +2153,452 @@ class XDiv extends XElement {
     }
     CreateContainer() {
         return XUtils.AddElement(null, "div", null);
+    }
+}
+/// <reference path="XDiv.ts" />
+class XBaseInput extends XDiv {
+    constructor(pOwner) {
+        super(pOwner, "InputContainer");
+        this.NewLine = false;
+        this.OrderIndex = -1;
+        this.Input = this.CreateInput();
+        this.ELMTitle = new XDiv(this, "InputTitle");
+    }
+    get Title() {
+        return this.ELMTitle.HTML.innerHTML;
+    }
+    set Title(pValue) {
+        this.ELMTitle.HTML.innerHTML = pValue;
+    }
+    CreateInput() {
+        return XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
+    }
+}
+/// <reference path="XBaseInput.ts" />
+class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    OnClick(pArg) {
+    }
+}
+/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
+class XDatePickerEditor extends XBaseButtonInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.SelectedDate = new Date();
+        this.Input.className = "XDatePickerEditor";
+        this.Calendar = new XCalendar(pOwner);
+        this.Calendar.IsVisible = false;
+        this.Calendar.OnSelectdate = (d) => this.Selected(d);
+        this.Calendar.ReferenceElement = this;
+        XPopupManager.Add(this.Calendar);
+        this.Input.placeholder = 'dd/mm/aaaa';
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
+        this.Title = "Digite uma Data";
+    }
+    Selected(pDate) {
+        this.SelectedDate = pDate;
+        this.Calendar.IsVisible = false;
+        this.Input.value = this.FormatDate(pDate, this.Input.placeholder);
+    }
+    FormatDate(data, formato) {
+        const completarComZero = (valor) => {
+            return valor < 10 ? `0${valor}` : valor.toString();
+        };
+        // Extrai componentes da data
+        const dia = completarComZero(data.getDate());
+        const mes = completarComZero(data.getMonth() + 1); // +1 pois meses são 0-based
+        const ano = data.getFullYear().toString();
+        const horas = completarComZero(data.getHours());
+        const minutos = completarComZero(data.getMinutes());
+        const segundos = completarComZero(data.getSeconds());
+        // Detecta partes do formato
+        const partes = formato.split(' ');
+        const formatoData = partes.find(p => p.toLowerCase().includes('dd')) || null;
+        const formatoHora = partes.find(p => p.toLowerCase().includes('hh')) || null;
+        // Monta a string
+        let resultado = '';
+        // Formata a data se necessário
+        if (formatoData) {
+            resultado = `${dia}/${mes}/${ano}`;
+        }
+        // Formata a hora se necessário
+        if (formatoHora) {
+            const separador = resultado ? ' ' : ''; // Espaço se já tiver data
+            let horaFormatada = `${horas}:${minutos}`;
+            // Adiciona segundos se necessário
+            if (formatoHora.toLowerCase().includes('ss')) {
+                horaFormatada += `:${segundos}`;
+            }
+            resultado += separador + horaFormatada;
+        }
+        return resultado;
+    }
+    HandleInput(pEvent) {
+        this.ValidateDate();
+        const input = pEvent.target;
+        const value = input.value.replace(/\D/g, '');
+        const placeholder = this.Input.placeholder;
+        const [datePart, timePart] = placeholder.includes(' ') ?
+            placeholder.split(' ') : [placeholder.startsWith('dd')
+                ? placeholder : null, placeholder.startsWith('hh') ? placeholder : null];
+        let formatted = '';
+        let remainingDigits = value;
+        if (datePart === null || datePart === void 0 ? void 0 : datePart.startsWith('dd/mm/aaaa')) {
+            const dateDigits = remainingDigits.slice(0, 8);
+            formatted = this.formatDateSection(dateDigits);
+            remainingDigits = remainingDigits.slice(8);
+        }
+        if (timePart === null || timePart === void 0 ? void 0 : timePart.startsWith('hh')) {
+            if (formatted !== '' && X.Length(formatted) == X.Length(datePart))
+                formatted += ' ';
+            formatted += this.formatTimeSection(remainingDigits, timePart === 'hh:MM:ss' ? 6 : 4);
+        }
+        if (pEvent.inputType == "deleteContentBackward")
+            formatted = formatted.trim();
+        input.value = formatted;
+    }
+    formatDateSection(pDigits) {
+        let formatted = '';
+        for (let i = 0; i < pDigits.length; i++) {
+            if (i === 2 || i === 4)
+                formatted += '/';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    formatTimeSection(pDigits, pMax) {
+        let formatted = '';
+        for (let i = 0; i < Math.min(pDigits.length, pMax); i++) {
+            if (i === 2 || i === 4)
+                formatted += ':';
+            formatted += pDigits[i];
+        }
+        return formatted;
+    }
+    ValidateDate() {
+        this.Input.classList.remove('Error');
+        if (X.IsEmpty(this.Input.value))
+            return;
+        if (!Date.IsDateOrTime(this.Input.value))
+            this.Input.classList.add('Error');
+        else {
+            const [d, m, y] = this.Input.value.split('/');
+            const date = new Date(`${y}-${m}-${d}`);
+            if (this.Calendar.IsVisible)
+                this.Calendar.SelectDate(date);
+        }
+    }
+    OnClick(pArg) {
+        this.Calendar.BindTo(this);
+        this.Calendar.Show();
+        this.Calendar.SelectedDate = this.SelectedDate;
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XDecimalEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XDecimalEditor";
+        this.AllowNegative = false;
+        this.MaxIntegerDigits = 4;
+        this.DecimalDigits = 2;
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
+        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.HandleKeydown);
+        this.Input.value = this.FormatValue(this.ProcessValue(''));
+        this.Title = "Digite um Valor Decimal";
+    }
+    HandleInput(event) {
+        const position = this.Input.selectionStart;
+        const value = this.Input.value;
+        const processed = this.ProcessValue(value);
+        const formatted = this.FormatValue(processed);
+        if (this.Input.value !== formatted) {
+            this.Input.value = formatted;
+            this.AdjustCursorPosition(position, value, formatted);
+        }
+    }
+    HandleKeydown(pArg) {
+        if (pArg.key === '-') {
+            pArg.preventDefault();
+            if (this.AllowNegative) {
+                const processed = this.ProcessValue(this.Input.value);
+                processed.isNegative = !processed.isNegative;
+                this.Input.value = this.FormatValue(processed);
+            }
+        }
+        else if (pArg.ctrlKey && (pArg.key === 'Home' || pArg.key === 'End')) {
+            pArg.preventDefault();
+            this.Input.setSelectionRange(0, this.Input.value.length);
+        }
+        else if (pArg.key === ',' && this.Input.value.includes(','))
+            pArg.preventDefault();
+    }
+    ProcessValue(value) {
+        let rawValue = value.replace(/[^\d-,]/g, '');
+        let isNegative = false;
+        if (this.AllowNegative) {
+            isNegative = rawValue.startsWith('-');
+            rawValue = rawValue.replace(/-/g, '');
+        }
+        const [integer = '0', decimal = ''] = rawValue.split(',');
+        const integerClean = integer.replace(/\D/g, '').replace(/^0+/, '').substring(0, this.MaxIntegerDigits) || '0';
+        const decimalClean = decimal.replace(/\D/g, '').slice(-this.DecimalDigits).RPad(this.DecimalDigits, '0');
+        return {
+            isNegative: isNegative && this.AllowNegative,
+            integerPart: integerClean || '0',
+            decimalPart: decimalClean
+        };
+    }
+    FormatValue(processed) {
+        const formattedInteger = processed.integerPart
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/(\d{3})(?=\d)/g, '$1.')
+            .split('')
+            .reverse()
+            .join('')
+            .replace(/^\./, '') || '0';
+        const sign = processed.isNegative ? '-' : '';
+        return `${sign}${formattedInteger},${processed.decimalPart}`;
+    }
+    AdjustCursorPosition(oldPos, oldValue, newValue) {
+        if (oldPos === null)
+            return;
+        const commaIndex = newValue.indexOf(',');
+        const isDecimal = oldPos > oldValue.indexOf(',');
+        if (isDecimal && commaIndex !== -1) {
+            const decimalCursor = Math.min(oldPos - oldValue.indexOf(',') - 1 + commaIndex + 1, newValue.length);
+            this.Input.setSelectionRange(decimalCursor, decimalCursor);
+        }
+        else
+            this.Input.setSelectionRange(oldPos, oldPos);
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XEMailEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XEMailEditor";
+        this.Input.placeholder = "e-mail";
+        XEventManager.AddEvent(this, this.HTML, XEventType.Input, this.Validate);
+        this.Title = "Digite um E-Mail";
+    }
+    Validate(pArg) {
+        pArg.preventDefault(); // Impede o envio do formulário
+        const email = this.Input.value;
+        var isvalid = email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+        this.Input.classList.remove('Error');
+        if (isvalid)
+            return;
+        if (!isvalid)
+            this.Input.classList.add('Error');
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XIntegerEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Mask = "#.##0";
+        this.AllowNegative = false;
+        this.Input.className = "XIntegerEditor";
+        this.AllowNegative = this.Mask.startsWith('-');
+        this.MaxDigits = this.Mask.replace(/[^#0]/g, '').length;
+        this.HasSeparator = this.Mask.includes('.');
+        this.IsFixedMask = !this.Mask.includes('#') && /^[-]?0+$/.test(this.Mask);
+        this.Init();
+        this.Title = "Digite um Valor Inteiro";
+    }
+    Init() {
+        this.Input.value = this.FormatNumber('0');
+        this.SetupEventListeners();
+    }
+    SetupEventListeners() {
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.GandleInput);
+        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.handleKeyDown);
+        XEventManager.AddEvent(this, this.Input, XEventType.Blur, this.HandleBlur);
+    }
+    GandleInput(pArg) {
+        const rawValue = this.GetRawValue(this.Input.value);
+        const processed = this.ProcessValue(rawValue);
+        this.Input.value = this.FormatNumber(processed);
+    }
+    handleKeyDown(e) {
+        if ([8, 46, 9, 27, 13, 37, 38, 39, 40, 36, 35].Contains(e.keyCode))
+            return;
+        if ((e.ctrlKey || e.metaKey) && [67, 86, 88, 65].Contains(e.keyCode))
+            return;
+        const isNegativeSign = e.key === '-' && this.AllowNegative;
+        const isNumber = e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode >= 96 && e.keyCode <= 105;
+        if (isNegativeSign) {
+            e.preventDefault();
+            this.ToggleSign();
+            return;
+        }
+        if (!isNumber) {
+            e.preventDefault();
+        }
+    }
+    ToggleSign() {
+        const current = this.GetRawValue(this.Input.value);
+        const newValue = current.startsWith('-') ? current.slice(1) : `-${current}`;
+        this.Input.value = this.FormatNumber(newValue);
+    }
+    HandleBlur() {
+        const rawValue = this.GetRawValue(this.Input.value);
+        if (rawValue === '-' || rawValue === '') {
+            this.Input.value = '0';
+        }
+        else {
+            this.Input.value = this.FormatNumber(rawValue);
+        }
+    }
+    GetRawValue(pValue) {
+        return pValue.replace(/[^0-9-]/g, '');
+    }
+    ProcessValue(pValue) {
+        let isNegative = this.AllowNegative && pValue.startsWith('-');
+        let digits = pValue.replace(/-/g, '').replace(/^0+/, '') || '0';
+        digits = digits.slice(0, this.MaxDigits);
+        if (this.IsFixedMask) {
+            digits = digits.RPad(this.MaxDigits, '0');
+        }
+        return (isNegative ? '-' : '') + digits;
+    }
+    FormatNumber(pValue) {
+        const isNegative = pValue.startsWith('-');
+        let digits = isNegative ? pValue.slice(1) : pValue;
+        digits = digits.replace(/[^0-9]/g, '');
+        if (this.HasSeparator) {
+            digits = this.InsertSeparators(digits);
+        }
+        if (this.IsFixedMask) {
+            digits = digits.LPad(this.MaxDigits, '0');
+        }
+        return (isNegative ? '-' : '') + digits;
+    }
+    InsertSeparators(pDigits) {
+        var _a, _b, _c, _d;
+        return (_d = (_c = (_b = (_a = pDigits === null || pDigits === void 0 ? void 0 : pDigits.split('')) === null || _a === void 0 ? void 0 : _a.reverse()) === null || _b === void 0 ? void 0 : _b.join('')) === null || _c === void 0 ? void 0 : _c.match(/.{1,3}/g)) === null || _d === void 0 ? void 0 : _d.join('.').split('').reverse().join('').replace(/^\./, '');
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XMemoEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XMemoEditor";
+        this.Title = "Digite um Texto";
+    }
+    CreateInput() {
+        return XUtils.AddElement(this.HTML, "textarea", "XBaseButtonInput");
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XNormalEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XNormalEditor";
+        this.Title = "Digite uma Frase";
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class PhoneFormatter {
+    static format(value) {
+        let nums = value.replace(/\D/g, '');
+        let formatted = '';
+        // Limitar tamanho máximo
+        const maxLength = nums.startsWith('55') ? 13 : 11;
+        nums = nums.substring(0, maxLength);
+        if (nums.startsWith('55') && nums.length > 2) {
+            formatted = `+55 `;
+            nums = nums.substring(2);
+        }
+        if (nums.length >= 2) {
+            formatted += `(${nums.substring(0, 2)})`;
+            nums = nums.substring(2);
+        }
+        if (nums.length > 0) {
+            formatted += ' ' + nums.replace(/(\d{4,5})(\d{4})$/, '$1-$2');
+        }
+        return formatted.replace(/(\s)-/g, '$1').trim();
+    }
+    static validate(phone) {
+        return /^(?:\+55\s\(\d{2}\)\s\d{5}-\d{4}$|\(\d{2}\)\s\d{4,5}-\d{4}$)/.test(phone);
+    }
+}
+class XPhoneEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.lastValue = '';
+        this.cursorPos = 0;
+        this.Input.className = "XPhoneEditor";
+        this.Title = "Digite um Nº de Telefone";
+        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.handleInput);
+        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.handleKeyDown);
+    }
+    handleKeyDown(e) {
+        // Permitir navegação e comandos especiais
+        const allowedKeys = [
+            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
+            'Home', 'End', 'Tab', 'Control'
+        ];
+        if (allowedKeys.Contains(e.key) || e.ctrlKey) {
+            return;
+        }
+        if (!/\d/.test(e.key)) {
+            e.preventDefault();
+        }
+    }
+    handleInput() {
+        const prevValue = this.Input.value;
+        const rawValue = prevValue.replace(/\D/g, '');
+        // Controlar máximo de dígitos
+        const maxLength = rawValue.startsWith('55') ? 13 : 11;
+        const newValue = PhoneFormatter.format(rawValue.substring(0, maxLength));
+        // Manter posição do cursor
+        const cursorBefore = this.Input.selectionStart || 0;
+        const diff = newValue.length - prevValue.length;
+        // Ajustar posição do cursor
+        let newCursorPos = cursorBefore;
+        if (this.lastValue.length > newValue.length) {
+            newCursorPos = this.calculateCursorPos(cursorBefore, prevValue, newValue);
+        }
+        else {
+            newCursorPos = cursorBefore + diff;
+        }
+        this.Input.value = newValue;
+        this.lastValue = newValue;
+        // Corrigir posição do cursor
+        requestAnimationFrame(() => {
+            this.Input.setSelectionRange(newCursorPos, newCursorPos);
+        });
+        this.updateValidation();
+    }
+    calculateCursorPos(oldPos, oldValue, newValue) {
+        let adjust = 0;
+        const isBackspace = oldValue.length > newValue.length;
+        // Ajustar para formatação automática
+        for (let i = 0; i < oldPos; i++) {
+            if (isBackspace && /[()\-\s]/.test(oldValue[i])) {
+                adjust--;
+            }
+            if (!isBackspace && /[()\-\s]/.test(newValue[i])) {
+                adjust++;
+            }
+        }
+        return Math.max(0, Math.min(newValue.length, oldPos + adjust));
+    }
+    updateValidation() {
+        const isvalid = PhoneFormatter.validate(this.Input.value);
+        this.Input.classList.remove('Error');
+        if (isvalid)
+            return;
+        if (!isvalid)
+            this.Input.classList.add('Error');
     }
 }
 /// <reference path="Base/XDiv.ts" />
@@ -2339,9 +2791,24 @@ class XTabControlHeader extends XDiv {
         super(pOwner, "XTabControlHeader");
         this.DropdownButton = null;
     }
+    SelectionChanged() {
+        this.validateVisibility();
+    }
     SizeChanged() {
         if (this.DropdownButton != null)
             this.DropdownButton.IsVisible = this.HTML.scrollWidth > this.HTML.offsetWidth;
+        this.validateVisibility();
+    }
+    validateVisibility() {
+        const painelRect = this.HTML.getBoundingClientRect();
+        this.HTML.childNodes.forEach(item => {
+            var elm = item;
+            const rect = elm.getBoundingClientRect();
+            if (rect.left < painelRect.left || rect.right > painelRect.right)
+                elm.style.visibility = 'hidden';
+            else
+                elm.style.visibility = 'visible';
+        });
     }
 }
 class XTabControlTab extends XDiv {
@@ -2389,32 +2856,32 @@ class XTabControl extends XDiv {
             this.PopulateDropdown();
         });
         this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
     }
     PopulateDropdown() {
         this.Dropdown.HTML.innerHTML = '';
@@ -2455,6 +2922,7 @@ class XTabControl extends XDiv {
         }
         this.Dropdown.IsVisible = false;
         this.ActiveTab = pButton.Tab;
+        this.Header.SelectionChanged();
     }
     AddTab(pTitle) {
         var _a;
@@ -2471,35 +2939,6 @@ class XTabControl extends XDiv {
     CreateTab() {
         return new XTabControlTab(this.Container);
         ;
-    }
-}
-/// <reference path="XDiv.ts" />
-class XBaseInput extends XDiv {
-    constructor(pOwner) {
-        super(pOwner, "InputContainer");
-        this.NewLine = false;
-        this.OrderIndex = -1;
-        this.Input = this.CreateInput();
-        this.ELMTitle = new XDiv(this, "InputTitle");
-    }
-    get Title() {
-        return this.ELMTitle.HTML.innerHTML;
-    }
-    set Title(pValue) {
-        this.ELMTitle.HTML.innerHTML = pValue;
-    }
-    CreateInput() {
-        return XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
-    }
-}
-/// <reference path="XBaseInput.ts" />
-class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Button = new XBaseButton(this, "XLookupButton");
-        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
-    }
-    OnClick(pArg) {
     }
 }
 /// <reference path="XPopupElement.ts" />
@@ -2689,74 +3128,80 @@ class XForm extends XDiv {
         edt.Cols = 9;
         edt.OrderIndex = 1;
         this.Fields.Add(edt);
-        edt = new XMemoEditor(this);
-        edt.Rows = 4;
-        edt.Cols = 9;
-        edt.OrderIndex = 2;
-        this.Fields.Add(edt);
-        edt = new XNormalEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
+        //edt = new XMemoEditor(this);
+        //edt.Rows = 4;
+        //edt.Cols = 9;
+        //edt.OrderIndex = 2;
+        //this.Fields.Add(<any>edt);
+        //edt = new XNormalEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //this.Fields.Add(<any>edt);
+        //edt = new XIntegerEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //this.Fields.Add(<any>edt);
+        //edt = new XIntegerEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //edt.Mask = "-##.##0";
+        //this.Fields.Add(<any>edt);
+        //edt = new XIntegerEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //edt.Mask = "####0";
+        //this.Fields.Add(<any>edt);
+        //edt = new XDecimalEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //edt.Mask = "####0";
+        //this.Fields.Add(<any>edt);
+        //edt = new XDecimalEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //edt.AllowNegative = true;
+        //edt.MaxIntegerDigits = 4;
+        //edt.DecimalDigits = 2;
+        //this.Fields.Add(<any>edt);
+        //edt = new XDecimalEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //edt.AllowNegative = true;
+        //edt.MaxIntegerDigits = 4;
+        //edt.DecimalDigits = 2;
+        //this.Fields.Add(<any>edt);
+        //edt = new XEMailEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //this.Fields.Add(<any>edt);
+        //edt = new XPhoneEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //this.Fields.Add(<any>edt);
+        //edt = new XPhoneEditor(this);
+        //edt.Rows = 1;
+        //edt.Cols = 4;
+        //edt.OrderIndex = 3;
+        //this.Fields.Add(<any>edt);
+        edt = new XDataGridEditor(this);
+        edt.Rows = 5;
+        edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
-        edt = new XIntegerEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        this.Fields.Add(edt);
-        edt = new XIntegerEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        edt.Mask = "-##.##0";
-        this.Fields.Add(edt);
-        edt = new XIntegerEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        edt.Mask = "####0";
-        this.Fields.Add(edt);
-        edt = new XDecimalEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        edt.Mask = "####0";
-        this.Fields.Add(edt);
-        edt = new XDecimalEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        edt.AllowNegative = true;
-        edt.MaxIntegerDigits = 4;
-        edt.DecimalDigits = 2;
-        this.Fields.Add(edt);
-        edt = new XDecimalEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        edt.AllowNegative = true;
-        edt.MaxIntegerDigits = 4;
-        edt.DecimalDigits = 2;
-        this.Fields.Add(edt);
-        edt = new XEMailEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        this.Fields.Add(edt);
-        edt = new XPhoneEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        this.Fields.Add(edt);
-        edt = new XPhoneEditor(this);
-        edt.Rows = 1;
-        edt.Cols = 4;
-        edt.OrderIndex = 3;
-        this.Fields.Add(edt);
+        //this.Fields.ForEach(e => e.OrderIndex = Math.floor(Math.random() * 1024));
+        this.Fields = this.Fields.OrderBy(e => e.OrderIndex);
     }
     SizeChanged() {
         this.ResizeChildren();
-        //this.OrganizeChildren(this.Rect);
     }
     ResizeChildren() {
         const cols = XDefault.DefaultColCount;
@@ -2892,137 +3337,195 @@ class XUtils {
         return elm;
     }
 }
-/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
-class XDatePickerEditor extends XBaseButtonInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.SelectedDate = new Date();
-        this.Input.className = "XDatePickerEditor";
-        this.Calendar = new XCalendar(pOwner);
-        this.Calendar.IsVisible = false;
-        this.Calendar.OnSelectdate = (d) => this.Selected(d);
-        this.Calendar.ReferenceElement = this;
-        XPopupManager.Add(this.Calendar);
-        this.Input.placeholder = 'dd/mm/aaaa';
-        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
-        this.Title = "Digite uma Data";
-    }
-    Selected(pDate) {
-        this.SelectedDate = pDate;
-        this.Calendar.IsVisible = false;
-        this.Input.value = this.FormatDate(pDate, this.Input.placeholder);
-    }
-    FormatDate(data, formato) {
-        const completarComZero = (valor) => {
-            return valor < 10 ? `0${valor}` : valor.toString();
-        };
-        // Extrai componentes da data
-        const dia = completarComZero(data.getDate());
-        const mes = completarComZero(data.getMonth() + 1); // +1 pois meses são 0-based
-        const ano = data.getFullYear().toString();
-        const horas = completarComZero(data.getHours());
-        const minutos = completarComZero(data.getMinutes());
-        const segundos = completarComZero(data.getSeconds());
-        // Detecta partes do formato
-        const partes = formato.split(' ');
-        const formatoData = partes.find(p => p.toLowerCase().includes('dd')) || null;
-        const formatoHora = partes.find(p => p.toLowerCase().includes('hh')) || null;
-        // Monta a string
-        let resultado = '';
-        // Formata a data se necessário
-        if (formatoData) {
-            resultado = `${dia}/${mes}/${ano}`;
-        }
-        // Formata a hora se necessário
-        if (formatoHora) {
-            const separador = resultado ? ' ' : ''; // Espaço se já tiver data
-            let horaFormatada = `${horas}:${minutos}`;
-            // Adiciona segundos se necessário
-            if (formatoHora.toLowerCase().includes('ss')) {
-                horaFormatada += `:${segundos}`;
-            }
-            resultado += separador + horaFormatada;
-        }
-        return resultado;
-    }
-    HandleInput(pEvent) {
-        this.ValidateDate();
-        const input = pEvent.target;
-        const value = input.value.replace(/\D/g, '');
-        const placeholder = this.Input.placeholder;
-        const [datePart, timePart] = placeholder.includes(' ') ?
-            placeholder.split(' ') : [placeholder.startsWith('dd')
-                ? placeholder : null, placeholder.startsWith('hh') ? placeholder : null];
-        let formatted = '';
-        let remainingDigits = value;
-        if (datePart === null || datePart === void 0 ? void 0 : datePart.startsWith('dd/mm/aaaa')) {
-            const dateDigits = remainingDigits.slice(0, 8);
-            formatted = this.formatDateSection(dateDigits);
-            remainingDigits = remainingDigits.slice(8);
-        }
-        if (timePart === null || timePart === void 0 ? void 0 : timePart.startsWith('hh')) {
-            if (formatted !== '' && X.Length(formatted) == X.Length(datePart))
-                formatted += ' ';
-            formatted += this.formatTimeSection(remainingDigits, timePart === 'hh:MM:ss' ? 6 : 4);
-        }
-        if (pEvent.inputType == "deleteContentBackward")
-            formatted = formatted.trim();
-        input.value = formatted;
-    }
-    formatDateSection(pDigits) {
-        let formatted = '';
-        for (let i = 0; i < pDigits.length; i++) {
-            if (i === 2 || i === 4)
-                formatted += '/';
-            formatted += pDigits[i];
-        }
-        return formatted;
-    }
-    formatTimeSection(pDigits, pMax) {
-        let formatted = '';
-        for (let i = 0; i < Math.min(pDigits.length, pMax); i++) {
-            if (i === 2 || i === 4)
-                formatted += ':';
-            formatted += pDigits[i];
-        }
-        return formatted;
-    }
-    ValidateDate() {
-        this.Input.classList.remove('Error');
-        if (X.IsEmpty(this.Input.value))
-            return;
-        if (!Date.IsDateOrTime(this.Input.value))
-            this.Input.classList.add('Error');
-        else {
-            const [d, m, y] = this.Input.value.split('/');
-            const date = new Date(`${y}-${m}-${d}`);
-            if (this.Calendar.IsVisible)
-                this.Calendar.SelectDate(date);
-        }
-    }
-    OnClick(pArg) {
-        this.Calendar.BindTo(this);
-        this.Calendar.Show();
-        this.Calendar.SelectedDate = this.SelectedDate;
-    }
-}
 /// <reference path="../Elements/Base/XBaseInput.ts" />
-class XMemoEditor extends XBaseInput {
+class XDataGridEditor extends XBaseInput {
     constructor(pOwner) {
         super(pOwner);
-        this.Input.className = "XMemoEditor";
-        this.Title = "Digite um Texto";
+        this.data = [];
+        this.sortState = null;
+        this.rowNumberColumn = { field: '#', visible: true, width: 50 };
+        for (let i = 0; i < 1000; i++) {
+            const row = {
+                id: i,
+                nome: `Nome ${i}`,
+                email: `email${i}@exemplo.com`,
+                cidade: `Cidade ${i % 100}`,
+                idade: 20 + (i % 50),
+                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa: `Empresa ${i % 20}`,
+                cargo: `Cargo ${i % 10}`,
+                salario: 2000 + (i % 50) * 100,
+                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                status: i % 4 === 0 ? 'Ativo' : 'Inativo'
+            };
+            this.data.push(row);
+        }
+        this.Title = "Grade de dados";
+        var div = new XDiv(this, "XDataGridEditor");
+        this.container = div.HTML;
+        this.Input = this.container;
+        this.dataset = this.data;
+        const fields = Object.keys(this.dataset[0] || {});
+        this.columns = fields.map(field => ({ field, visible: true, width: 120 }));
+        this.render();
+        this.addColumnVisibilityToggle();
     }
     CreateInput() {
-        return XUtils.AddElement(this.HTML, "textarea", "XBaseButtonInput");
+        return null;
     }
-}
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class XNormalEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Input.className = "XNormalEditor";
-        this.Title = "Digite uma Frase";
+    render() {
+        this.container.innerHTML = '';
+        const table = document.createElement('table');
+        table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
+        this.buildHeader(table);
+        this.buildBody(table);
+        this.container.appendChild(table);
+    }
+    buildHeader(table) {
+        const thead = document.createElement('thead');
+        //thead.style.position = 'sticky';
+        //thead.style.top = '0';
+        //thead.style.zIndex = '2';
+        const headerRow = document.createElement('tr');
+        // Coluna de número sequencial
+        const rowNumberTh = this.createHeaderTh(this.rowNumberColumn);
+        headerRow.appendChild(rowNumberTh);
+        // Colunas do dataset
+        this.columns.filter(c => c.visible).forEach(colConfig => {
+            const th = this.createHeaderTh(colConfig);
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+    }
+    createHeaderTh(colConfig) {
+        var _a;
+        const th = document.createElement('th');
+        th.textContent = colConfig.field;
+        th.style.width = `${colConfig.width}px`;
+        if (colConfig.field !== '#') {
+            th.draggable = true;
+            th.addEventListener('dragstart', (e) => this.handleDragStart(e, colConfig));
+            th.addEventListener('dragover', (e) => this.handleDragOver(e, colConfig));
+            // Indicador de ordenação
+            if (((_a = this.sortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.field) {
+                th.textContent += this.sortState.direction === 'asc' ? ' ▲' : ' ▼';
+            }
+        }
+        // Redimensionador
+        const resizer = document.createElement('div');
+        resizer.className = 'resizer';
+        th.appendChild(resizer);
+        this.addResizerEvents(th, resizer, colConfig);
+        // Clique para ordenar
+        if (colConfig.field !== '#') {
+            th.addEventListener('click', () => this.sortData(colConfig.field));
+        }
+        return th;
+    }
+    addResizerEvents(th, resizer, colConfig) {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = th.offsetWidth;
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.removeEventListener('mousemove', handleMouseMove);
+            });
+        });
+        const handleMouseMove = (e) => {
+            if (!isResizing)
+                return;
+            const newWidth = startWidth + (e.clientX - startX);
+            th.style.width = `${newWidth}px`;
+            colConfig.width = newWidth;
+            document.querySelectorAll(`td[data-field="${colConfig.field}"]`).forEach(td => {
+                td.style.width = `${newWidth}px`;
+            });
+        };
+    }
+    handleDragStart(e, colConfig) {
+        e.dataTransfer.setData('text/plain', colConfig.field);
+    }
+    handleDragOver(e, targetColConfig) {
+        e.preventDefault();
+        const draggedField = e.dataTransfer.getData('text/plain');
+        const draggedIndex = this.columns.findIndex(c => c.field === draggedField);
+        const targetIndex = this.columns.findIndex(c => c.field === targetColConfig.field);
+        if (draggedIndex === -1 || targetIndex === -1)
+            return;
+        const temp = this.columns[draggedIndex];
+        this.columns[draggedIndex] = this.columns[targetIndex];
+        this.columns[targetIndex] = temp;
+        this.render();
+    }
+    sortData(field) {
+        var _a;
+        if (((_a = this.sortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
+            this.sortState.direction = this.sortState.direction === 'asc' ? 'desc' : 'asc';
+        }
+        else {
+            this.sortState = { field, direction: 'asc' };
+        }
+        var self = this.sortState;
+        this.dataset.sort((a, b) => {
+            var e = this;
+            if (a[field] > b[field])
+                return e.sortState.direction === 'asc' ? 1 : -1;
+            if (a[field] < b[field])
+                return e.sortState.direction === 'asc' ? -1 : 1;
+            return 0;
+        });
+        this.render();
+    }
+    addColumnVisibilityToggle() {
+        const button = document.createElement('button');
+        button.className = 'menu-button';
+        button.textContent = '☰';
+        const menu = document.createElement('div');
+        menu.className = 'column-menu';
+        this.columns.forEach(col => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = col.visible;
+            checkbox.addEventListener('change', () => {
+                col.visible = checkbox.checked;
+                this.render();
+            });
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(col.field));
+            menu.appendChild(label);
+        });
+        button.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+        this.HTML.appendChild(button);
+        this.HTML.appendChild(menu);
+    }
+    buildBody(table) {
+        const tbody = document.createElement('tbody');
+        this.dataset.forEach((rowData, index) => {
+            const tr = document.createElement('tr');
+            // Número sequencial
+            const tdNumber = document.createElement('td');
+            tdNumber.textContent = (index + 1).toString();
+            tr.appendChild(tdNumber);
+            // Dados
+            this.columns.filter(c => c.visible).forEach(colConfig => {
+                const td = document.createElement('td');
+                td.dataset.field = colConfig.field;
+                td.textContent = rowData[colConfig.field];
+                td.style.width = `${colConfig.width}px`;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
     }
 }
 /// <reference path="src/XDefault.ts" />
@@ -3049,289 +3552,6 @@ class XNormalEditor extends XBaseInput {
 /// <reference path="src/Editors/XDatePickerEditor.ts" />
 /// <reference path="src/Editors/XMemoEditor.ts" />
 /// <reference path="src/Editors/XNormalEditor.ts" />
+/// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class XIntegerEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Mask = "#.##0";
-        this.AllowNegative = false;
-        this.Input.className = "XIntegerEditor";
-        this.AllowNegative = this.Mask.startsWith('-');
-        this.MaxDigits = this.Mask.replace(/[^#0]/g, '').length;
-        this.HasSeparator = this.Mask.includes('.');
-        this.IsFixedMask = !this.Mask.includes('#') && /^[-]?0+$/.test(this.Mask);
-        this.Init();
-        this.Title = "Digite um Valor Inteiro";
-    }
-    Init() {
-        this.Input.value = this.FormatNumber('0');
-        this.SetupEventListeners();
-    }
-    SetupEventListeners() {
-        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.GandleInput);
-        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.handleKeyDown);
-        XEventManager.AddEvent(this, this.Input, XEventType.Blur, this.HandleBlur);
-    }
-    GandleInput(pArg) {
-        const rawValue = this.GetRawValue(this.Input.value);
-        const processed = this.ProcessValue(rawValue);
-        this.Input.value = this.FormatNumber(processed);
-    }
-    handleKeyDown(e) {
-        if ([8, 46, 9, 27, 13, 37, 38, 39, 40, 36, 35].Contains(e.keyCode))
-            return;
-        if ((e.ctrlKey || e.metaKey) && [67, 86, 88, 65].Contains(e.keyCode))
-            return;
-        const isNegativeSign = e.key === '-' && this.AllowNegative;
-        const isNumber = e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode >= 96 && e.keyCode <= 105;
-        if (isNegativeSign) {
-            e.preventDefault();
-            this.ToggleSign();
-            return;
-        }
-        if (!isNumber) {
-            e.preventDefault();
-        }
-    }
-    ToggleSign() {
-        const current = this.GetRawValue(this.Input.value);
-        const newValue = current.startsWith('-') ? current.slice(1) : `-${current}`;
-        this.Input.value = this.FormatNumber(newValue);
-    }
-    HandleBlur() {
-        const rawValue = this.GetRawValue(this.Input.value);
-        if (rawValue === '-' || rawValue === '') {
-            this.Input.value = '0';
-        }
-        else {
-            this.Input.value = this.FormatNumber(rawValue);
-        }
-    }
-    GetRawValue(pValue) {
-        return pValue.replace(/[^0-9-]/g, '');
-    }
-    ProcessValue(pValue) {
-        let isNegative = this.AllowNegative && pValue.startsWith('-');
-        let digits = pValue.replace(/-/g, '').replace(/^0+/, '') || '0';
-        digits = digits.slice(0, this.MaxDigits);
-        if (this.IsFixedMask) {
-            digits = digits.RPad(this.MaxDigits, '0');
-        }
-        return (isNegative ? '-' : '') + digits;
-    }
-    FormatNumber(pValue) {
-        const isNegative = pValue.startsWith('-');
-        let digits = isNegative ? pValue.slice(1) : pValue;
-        digits = digits.replace(/[^0-9]/g, '');
-        if (this.HasSeparator) {
-            digits = this.InsertSeparators(digits);
-        }
-        if (this.IsFixedMask) {
-            digits = digits.LPad(this.MaxDigits, '0');
-        }
-        return (isNegative ? '-' : '') + digits;
-    }
-    InsertSeparators(pDigits) {
-        var _a, _b, _c, _d;
-        return (_d = (_c = (_b = (_a = pDigits === null || pDigits === void 0 ? void 0 : pDigits.split('')) === null || _a === void 0 ? void 0 : _a.reverse()) === null || _b === void 0 ? void 0 : _b.join('')) === null || _c === void 0 ? void 0 : _c.match(/.{1,3}/g)) === null || _d === void 0 ? void 0 : _d.join('.').split('').reverse().join('').replace(/^\./, '');
-    }
-}
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class XDecimalEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Input.className = "XDecimalEditor";
-        this.AllowNegative = false;
-        this.MaxIntegerDigits = 4;
-        this.DecimalDigits = 2;
-        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
-        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.HandleKeydown);
-        this.Input.value = this.FormatValue(this.ProcessValue(''));
-        this.Title = "Digite um Valor Decimal";
-    }
-    HandleInput(event) {
-        const position = this.Input.selectionStart;
-        const value = this.Input.value;
-        const processed = this.ProcessValue(value);
-        const formatted = this.FormatValue(processed);
-        if (this.Input.value !== formatted) {
-            this.Input.value = formatted;
-            this.AdjustCursorPosition(position, value, formatted);
-        }
-    }
-    HandleKeydown(pArg) {
-        if (pArg.key === '-') {
-            pArg.preventDefault();
-            if (this.AllowNegative) {
-                const processed = this.ProcessValue(this.Input.value);
-                processed.isNegative = !processed.isNegative;
-                this.Input.value = this.FormatValue(processed);
-            }
-        }
-        else if (pArg.ctrlKey && (pArg.key === 'Home' || pArg.key === 'End')) {
-            pArg.preventDefault();
-            this.Input.setSelectionRange(0, this.Input.value.length);
-        }
-        else if (pArg.key === ',' && this.Input.value.includes(','))
-            pArg.preventDefault();
-    }
-    ProcessValue(value) {
-        let rawValue = value.replace(/[^\d-,]/g, '');
-        let isNegative = false;
-        if (this.AllowNegative) {
-            isNegative = rawValue.startsWith('-');
-            rawValue = rawValue.replace(/-/g, '');
-        }
-        const [integer = '0', decimal = ''] = rawValue.split(',');
-        const integerClean = integer.replace(/\D/g, '').replace(/^0+/, '').substring(0, this.MaxIntegerDigits) || '0';
-        const decimalClean = decimal.replace(/\D/g, '').slice(-this.DecimalDigits).RPad(this.DecimalDigits, '0');
-        return {
-            isNegative: isNegative && this.AllowNegative,
-            integerPart: integerClean || '0',
-            decimalPart: decimalClean
-        };
-    }
-    FormatValue(processed) {
-        const formattedInteger = processed.integerPart
-            .split('')
-            .reverse()
-            .join('')
-            .replace(/(\d{3})(?=\d)/g, '$1.')
-            .split('')
-            .reverse()
-            .join('')
-            .replace(/^\./, '') || '0';
-        const sign = processed.isNegative ? '-' : '';
-        return `${sign}${formattedInteger},${processed.decimalPart}`;
-    }
-    AdjustCursorPosition(oldPos, oldValue, newValue) {
-        if (oldPos === null)
-            return;
-        const commaIndex = newValue.indexOf(',');
-        const isDecimal = oldPos > oldValue.indexOf(',');
-        if (isDecimal && commaIndex !== -1) {
-            const decimalCursor = Math.min(oldPos - oldValue.indexOf(',') - 1 + commaIndex + 1, newValue.length);
-            this.Input.setSelectionRange(decimalCursor, decimalCursor);
-        }
-        else
-            this.Input.setSelectionRange(oldPos, oldPos);
-    }
-}
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class XEMailEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.Input.className = "XEMailEditor";
-        this.Input.placeholder = "e-mail";
-        XEventManager.AddEvent(this, this.HTML, XEventType.Input, this.Validate);
-        this.Title = "Digite um E-Mail";
-    }
-    Validate(pArg) {
-        pArg.preventDefault(); // Impede o envio do formulário
-        const email = this.Input.value;
-        var isvalid = email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-        this.Input.classList.remove('Error');
-        if (isvalid)
-            return;
-        if (!isvalid)
-            this.Input.classList.add('Error');
-    }
-}
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class PhoneFormatter {
-    static format(value) {
-        let nums = value.replace(/\D/g, '');
-        let formatted = '';
-        // Limitar tamanho máximo
-        const maxLength = nums.startsWith('55') ? 13 : 11;
-        nums = nums.substring(0, maxLength);
-        if (nums.startsWith('55') && nums.length > 2) {
-            formatted = `+55 `;
-            nums = nums.substring(2);
-        }
-        if (nums.length >= 2) {
-            formatted += `(${nums.substring(0, 2)})`;
-            nums = nums.substring(2);
-        }
-        if (nums.length > 0) {
-            formatted += ' ' + nums.replace(/(\d{4,5})(\d{4})$/, '$1-$2');
-        }
-        return formatted.replace(/(\s)-/g, '$1').trim();
-    }
-    static validate(phone) {
-        return /^(?:\+55\s\(\d{2}\)\s\d{5}-\d{4}$|\(\d{2}\)\s\d{4,5}-\d{4}$)/.test(phone);
-    }
-}
-class XPhoneEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
-        this.lastValue = '';
-        this.cursorPos = 0;
-        this.Input.className = "XPhoneEditor";
-        this.Title = "Digite um Nº de Telefone";
-        XEventManager.AddEvent(this, this.Input, XEventType.Input, this.handleInput);
-        XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.handleKeyDown);
-    }
-    handleKeyDown(e) {
-        // Permitir navegação e comandos especiais
-        const allowedKeys = [
-            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
-            'Home', 'End', 'Tab', 'Control'
-        ];
-        if (allowedKeys.Contains(e.key) || e.ctrlKey) {
-            return;
-        }
-        if (!/\d/.test(e.key)) {
-            e.preventDefault();
-        }
-    }
-    handleInput() {
-        const prevValue = this.Input.value;
-        const rawValue = prevValue.replace(/\D/g, '');
-        // Controlar máximo de dígitos
-        const maxLength = rawValue.startsWith('55') ? 13 : 11;
-        const newValue = PhoneFormatter.format(rawValue.substring(0, maxLength));
-        // Manter posição do cursor
-        const cursorBefore = this.Input.selectionStart || 0;
-        const diff = newValue.length - prevValue.length;
-        // Ajustar posição do cursor
-        let newCursorPos = cursorBefore;
-        if (this.lastValue.length > newValue.length) {
-            newCursorPos = this.calculateCursorPos(cursorBefore, prevValue, newValue);
-        }
-        else {
-            newCursorPos = cursorBefore + diff;
-        }
-        this.Input.value = newValue;
-        this.lastValue = newValue;
-        // Corrigir posição do cursor
-        requestAnimationFrame(() => {
-            this.Input.setSelectionRange(newCursorPos, newCursorPos);
-        });
-        this.updateValidation();
-    }
-    calculateCursorPos(oldPos, oldValue, newValue) {
-        let adjust = 0;
-        const isBackspace = oldValue.length > newValue.length;
-        // Ajustar para formatação automática
-        for (let i = 0; i < oldPos; i++) {
-            if (isBackspace && /[()\-\s]/.test(oldValue[i])) {
-                adjust--;
-            }
-            if (!isBackspace && /[()\-\s]/.test(newValue[i])) {
-                adjust++;
-            }
-        }
-        return Math.max(0, Math.min(newValue.length, oldPos + adjust));
-    }
-    updateValidation() {
-        const isvalid = PhoneFormatter.validate(this.Input.value);
-        this.Input.classList.remove('Error');
-        if (isvalid)
-            return;
-        if (!isvalid)
-            this.Input.classList.add('Error');
-    }
-}
 //# sourceMappingURL=TFX.Core.js.map

@@ -18,6 +18,7 @@ class XTabControlButton extends XBaseTextButton
 
 class XTabControlHeader extends XDiv
 {
+
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XTabControlHeader");
@@ -25,10 +26,32 @@ class XTabControlHeader extends XDiv
 
     DropdownButton: XTabControlButtonList | null = null;
 
+    SelectionChanged()
+    {
+        this.validateVisibility();
+    }
+
     override SizeChanged()
     {
         if (this.DropdownButton != null)
             this.DropdownButton.IsVisible = this.HTML.scrollWidth > this.HTML.offsetWidth;
+        this.validateVisibility();
+    }
+
+    private validateVisibility()
+    {
+        const painelRect = this.HTML.getBoundingClientRect();
+        this.HTML.childNodes.forEach(item =>
+        {
+            var elm = <HTMLElement>item;
+            const rect = elm.getBoundingClientRect();
+
+            if (rect.left < painelRect.left || rect.right > painelRect.right)
+                elm.style.visibility = 'hidden';
+
+            else
+                elm.style.visibility = 'visible';
+        });
     }
 }
 class XTabControlTab extends XDiv
@@ -91,32 +114,32 @@ class XTabControl extends XDiv
             this.PopulateDropdown();
         });
         this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
-        this.AddTab("X21");
-        this.AddTab("X21 skjldjlksd");
-        this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
+        //this.AddTab("X21");
+        //this.AddTab("X21 skjldjlksd");
+        //this.AddTab("X21 sdkljdflks");
     }
     Header: XTabControlHeader;
     Container: XTabControlContainer;
@@ -173,6 +196,7 @@ class XTabControl extends XDiv
         }
         this.Dropdown.IsVisible = false;
         this.ActiveTab = pButton.Tab;
+        this.Header.SelectionChanged();
     }
 
     AddTab(pTitle: string)

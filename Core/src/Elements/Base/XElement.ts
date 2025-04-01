@@ -23,6 +23,8 @@
             pOwner.appendChild(this.HTML);
         this._ResizeObserver = new ResizeObserver(() => this.SizeChanged());
         this._ResizeObserver.observe(this.HTML);
+        if (pOwner instanceof XElement)
+            pOwner.AddChildren(this);
     }
 
     public HTML: HTMLElement;
@@ -35,6 +37,12 @@
     OrderIndex: number = 0;
     Rows: number = 0;
     Cols: number = 0;
+    Children: XArray<XElement> = new XArray<XElement>();
+
+    AddChildren(pElement: XElement)
+    {
+        this.Children.Add(pElement);    
+    }
     get Rect(): XRect
     {
         return this.HTML.GetRect();

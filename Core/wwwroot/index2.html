@@ -5,35 +5,65 @@
     <title>TFX Core</title>
     <script src="js/TFX.Core.js"></script>
     <style>
-        .numeric-input {
-            font-family: 'Courier New', monospace;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            width: 200px;
-            outline: none;
-            text-align: right;
+        .container {
+            width: 100%; /* Largura do painel */
+            overflow-x: auto; /* Habilita scroll horizontal */
+            scroll-snap-type: x mandatory; /* Força o alinhamento ao filho */
+            white-space: nowrap; /* Mantém os filhos em linha */
+            scrollbar-width: none; /* Remove a barra de scroll (opcional) */
         }
 
-            .numeric-input:focus {
-                border-color: #2196F3;
-                box-shadow: 0 0 3px #2196F3;
-            }
+        .filho {
+            display: inline-block; /* Exibe os filhos em linha */
+            width: 200px; /* Largura de cada filho */
+            height: 150px; /* Altura do filho */
+            scroll-snap-align: start; /* Alinha o início do filho ao container */
+            flex-shrink: 0; /* Impede redução de tamanho (se usar flex) */
+        }
+
+        /* Estilização opcional para melhor visualização */
+        .filho {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
     </style>
+
 </head>
 <body>
-    <input type="text" class="numeric-input">
-
-    <script>
-
-
-        // Inicialização
-        const input = document.querySelector('.numeric-input');
-        new NumericInput(input, {
-            allowNegative: true,
-            maxIntegerDigits: 4,
-            decimalDigits: 2
-        });
-    </script>
+    <div>
+        <div class="container">
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <div class="filho">Filho 1</div>
+            <div class="filho">Filho 2</div>
+            <div class="filho">Filho 3</div>
+            <!-- Mais filhos... -->
+        </div>
+    </div>
 </body>
