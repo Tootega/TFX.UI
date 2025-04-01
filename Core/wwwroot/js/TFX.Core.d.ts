@@ -583,6 +583,11 @@ declare class XBaseInput extends XDiv implements XIEditor {
     set Title(pValue: string);
     CreateInput(): HTMLInputElement;
 }
+declare class XDataGridEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    DataGrid: XDataGrid;
+    CreateInput(): HTMLInputElement;
+}
 declare class XBaseButtonInput extends XBaseInput {
     constructor(pOwner: XElement | HTMLElement | null);
     Button: XBaseButton;
@@ -809,20 +814,21 @@ declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
 }
-interface ColumnConfig {
+interface XColumnConfig {
     field: string;
     visible: boolean;
     width: number;
 }
-declare class XDataGridEditor extends XBaseInput {
+declare class XDataGrid extends XElement {
     data: any;
-    constructor(pOwner: XElement | HTMLElement | null);
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Container: XDiv;
     private container;
     private dataset;
     private columns;
     private sortState;
     private rowNumberColumn;
-    CreateInput(): HTMLInputElement;
+    protected CreateContainer(): HTMLElement;
     private render;
     private buildHeader;
     private createHeaderTh;

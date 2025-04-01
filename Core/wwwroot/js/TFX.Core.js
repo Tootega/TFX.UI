@@ -2174,6 +2174,17 @@ class XBaseInput extends XDiv {
         return XUtils.AddElement(this.HTML, "input", "XBaseButtonInput");
     }
 }
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XDataGridEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.DataGrid = new XDataGrid(this, "XDataGridEditor");
+        this.Input = this.DataGrid.HTML;
+    }
+    CreateInput() {
+        return null;
+    }
+}
 /// <reference path="XBaseInput.ts" />
 class XBaseButtonInput extends XBaseInput {
     constructor(pOwner) {
@@ -3118,7 +3129,7 @@ class XForm extends XDiv {
         edt.OrderIndex = 1;
         this.Fields.Add(edt);
         edt = new XMemoEditor(this);
-        edt.Rows = 4;
+        edt.Rows = 3;
         edt.Cols = 9;
         edt.OrderIndex = 2;
         this.Fields.Add(edt);
@@ -3182,7 +3193,7 @@ class XForm extends XDiv {
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
         edt = new XDataGridEditor(this);
-        edt.Rows = 5;
+        edt.Rows = 8;
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
@@ -3327,11 +3338,38 @@ class XUtils {
         return elm;
     }
 }
-/// <reference path="../Elements/Base/XBaseInput.ts" />
-class XDataGridEditor extends XBaseInput {
-    constructor(pOwner) {
-        super(pOwner);
+/// <reference path="src/XDefault.ts" />
+/// <reference path="src/XConst.ts" />
+/// <reference path="src/XInterfaces.ts" />
+/// <reference path="src/XExtensions.ts" />
+/// <reference path="src/XMath.ts" />
+/// <reference path="src/XSort.ts" />
+/// <reference path="src/Utils/XUtils.ts" />
+/// <reference path="src/XTypes.ts" />
+/// <reference path="src/Elements/Base/XElement.ts" />
+/// <reference path="src/XPopupManager.ts" />
+/// <reference path="src/XEventManager.ts" />
+/// <reference path="src/Elements/Base/XElement.ts" />
+/// <reference path="src/Elements/Base/XDiv.ts" />
+/// <reference path="src/Elements/Base/XBaseButton.ts" />
+/// <reference path="src/Elements/Base/XBaseTextButton.ts" />
+/// <reference path="src/Elements/Base/XBaseInput.ts" />
+/// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
+/// <reference path="src/Elements/Base/XPopupElement.ts" />
+/// <reference path="src/Elements/Base/XCalendar.ts" />
+/// <reference path="src/Elements/XMenu.ts" />
+/// <reference path="src/Elements/XTabControl.ts" />
+/// <reference path="src/Editors/XDatePickerEditor.ts" />
+/// <reference path="src/Editors/XMemoEditor.ts" />
+/// <reference path="src/Editors/XNormalEditor.ts" />
+/// <reference path="src/Editors/XDataGridEditor.ts" />
+/// <reference path="src/Stage/XStage.ts" />
+/// <reference path="XElement.ts" />
+class XDataGrid extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
         this.data = [];
+        this.dataset = [];
         this.sortState = null;
         this.rowNumberColumn = { field: '#', visible: true, width: 50 };
         for (let i = 0; i < 100; i++) {
@@ -3346,22 +3384,28 @@ class XDataGridEditor extends XBaseInput {
                 cargo: `Cargo ${i % 10}`,
                 salario: 2000 + (i % 50) * 100,
                 dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
-                status: i % 4 === 0 ? 'Ativo' : 'Inativo'
+                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
+                cargo1: `Cargo ${i % 10}`,
+                salario2: 2000 + (i % 50) * 100,
+                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                nome1: `Nome ${i}`,
+                email1: `email${i}@exemplo.com`,
+                cidade1: `Cidade ${i % 100}`,
+                idade1: 20 + (i % 50),
+                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa1: `Empresa ${i % 20}`,
             };
-            this.data.push(row);
+            this.dataset.push(row);
         }
-        this.Title = "Grade de dados";
-        var div = new XDiv(this, "XDataGridEditor");
-        this.container = div.HTML;
-        this.Input = this.container;
-        this.dataset = this.data;
+        this.Container = new XDiv(this, "XDataGrid");
+        this.container = this.Container.HTML;
         const fields = Object.keys(this.dataset[0] || {});
         this.columns = fields.map(field => ({ field, visible: true, width: 120 }));
         this.render();
         this.addColumnVisibilityToggle();
     }
-    CreateInput() {
-        return null;
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
     }
     render() {
         this.container.innerHTML = '';
@@ -3401,7 +3445,8 @@ class XDataGridEditor extends XBaseInput {
         th.appendChild(sortIcon);
         // Drag para reordenar colunas
         th.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', colConfig.field);
+            var _a;
+            (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData('text/plain', colConfig.field);
             th.classList.add('dragging');
         });
         th.addEventListener('dragend', () => {
@@ -3417,9 +3462,10 @@ class XDataGridEditor extends XBaseInput {
             th.classList.remove('drag-over');
         });
         th.addEventListener('drop', (e) => {
+            var _a;
             e.preventDefault();
             th.classList.remove('drag-over');
-            const draggedField = e.dataTransfer.getData('text/plain');
+            const draggedField = (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.getData('text/plain');
             const visibleColumns = this.getVisibleColumns();
             const draggedIndex = visibleColumns.findIndex(c => c.field === draggedField);
             const targetIndex = visibleColumns.findIndex(c => c.field === colConfig.field);
@@ -3546,30 +3592,4 @@ class XDataGridEditor extends XBaseInput {
         table.appendChild(tbody);
     }
 }
-/// <reference path="src/XDefault.ts" />
-/// <reference path="src/XConst.ts" />
-/// <reference path="src/XInterfaces.ts" />
-/// <reference path="src/XExtensions.ts" />
-/// <reference path="src/XMath.ts" />
-/// <reference path="src/XSort.ts" />
-/// <reference path="src/Utils/XUtils.ts" />
-/// <reference path="src/XTypes.ts" />
-/// <reference path="src/Elements/Base/XElement.ts" />
-/// <reference path="src/XPopupManager.ts" />
-/// <reference path="src/XEventManager.ts" />
-/// <reference path="src/Elements/Base/XElement.ts" />
-/// <reference path="src/Elements/Base/XDiv.ts" />
-/// <reference path="src/Elements/Base/XBaseButton.ts" />
-/// <reference path="src/Elements/Base/XBaseTextButton.ts" />
-/// <reference path="src/Elements/Base/XBaseInput.ts" />
-/// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
-/// <reference path="src/Elements/Base/XPopupElement.ts" />
-/// <reference path="src/Elements/Base/XCalendar.ts" />
-/// <reference path="src/Elements/XMenu.ts" />
-/// <reference path="src/Elements/XTabControl.ts" />
-/// <reference path="src/Editors/XDatePickerEditor.ts" />
-/// <reference path="src/Editors/XMemoEditor.ts" />
-/// <reference path="src/Editors/XNormalEditor.ts" />
-/// <reference path="src/Editors/XDataGridEditor.ts" />
-/// <reference path="src/Stage/XStage.ts" />
 //# sourceMappingURL=TFX.Core.js.map

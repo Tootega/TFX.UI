@@ -33,7 +33,7 @@ class XForm extends XDiv
         this.Fields.Add(<any>edt);
 
         edt = new XMemoEditor(this);
-        edt.Rows = 4;
+        edt.Rows = 3;
         edt.Cols = 9;
         edt.OrderIndex = 2;
         this.Fields.Add(<any>edt);
@@ -103,7 +103,7 @@ class XForm extends XDiv
         this.Fields.Add(<any>edt);
 
         edt = new XDataGridEditor(this);
-        edt.Rows = 5;
+        edt.Rows = 8;
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(<any>edt);
@@ -111,14 +111,12 @@ class XForm extends XDiv
         this.Fields.ForEach(e => e.OrderIndex = cn++);
         this.Fields = this.Fields.OrderBy(e => e.OrderIndex);
     }
-
     Fields: XArray<XIEditor> = new XArray<XIEditor>();
 
     override SizeChanged()
     {
         this.ResizeChildren();
     }
-
 
     ResizeChildren()
     {
