@@ -31,7 +31,7 @@ class XForm extends XDiv
         edt.Cols = 9;
         edt.OrderIndex = 1;
         this.Fields.Add(<any>edt);
-        
+
         edt = new XMemoEditor(this);
         edt.Rows = 4;
         edt.Cols = 9;
@@ -83,6 +83,23 @@ class XForm extends XDiv
         edt.AllowNegative = true;
         edt.MaxIntegerDigits = 4;
         edt.DecimalDigits = 2;
+        this.Fields.Add(<any>edt);
+        edt = new XEMailEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+
+        edt = new XPhoneEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+
+        edt = new XPhoneEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 4;
+        edt.OrderIndex = 3;
         this.Fields.Add(<any>edt);        
     }
 
@@ -146,6 +163,7 @@ class XForm extends XDiv
                         var r = new XRect(x, y, ccols * cellw, crows * cellh);
                         r.Inflate(-2, -2);
                         child.Rect = r;
+
                         placed = true;
                         break;
                     }
@@ -154,6 +172,30 @@ class XForm extends XDiv
                     break;
             }
         }
+        var tidx = 1;
+        var tabs = this.SortRectangles(this.Fields);
+        for (const child of tabs)
+            child.Input.tabIndex = tidx++;
     }
+
+    SortRectangles(rectangles: XArray<XIEditor>): XArray<XIEditor>
+    {
+        return rectangles.sort((a, b) =>
+        {
+
+            if (a.Rect.Top < b.Rect.Top)
+                return -1;
+            if (a.Rect.Top > b.Rect.Top)
+                return 1;
+
+            if (a.Rect.Left < b.Rect.Left)
+                return -1;
+            if (a.Rect.Left > b.Rect.Left)
+                return 1;
+
+            return 0;
+        });
+    }
+
 }
 

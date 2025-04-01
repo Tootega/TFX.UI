@@ -12,6 +12,7 @@ class XDecimalEditor extends XBaseInput
         XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
         XEventManager.AddEvent(this, this.Input, XEventType.KeyDown, this.HandleKeydown);
         this.Input.value = this.FormatValue(this.ProcessValue(''));
+        this.Title = "Digite um Valor Decimal";
     }
 
     AllowNegative: boolean;

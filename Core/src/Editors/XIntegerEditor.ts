@@ -11,6 +11,7 @@ class XIntegerEditor extends XBaseInput
         this.IsFixedMask = !this.Mask.includes('#') && /^[-]?0+$/.test(this.Mask);
 
         this.Init();
+        this.Title = "Digite um Valor Inteiro";
     }
 
     Mask: string = "#.##0";

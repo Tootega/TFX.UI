@@ -1,19 +1,3 @@
-declare class NumericInput {
-    private input;
-    private allowNegative;
-    private maxIntegerDigits;
-    private decimalDigits;
-    constructor(input: HTMLInputElement, options?: {
-        allowNegative?: boolean;
-        maxIntegerDigits?: number;
-        decimalDigits?: number;
-    });
-    private handleInput;
-    private handleKeydown;
-    private processValue;
-    private formatValue;
-    private adjustCursorPosition;
-}
 declare enum XKey {
     K_CANCEL = 3,
     K_HELP = 6,
@@ -383,6 +367,7 @@ interface XIEditor extends XIElement {
     Cols: number;
     NewLine: boolean;
     Rect: XRect;
+    Input: HTMLInputElement;
 }
 interface XIPopupPanel extends XIElement {
     CallPopupClosed(): void;
@@ -677,6 +662,8 @@ declare class XBaseInput extends XDiv implements XIEditor {
     protected ELMTitle: XDiv;
     NewLine: boolean;
     OrderIndex: number;
+    get Title(): string;
+    set Title(pValue: string);
     CreateInput(): HTMLInputElement;
 }
 declare class XBaseButtonInput extends XBaseInput {
@@ -726,6 +713,7 @@ declare class XForm extends XDiv {
     Fields: XArray<XIEditor>;
     SizeChanged(): void;
     ResizeChildren(): void;
+    SortRectangles(rectangles: XArray<XIEditor>): XArray<XIEditor>;
 }
 declare class XStage extends XDiv {
     static Instance: XStage;
@@ -799,4 +787,21 @@ declare class XDecimalEditor extends XBaseInput {
     private ProcessValue;
     private FormatValue;
     private AdjustCursorPosition;
+}
+declare class XEMailEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Validate(pArg: InputEvent): void;
+}
+declare class PhoneFormatter {
+    static format(value: string): string;
+    static validate(phone: string): boolean;
+}
+declare class XPhoneEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    private lastValue;
+    private cursorPos;
+    private handleKeyDown;
+    private handleInput;
+    private calculateCursorPos;
+    private updateValidation;
 }

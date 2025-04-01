@@ -6,14 +6,21 @@ class XBaseInput extends XDiv implements XIEditor
         super(pOwner, "InputContainer");
         this.Input = this.CreateInput();
         this.ELMTitle = new XDiv(this, "InputTitle");
-        this.ELMTitle.HTML.innerText = new Date().toLocaleTimeString();
+
     }
     Input: HTMLInputElement;
     protected ELMTitle: XDiv;
-
-
     NewLine: boolean = false;
-    OrderIndex: number = -1;  
+    OrderIndex: number = -1;
+
+    get Title(): string
+    {
+        return this.ELMTitle.HTML.innerHTML;
+    }
+    set Title(pValue: string)
+    {
+        this.ELMTitle.HTML.innerHTML = pValue;
+    }
 
     CreateInput(): HTMLInputElement
     {

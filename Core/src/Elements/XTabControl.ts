@@ -52,6 +52,14 @@ class XTabControlDropdown extends XPopupElement
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XTabControlDropdown");
+        this.HTML.addEventListener('wheel', function (event)
+        {
+            const { deltaY } = event;
+            const { scrollTop, scrollHeight, clientHeight } = this;
+
+            if ((deltaY > 0 && (scrollTop + clientHeight >= scrollHeight)) || (deltaY < 0 && scrollTop <= 0))
+                event.preventDefault();
+        });
     }
 }
 

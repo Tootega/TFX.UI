@@ -5,5 +5,6 @@ class XNormalEditor extends XBaseInput
     {
         super(pOwner);
         this.Input.className = "XNormalEditor";
+        this.Title = "Digite uma Frase";
     }
 }
