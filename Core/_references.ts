@@ -17,10 +17,12 @@
 /// <reference path="src/Elements/Base/XBaseInput.ts" />
 /// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="src/Elements/Base/XPopupElement.ts" />
-/// <reference path="src/Elements/Base/XCalendar.ts" />
 
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
+/// <reference path="src/Elements/XCalendar.ts" />
+/// <reference path="src/Elements/XDataGrid.ts" />
+
 /// <reference path="src/Editors/XDatePickerEditor.ts" />
 /// <reference path="src/Editors/XMemoEditor.ts" />
 /// <reference path="src/Editors/XNormalEditor.ts" />
