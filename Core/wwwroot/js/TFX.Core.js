@@ -3453,24 +3453,27 @@ class XDataGridEditor extends XBaseInput {
         let startX = 0;
         let startWidth = 0;
         resizer.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // Impede interferência com drag
+            e.stopPropagation(); // Impede a propagação para o elemento pai
+            e.preventDefault(); // Evita comportamento padrão indesejado
             isResizing = true;
             startX = e.clientX;
             startWidth = th.offsetWidth;
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', () => {
+            const handleMouseMove = (e) => {
+                if (!isResizing)
+                    return;
+                const newWidth = startWidth + (e.clientX - startX);
+                th.style.width = `${newWidth}px`;
+                colConfig.width = newWidth;
+                this.updateColumnWidths(colConfig.field, newWidth);
+            };
+            const handleMouseUp = () => {
                 isResizing = false;
                 document.removeEventListener('mousemove', handleMouseMove);
-            }, { once: true });
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp, { once: true });
         });
-        const handleMouseMove = (e) => {
-            if (!isResizing)
-                return;
-            const newWidth = startWidth + (e.clientX - startX);
-            th.style.width = `${newWidth}px`;
-            colConfig.width = newWidth;
-            this.updateColumnWidths(colConfig.field, newWidth);
-        };
     }
     updateColumnWidths(field, width) {
         const index = this.columns.findIndex(c => c.field === field);

@@ -695,7 +695,14 @@
 }
 
 .resizer {
-  pointer-events: auto; /* Permite eventos de drag passar pelo redimensionador */
+  cursor: col-resize;
+  width: 5px;
+  right: 0;
+  top: 0;
+  height: 100%;
+  position: absolute;
+  background: #ccc;
+  z-index: 1;
 }
 
 table {
@@ -722,8 +729,16 @@ th {
   user-select: none;
   top: -5px;
   padding: 10px 0px 13px 5px;
-  cursor: grab;
   position: relative;
+}
+
+th.dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
+th:hover .resizer {
+  background: #999;
 }
 
 th:active {

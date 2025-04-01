@@ -165,26 +165,32 @@ class XDataGridEditor extends XBaseInput
 
         resizer.addEventListener('mousedown', (e) =>
         {
-            e.stopPropagation(); // Impede interferência com drag
+            e.stopPropagation(); // Impede a propagação para o elemento pai
+            e.preventDefault(); // Evita comportamento padrão indesejado
+
             isResizing = true;
             startX = e.clientX;
             startWidth = th.offsetWidth;
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', () =>
+
+            const handleMouseMove = (e: MouseEvent) =>
+            {
+                if (!isResizing) return;
+                const newWidth = startWidth + (e.clientX - startX);
+                th.style.width = `${newWidth}px`;
+                colConfig.width = newWidth;
+                this.updateColumnWidths(colConfig.field, newWidth);
+            };
+
+            const handleMouseUp = () =>
             {
                 isResizing = false;
                 document.removeEventListener('mousemove', handleMouseMove);
-            }, { once: true });
-        });
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
 
-        const handleMouseMove = (e: MouseEvent) =>
-        {
-            if (!isResizing) return;
-            const newWidth = startWidth + (e.clientX - startX);
-            th.style.width = `${newWidth}px`;
-            colConfig.width = newWidth;
-            this.updateColumnWidths(colConfig.field, newWidth);
-        };
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp, { once: true });
+        });
     }
 
     private updateColumnWidths(field: string, width: number)
