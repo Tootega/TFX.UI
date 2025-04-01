@@ -38,6 +38,7 @@ interface XIEditor extends XIElement
     Cols: number;
     NewLine: boolean;
     Rect: XRect;
+    Input: HTMLInputElement;
 }
 
 interface XIPopupPanel extends XIElement

@@ -5,6 +5,7 @@ class XMemoEditor extends XBaseInput
     {
         super(pOwner);
         this.Input.className = "XMemoEditor";
+        this.Title = "Digite um Texto";
     }
 
     override CreateInput(): HTMLInputElement
