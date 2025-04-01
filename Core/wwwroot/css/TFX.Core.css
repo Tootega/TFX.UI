@@ -317,6 +317,27 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+.XDataGridEditor {
+  position: absolute;
+  padding: var(--ip-padding);
+  height: var(--ip-height);
+  border-radius: 5px;
+  border: 2px solid #74ddff;
+  outline: none;
+  height: calc(100% - 34px);
+  width: calc(100% - 13px);
+  resize: none;
+  top: 20px;
+  text-align: right;
+  overflow: auto;
+}
+
+.XDataGridEditor:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 .XMenu {
   position: absolute;
   width: 300px;
@@ -647,14 +668,81 @@
 
 .XForm {
   /*    display: grid;
-      grid-template-columns: repeat(32, 1fr);
-      grid-template-rows: repeat(32, 41px);*/
+  grid-template-columns: repeat(32, 1fr);
+  grid-template-rows: repeat(32, 41px);*/
   position: absolute;
-  border: 2px solid #a0c3e6;
-  border-radius: 10px;
-  background-color: #e9f4ff;
+  /*    border: 2px solid #a0c3e6;
+      border-radius: 10px;
+  background-color: #e9f4ff;*/
   width: calc(100% - 2px);
   height: calc(100% - 3px);
+}
+
+.XContainer {
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  background: white;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  position: relative;
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+th {
+  background-color: #f2f2f2;
+  cursor: move;
+  user-select: none;
+  top: -5px;
+  padding: 10px 0px 13px 5px;
+}
+
+.resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: #ccc;
+  cursor: col-resize;
+}
+
+.menu-button {
+  position: absolute;
+  right: 19px;
+  top: 25px;
+  padding: 5px;
+  z-index: 20;
+}
+
+.column-menu {
+  position: absolute;
+  right: 19px;
+  top: 57px;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: none;
+  z-index: 100;
+}
+
+.column-menu label {
+  display: block;
+  margin: 5px 0;
 }
 
 html {
@@ -726,6 +814,10 @@ html {
   background-color: transparent;
   left: 1px;
   top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .MainDiv {

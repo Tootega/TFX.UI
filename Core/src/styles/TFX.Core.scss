@@ -4,6 +4,7 @@
 @import "XMenu.scss";
 @import "XTabControl.scss";
 @import "XStage.scss";
+@import "XDataGridEditor.scss";
 
 html {
     min-height: 100%;
@@ -74,6 +75,10 @@ html {
     background-color: transparent;
     left: 1px;
     top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
 }
 
 .MainDiv {

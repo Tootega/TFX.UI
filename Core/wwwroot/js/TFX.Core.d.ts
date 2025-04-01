@@ -551,6 +551,8 @@ declare class XElement {
     OrderIndex: number;
     Rows: number;
     Cols: number;
+    Children: XArray<XElement>;
+    AddChildren(pElement: XElement): void;
     get Rect(): XRect;
     set Rect(pValue: XRect);
     SizeChanged(): void;
@@ -570,6 +572,86 @@ declare class XElement {
 declare class XDiv extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     protected CreateContainer(): HTMLElement;
+}
+declare class XBaseInput extends XDiv implements XIEditor {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Input: HTMLInputElement;
+    protected ELMTitle: XDiv;
+    NewLine: boolean;
+    OrderIndex: number;
+    get Title(): string;
+    set Title(pValue: string);
+    CreateInput(): HTMLInputElement;
+}
+declare class XBaseButtonInput extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Button: XBaseButton;
+    OnClick(pArg: KeyboardEvent): void;
+}
+declare class XDatePickerEditor extends XBaseButtonInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Calendar: XCalendar;
+    SelectedDate: Date;
+    Selected(pDate: Date): void;
+    FormatDate(data: Date, formato: string): string;
+    private HandleInput;
+    private formatDateSection;
+    private formatTimeSection;
+    private ValidateDate;
+    OnClick(pArg: KeyboardEvent): void;
+}
+declare class XDecimalEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    AllowNegative: boolean;
+    MaxIntegerDigits: number;
+    DecimalDigits: number;
+    private HandleInput;
+    private HandleKeydown;
+    private ProcessValue;
+    private FormatValue;
+    private AdjustCursorPosition;
+}
+declare class XEMailEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Validate(pArg: InputEvent): void;
+}
+declare class XIntegerEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Mask: string;
+    AllowNegative: boolean;
+    MaxDigits: number;
+    HasSeparator: boolean;
+    IsFixedMask: boolean;
+    Init(): void;
+    SetupEventListeners(): void;
+    GandleInput(pArg: any): void;
+    handleKeyDown(e: any): void;
+    ToggleSign(): void;
+    HandleBlur(): void;
+    GetRawValue(pValue: string): string;
+    ProcessValue(pValue: string): string;
+    FormatNumber(pValue: string): string;
+    InsertSeparators(pDigits: string): any;
+}
+declare class XMemoEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    CreateInput(): HTMLInputElement;
+}
+declare class XNormalEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+}
+declare class PhoneFormatter {
+    static format(value: string): string;
+    static validate(phone: string): boolean;
+}
+declare class XPhoneEditor extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    private lastValue;
+    private cursorPos;
+    private handleKeyDown;
+    private handleInput;
+    private calculateCursorPos;
+    private updateValidation;
 }
 declare class XMenuButtonItem extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any);
@@ -628,7 +710,9 @@ declare class XTabControlButton extends XBaseTextButton {
 declare class XTabControlHeader extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
     DropdownButton: XTabControlButtonList | null;
+    SelectionChanged(): void;
     SizeChanged(): void;
+    private validateVisibility;
 }
 declare class XTabControlTab extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
@@ -655,21 +739,6 @@ declare class XTabControl extends XDiv {
     SelectTab(pButton: XTabControlButton): void;
     AddTab(pTitle: string): void;
     CreateTab(): XTabControlTab;
-}
-declare class XBaseInput extends XDiv implements XIEditor {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Input: HTMLInputElement;
-    protected ELMTitle: XDiv;
-    NewLine: boolean;
-    OrderIndex: number;
-    get Title(): string;
-    set Title(pValue: string);
-    CreateInput(): HTMLInputElement;
-}
-declare class XBaseButtonInput extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Button: XBaseButton;
-    OnClick(pArg: KeyboardEvent): void;
 }
 declare class XCalendar extends XPopupElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
@@ -740,68 +809,27 @@ declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
 }
-declare class XDatePickerEditor extends XBaseButtonInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Calendar: XCalendar;
-    SelectedDate: Date;
-    Selected(pDate: Date): void;
-    FormatDate(data: Date, formato: string): string;
-    private HandleInput;
-    private formatDateSection;
-    private formatTimeSection;
-    private ValidateDate;
-    OnClick(pArg: KeyboardEvent): void;
+interface ColumnConfig {
+    field: string;
+    visible: boolean;
+    width: number;
 }
-declare class XMemoEditor extends XBaseInput {
+declare class XDataGridEditor extends XBaseInput {
+    data: any;
     constructor(pOwner: XElement | HTMLElement | null);
+    private container;
+    private dataset;
+    private columns;
+    private sortState;
+    private rowNumberColumn;
     CreateInput(): HTMLInputElement;
-}
-declare class XNormalEditor extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-}
-declare class XIntegerEditor extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Mask: string;
-    AllowNegative: boolean;
-    MaxDigits: number;
-    HasSeparator: boolean;
-    IsFixedMask: boolean;
-    Init(): void;
-    SetupEventListeners(): void;
-    GandleInput(pArg: any): void;
-    handleKeyDown(e: any): void;
-    ToggleSign(): void;
-    HandleBlur(): void;
-    GetRawValue(pValue: string): string;
-    ProcessValue(pValue: string): string;
-    FormatNumber(pValue: string): string;
-    InsertSeparators(pDigits: string): any;
-}
-declare class XDecimalEditor extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    AllowNegative: boolean;
-    MaxIntegerDigits: number;
-    DecimalDigits: number;
-    private HandleInput;
-    private HandleKeydown;
-    private ProcessValue;
-    private FormatValue;
-    private AdjustCursorPosition;
-}
-declare class XEMailEditor extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Validate(pArg: InputEvent): void;
-}
-declare class PhoneFormatter {
-    static format(value: string): string;
-    static validate(phone: string): boolean;
-}
-declare class XPhoneEditor extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    private lastValue;
-    private cursorPos;
-    private handleKeyDown;
-    private handleInput;
-    private calculateCursorPos;
-    private updateValidation;
+    private render;
+    private buildHeader;
+    private createHeaderTh;
+    private addResizerEvents;
+    private handleDragStart;
+    private handleDragOver;
+    private sortData;
+    private addColumnVisibilityToggle;
+    private buildBody;
 }
