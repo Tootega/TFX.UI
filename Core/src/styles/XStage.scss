@@ -25,13 +25,7 @@
 }
 
 .XForm {
-    /*    display: grid;
-    grid-template-columns: repeat(32, 1fr);
-    grid-template-rows: repeat(32, 41px);*/
     position: absolute;
-    /*    border: 2px solid #a0c3e6;
-    border-radius: 10px;
-background-color: #e9f4ff;*/
     width: calc(100% - 2px);
     height: calc(100% - 3px);
 }

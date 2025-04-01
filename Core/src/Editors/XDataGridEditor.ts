@@ -33,7 +33,7 @@ class XDataGridEditor extends XBaseInput
         this.Title = "Grade de dados";
         var div = new XDiv(this, "XDataGridEditor");
         this.container = div.HTML;
-        this.Input = <any>this.container ;
+        this.Input = <any>this.container;
         this.dataset = this.data;
         const fields = Object.keys(this.dataset[0] || {});
         this.columns = fields.map(field => ({ field, visible: true, width: 120 }));
@@ -56,7 +56,7 @@ class XDataGridEditor extends XBaseInput
     {
         this.container.innerHTML = '';
         const table = document.createElement('table');
-        table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
+        //table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
         this.buildHeader(table);
         this.buildBody(table);
         this.container.appendChild(table);
@@ -65,9 +65,6 @@ class XDataGridEditor extends XBaseInput
     private buildHeader(table: HTMLTableElement)
     {
         const thead = document.createElement('thead');
-        //thead.style.position = 'sticky';
-        //thead.style.top = '0';
-        //thead.style.zIndex = '2';
         const headerRow = document.createElement('tr');
 
         // Coluna de número sequencial
@@ -91,7 +88,16 @@ class XDataGridEditor extends XBaseInput
         th.textContent = colConfig.field;
         th.style.width = `${colConfig.width}px`;
         th.style.userSelect = 'none';
-        th.draggable = true;
+        //if (colConfig.field !== '#')
+        th.draggable = colConfig.field !== '#';
+
+        const sortIcon = document.createElement('span');
+        sortIcon.className = 'sort-icon';
+        if (this.sortState?.field === colConfig.field)
+        {
+            sortIcon.textContent = this.sortState.direction === 'asc' ? ' ▲' : ' ▼';
+        }
+        th.appendChild(sortIcon);
 
         // Drag para reordenar colunas
         th.addEventListener('dragstart', (e) =>
@@ -150,11 +156,7 @@ class XDataGridEditor extends XBaseInput
         this.addResizerEvents(th, resizer, colConfig);
 
         // Clique para ordenar
-        if (colConfig.field !== '#')
-        {
-            th.addEventListener('click', () => this.sortData(colConfig.field));
-        }
-
+        th.addEventListener('click', () => this.sortData(colConfig.field));
         return th;
     }
     private addResizerEvents(th: HTMLTableCellElement, resizer: HTMLDivElement, colConfig: ColumnConfig)
@@ -284,9 +286,14 @@ class XDataGridEditor extends XBaseInput
             {
                 const td = document.createElement('td');
                 td.dataset.field = colConfig.field;
-                td.textContent = rowData[colConfig.field];
+
                 td.style.width = `${colConfig.width}px`;
                 tr.appendChild(td);
+                const txt= document.createElement('span');
+                txt.innerText = rowData[colConfig.field];
+
+                td.appendChild(txt);
+
             });
 
             tbody.appendChild(tr);
