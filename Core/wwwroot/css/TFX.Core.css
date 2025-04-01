@@ -684,6 +684,20 @@
   height: 100%;
 }
 
+.dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.drag-over {
+  border-left: 3px solid #2196F3 !important;
+  border-right: 3px solid #2196F3 !important;
+}
+
+.resizer {
+  pointer-events: auto; /* Permite eventos de drag passar pelo redimensionador */
+}
+
 table {
   border-collapse: collapse;
   background: white;
@@ -705,10 +719,15 @@ th, td {
 
 th {
   background-color: #f2f2f2;
-  cursor: move;
   user-select: none;
   top: -5px;
   padding: 10px 0px 13px 5px;
+  cursor: grab;
+  position: relative;
+}
+
+th:active {
+  cursor: grabbing;
 }
 
 .resizer {
