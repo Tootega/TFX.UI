@@ -540,7 +540,7 @@ declare class XSize {
 declare class XElement {
     static _ID: number;
     static NextID(): number;
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
     HTML: HTMLElement;
     Element: HTMLElement | null;
     Owner: XElement | HTMLElement | null;
@@ -564,7 +564,7 @@ declare class XElement {
     Show(pValue?: boolean): void;
     SetContent(pValue: string): void;
     protected CreateChildren(): void;
-    protected CreateContainer(): HTMLElement;
+    protected CreateContainer(pTag?: string | null): HTMLElement;
     CanClose(pSource: HTMLElement): boolean;
     get IsVisible(): boolean;
     set IsVisible(pValue: boolean);
@@ -788,7 +788,7 @@ declare class XTopBar extends XDiv {
 }
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
-    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass?: string | null, pInsert?: boolean): T;
+    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
 }
 declare class XCalendar extends XPopupElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
@@ -824,9 +824,9 @@ declare class XDataGrid extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     Container: XDiv;
     private container;
-    private dataset;
-    private columns;
-    private sortState;
+    private DataSet;
+    private Columns;
+    private _SortState;
     private rowNumberColumn;
     protected CreateContainer(): HTMLElement;
     private render;
@@ -838,4 +838,28 @@ declare class XDataGrid extends XElement {
     private sortData;
     private addColumnVisibilityToggle;
     private buildBody;
+}
+declare class XTableElement extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
+    protected CreateContainer(pTag?: string | null): HTMLElement;
+}
+declare class XTableHeader extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Row: XTableElement;
+    Columns: XArray<XTableElement>;
+    protected CreateContainer(): HTMLElement;
+    AddCell(pClass: string): void;
+}
+declare class XTableBody extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Row: XTableElement;
+    Columns: XArray<XTableElement>;
+    AddCell(pClass: string): void;
+    protected CreateContainer(): HTMLElement;
+}
+declare class XTable extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Header: XTableHeader;
+    Body: XTableBody;
+    protected CreateContainer(): HTMLElement;
 }

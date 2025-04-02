@@ -2024,7 +2024,7 @@ class XElement {
     static NextID() {
         return this._ID++;
     }
-    constructor(pOwner, pClass = null) {
+    constructor(pOwner, pClass = null, pTag = null) {
         this._IsVisible = true;
         this.UUID = 0;
         this.OnResize = null;
@@ -2034,7 +2034,7 @@ class XElement {
         this.Children = new XArray();
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
-        this.HTML = this.CreateContainer();
+        this.HTML = this.CreateContainer(pTag);
         if (pClass == null)
             pClass = this.constructor.name;
         this.Element = null;
@@ -2130,7 +2130,7 @@ class XElement {
     }
     CreateChildren() {
     }
-    CreateContainer() {
+    CreateContainer(pTag = null) {
         throw new Error("Method not implemented.");
     }
     CanClose(pSource) {
@@ -2178,6 +2178,7 @@ class XBaseInput extends XDiv {
 class XDataGridEditor extends XBaseInput {
     constructor(pOwner) {
         super(pOwner);
+        this.Title = "Grade de Dados";
         this.DataGrid = new XDataGrid(this, "XDataGridEditor");
         this.Input = this.DataGrid.HTML;
     }
@@ -3155,7 +3156,9 @@ class XUtils {
     static IsNumber(pValue) {
         return !isNaN(parseFloat(pValue)) && isFinite(pValue);
     }
-    static AddElement(pOwner, pType, pClass = null, pInsert = false) {
+    static AddElement(pOwner, pTag, pClass = null, pInsert = false) {
+        if (pTag == null)
+            throw new Error(`Parameter "pTag" can´t be null`);
         var own;
         if (pOwner == null)
             own = document.body;
@@ -3163,7 +3166,7 @@ class XUtils {
             own = pOwner;
         else
             own = pOwner.HTML;
-        var elm = document.createElement(pType);
+        var elm = document.createElement(pTag);
         if (pClass != null)
             elm.className = pClass;
         if (pInsert && own.childNodes.length > 0)
@@ -3343,8 +3346,8 @@ class XDataGrid extends XElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
         this.data = [];
-        this.dataset = [];
-        this.sortState = null;
+        this.DataSet = [];
+        this._SortState = null;
         this.rowNumberColumn = { field: '#', visible: true, width: 50 };
         for (let i = 0; i < 100; i++) {
             const row = {
@@ -3369,12 +3372,12 @@ class XDataGrid extends XElement {
                 telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
                 empresa1: `Empresa ${i % 20}`,
             };
-            this.dataset.push(row);
+            this.DataSet.push(row);
         }
         this.Container = new XDiv(this, "XDataGrid");
         this.container = this.Container.HTML;
-        const fields = Object.keys(this.dataset[0] || {});
-        this.columns = fields.map(field => ({ field, visible: true, width: 120 }));
+        const fields = Object.keys(this.DataSet[0] || {});
+        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
         this.render();
         this.addColumnVisibilityToggle();
     }
@@ -3396,7 +3399,7 @@ class XDataGrid extends XElement {
         const rowNumberTh = this.createHeaderTh(this.rowNumberColumn);
         headerRow.appendChild(rowNumberTh);
         // Colunas do dataset
-        this.columns.filter(c => c.visible).forEach(colConfig => {
+        this.Columns.filter(c => c.visible).forEach(colConfig => {
             const th = this.createHeaderTh(colConfig);
             headerRow.appendChild(th);
         });
@@ -3407,14 +3410,14 @@ class XDataGrid extends XElement {
         var _a;
         const th = document.createElement('th');
         th.textContent = colConfig.field;
-        th.style.width = `${colConfig.width}px`;
+        //th.style.width = `${colConfig.width}px`;
         th.style.userSelect = 'none';
         //if (colConfig.field !== '#')
         th.draggable = colConfig.field !== '#';
         const sortIcon = document.createElement('span');
         sortIcon.className = 'sort-icon';
-        if (((_a = this.sortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.field) {
-            sortIcon.textContent = this.sortState.direction === 'asc' ? ' ▲' : ' ▼';
+        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.field) {
+            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
         }
         th.appendChild(sortIcon);
         // Drag para reordenar colunas
@@ -3446,10 +3449,10 @@ class XDataGrid extends XElement {
             if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex)
                 return;
             // Reordenar colunas originais mantendo a referência
-            const originalDraggedIndex = this.columns.findIndex(c => c.field === draggedField);
-            const originalTargetIndex = this.columns.findIndex(c => c.field === colConfig.field);
-            [this.columns[originalDraggedIndex], this.columns[originalTargetIndex]] =
-                [this.columns[originalTargetIndex], this.columns[originalDraggedIndex]];
+            const originalDraggedIndex = this.Columns.findIndex(c => c.field === draggedField);
+            const originalTargetIndex = this.Columns.findIndex(c => c.field === colConfig.field);
+            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
+                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
             this.render();
         });
         // Redimensionador
@@ -3489,31 +3492,31 @@ class XDataGrid extends XElement {
         });
     }
     updateColumnWidths(field, width) {
-        const index = this.columns.findIndex(c => c.field === field);
+        const index = this.Columns.findIndex(c => c.field === field);
         if (index > -1) {
-            this.columns[index].width = width;
+            this.Columns[index].width = width;
             document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
                 .forEach(el => el.style.width = `${width}px`);
         }
     }
     getVisibleColumns() {
-        return [this.rowNumberColumn, ...this.columns.filter(c => c.visible)];
+        return [this.rowNumberColumn, ...this.Columns.filter(c => c.visible)];
     }
     sortData(field) {
         var _a;
-        if (((_a = this.sortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
-            this.sortState.direction = this.sortState.direction === 'asc' ? 'desc' : 'asc';
+        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
+            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
         }
         else {
-            this.sortState = { field, direction: 'asc' };
+            this._SortState = { field, direction: 'asc' };
         }
-        var self = this.sortState;
-        this.dataset.sort((a, b) => {
+        var self = this._SortState;
+        this.DataSet.sort((a, b) => {
             var e = this;
             if (a[field] > b[field])
-                return e.sortState.direction === 'asc' ? 1 : -1;
+                return e._SortState.direction === 'asc' ? 1 : -1;
             if (a[field] < b[field])
-                return e.sortState.direction === 'asc' ? -1 : 1;
+                return e._SortState.direction === 'asc' ? -1 : 1;
             return 0;
         });
         this.render();
@@ -3524,7 +3527,7 @@ class XDataGrid extends XElement {
         button.textContent = '☰';
         const menu = document.createElement('div');
         menu.className = 'column-menu';
-        this.columns.forEach(col => {
+        this.Columns.forEach(col => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -3545,14 +3548,14 @@ class XDataGrid extends XElement {
     }
     buildBody(table) {
         const tbody = document.createElement('tbody');
-        this.dataset.forEach((rowData, index) => {
+        this.DataSet.forEach((rowData, index) => {
             const tr = document.createElement('tr');
             // Número sequencial
             const tdNumber = document.createElement('td');
             tdNumber.textContent = (index + 1).toString();
             tr.appendChild(tdNumber);
             // Dados
-            this.columns.filter(c => c.visible).forEach(colConfig => {
+            this.Columns.filter(c => c.visible).forEach(colConfig => {
                 const td = document.createElement('td');
                 td.dataset.field = colConfig.field;
                 td.style.width = `${colConfig.width}px`;
@@ -3593,4 +3596,52 @@ class XDataGrid extends XElement {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
+/// <reference path="XDiv.ts" />
+class XTableElement extends XElement {
+    constructor(pOwner, pClass = null, pTag = null) {
+        super(pOwner, pClass, pTag);
+    }
+    CreateContainer(pTag = null) {
+        return XUtils.AddElement(null, pTag, null);
+    }
+}
+class XTableHeader extends XElement {
+    constructor(pOwner) {
+        super(pOwner, "XTableHeader");
+        this.Columns = new XArray();
+        this.Row = new XTableElement(this, "XTableHR", "tr");
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "thead", null);
+    }
+    AddCell(pClass) {
+        var cell = new XTableElement(this.Row, pClass, "th");
+        this.Columns.Add(cell);
+    }
+}
+class XTableBody extends XElement {
+    constructor(pOwner) {
+        super(pOwner, "XTableBody");
+        this.Columns = new XArray();
+        this.Row = new XTableElement(this, "XTableBR", "tr");
+    }
+    AddCell(pClass) {
+        var cell = new XTableElement(this.Row, pClass, "td");
+        this.Columns.Add(cell);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "tbody", null);
+    }
+}
+class XTable extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.Header = new XTableHeader(this);
+        this.Body = new XTableBody(this);
+        ;
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "table");
+    }
+}
 //# sourceMappingURL=TFX.Core.js.map

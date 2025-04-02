@@ -38,20 +38,20 @@ class XDataGrid extends XElement
                 telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
                 empresa1: `Empresa ${i % 20}`,
             };
-            this.dataset.push(row);
+            this.DataSet.push(row);
         }
         this.Container = new XDiv(this, "XDataGrid");
         this.container = this.Container.HTML;
-        const fields = Object.keys(this.dataset[0] || {});
-        this.columns = fields.map(field => ({ field, visible: true, width: 120 }));
+        const fields = Object.keys(this.DataSet[0] || {});
+        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
         this.render();
         this.addColumnVisibilityToggle();
     }
     Container: XDiv;
     private container: HTMLElement;
-    private dataset: any[] = [];
-    private columns: XColumnConfig[];
-    private sortState: { field: string; direction: 'asc' | 'desc' } | null = null;
+    private DataSet: any[] = [];
+    private Columns: XColumnConfig[];
+    private _SortState: { field: string; direction: 'asc' | 'desc' } | null = null;
     private rowNumberColumn: XColumnConfig = { field: '#', visible: true, width: 50 };
 
     protected override CreateContainer(): HTMLElement 
@@ -79,7 +79,7 @@ class XDataGrid extends XElement
         headerRow.appendChild(rowNumberTh);
 
         // Colunas do dataset
-        this.columns.filter(c => c.visible).forEach(colConfig =>
+        this.Columns.filter(c => c.visible).forEach(colConfig =>
         {
             const th = this.createHeaderTh(colConfig);
             headerRow.appendChild(th);
@@ -93,16 +93,16 @@ class XDataGrid extends XElement
     {
         const th = document.createElement('th');
         th.textContent = colConfig.field;
-        th.style.width = `${colConfig.width}px`;
+        //th.style.width = `${colConfig.width}px`;
         th.style.userSelect = 'none';
         //if (colConfig.field !== '#')
         th.draggable = colConfig.field !== '#';
 
         const sortIcon = document.createElement('span');
         sortIcon.className = 'sort-icon';
-        if (this.sortState?.field === colConfig.field)
+        if (this._SortState?.field === colConfig.field)
         {
-            sortIcon.textContent = this.sortState.direction === 'asc' ? ' ▲' : ' ▼';
+            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
         }
         th.appendChild(sortIcon);
 
@@ -146,11 +146,11 @@ class XDataGrid extends XElement
             if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) return;
 
             // Reordenar colunas originais mantendo a referência
-            const originalDraggedIndex = this.columns.findIndex(c => c.field === draggedField);
-            const originalTargetIndex = this.columns.findIndex(c => c.field === colConfig.field);
+            const originalDraggedIndex = this.Columns.findIndex(c => c.field === draggedField);
+            const originalTargetIndex = this.Columns.findIndex(c => c.field === colConfig.field);
 
-            [this.columns[originalDraggedIndex], this.columns[originalTargetIndex]] =
-                [this.columns[originalTargetIndex], this.columns[originalDraggedIndex]];
+            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
+                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
 
             this.render();
         });
@@ -204,10 +204,10 @@ class XDataGrid extends XElement
 
     private updateColumnWidths(field: string, width: number)
     {
-        const index = this.columns.findIndex(c => c.field === field);
+        const index = this.Columns.findIndex(c => c.field === field);
         if (index > -1)
         {
-            this.columns[index].width = width;
+            this.Columns[index].width = width;
             document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
                 .forEach(el => (el as HTMLElement).style.width = `${width}px`);
         }
@@ -215,27 +215,27 @@ class XDataGrid extends XElement
 
     private getVisibleColumns(): XColumnConfig[]
     {
-        return [this.rowNumberColumn, ...this.columns.filter(c => c.visible)];
+        return [this.rowNumberColumn, ...this.Columns.filter(c => c.visible)];
     }
 
 
     private sortData(field: string)
     {
-        if (this.sortState?.field === field)
+        if (this._SortState?.field === field)
         {
-            this.sortState.direction = this.sortState.direction === 'asc' ? 'desc' : 'asc';
+            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
         } else
         {
-            this.sortState = { field, direction: 'asc' };
+            this._SortState = { field, direction: 'asc' };
         }
-        var self = this.sortState;
-        this.dataset.sort((a, b) =>
+        var self = this._SortState;
+        this.DataSet.sort((a, b) =>
         {
             var e: any = this;
             if (a[field] > b[field])
-                return e.sortState.direction === 'asc' ? 1 : -1;
+                return e._SortState.direction === 'asc' ? 1 : -1;
             if (a[field] < b[field])
-                return e.sortState.direction === 'asc' ? -1 : 1;
+                return e._SortState.direction === 'asc' ? -1 : 1;
             return 0;
         });
 
@@ -251,7 +251,7 @@ class XDataGrid extends XElement
         const menu = document.createElement('div');
         menu.className = 'column-menu';
 
-        this.columns.forEach(col =>
+        this.Columns.forEach(col =>
         {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
@@ -279,7 +279,7 @@ class XDataGrid extends XElement
     private buildBody(table: HTMLTableElement)
     {
         const tbody = document.createElement('tbody');
-        this.dataset.forEach((rowData, index) =>
+        this.DataSet.forEach((rowData, index) =>
         {
             const tr = document.createElement('tr');
 
@@ -289,7 +289,7 @@ class XDataGrid extends XElement
             tr.appendChild(tdNumber);
 
             // Dados
-            this.columns.filter(c => c.visible).forEach(colConfig =>
+            this.Columns.filter(c => c.visible).forEach(colConfig =>
             {
                 const td = document.createElement('td');
                 td.dataset.field = colConfig.field;
