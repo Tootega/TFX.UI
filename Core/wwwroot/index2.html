@@ -1,69 +1,90 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>TFX Core</title>
-    <script src="js/TFX.Core.js"></script>
-    <style>
-        .container {
-            width: 100%; /* Largura do painel */
-            overflow-x: auto; /* Habilita scroll horizontal */
-            scroll-snap-type: x mandatory; /* Força o alinhamento ao filho */
-            white-space: nowrap; /* Mantém os filhos em linha */
-            scrollbar-width: none; /* Remove a barra de scroll (opcional) */
-        }
-
-        .filho {
-            display: inline-block; /* Exibe os filhos em linha */
-            width: 200px; /* Largura de cada filho */
-            height: 150px; /* Altura do filho */
-            scroll-snap-align: start; /* Alinha o início do filho ao container */
-            flex-shrink: 0; /* Impede redução de tamanho (se usar flex) */
-        }
-
-        /* Estilização opcional para melhor visualização */
-        .filho {
-            background: #f0f0f0;
-            border: 1px solid #ccc;
-            margin-right: 10px;
-        }
-    </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adjusted Sticky Bar Example</title>
+<style>
+  #scrollPanel {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    position: relative;
+    padding-top: 50px;  /* Ajuste este valor conforme a altura da sua stickyBar */
+  }
+  #stickyBar {
+    position: sticky;
+    top: 0;  /* Este valor mantém a stickyBar no topo do viewport quando você rola */
+    background-color: white;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000;
+    height: 40px;  /* Definir uma altura fixa para a stickyBar */
+  }
+</style>
 </head>
 <body>
-    <div>
-        <div class="container">
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <div class="filho">Filho 1</div>
-            <div class="filho">Filho 2</div>
-            <div class="filho">Filho 3</div>
-            <!-- Mais filhos... -->
-        </div>
-    </div>
+
+<div id="scrollPanel">
+  <div id="stickyBar">Eu fico fixo no topo!</div>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <!-- Repetir o conteúdo suficiente para ultrapassar a altura do painel -->
+</div>
+
 </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adjusted Sticky Bar Example</title>
+<style>
+  #scrollPanel {
+    height: 200px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    position: relative;
+    padding-top: 50px;  /* Ajuste este valor conforme a altura da sua stickyBar */
+  }
+  #stickyBar {
+    position: sticky;
+    top: 0;  /* Este valor mantém a stickyBar no topo do viewport quando você rola */
+    background-color: white;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000;
+    height: 40px;  /* Definir uma altura fixa para a stickyBar */
+  }
+</style>
+</head>
+<body>
+
+<div id="scrollPanel">
+  <div id="stickyBar">Eu fico fixo no topo!</div>
+  <p>Muito texto aqui para garantir que a barra de rolagem apareça. Repita várias vezes para adicionar mais conteúdo e ver o efeito.</p>
+  <!-- Repetir o conteúdo suficiente para ultrapassar a altura do painel -->
+</div>
+
+</body>
+</html>

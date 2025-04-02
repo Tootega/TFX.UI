@@ -5,8 +5,10 @@ class XUtils
         return !isNaN(parseFloat(pValue)) && isFinite(pValue);
     }
 
-    public static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pType: string, pClass: string | null = null, pInsert: boolean = false): T
+    public static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass: string | null = null, pInsert: boolean = false): T
     {
+        if (pTag == null)
+            throw new Error(`Parameter "pTag" can´t be null`);
         var own: Element;
         if (pOwner == null)
             own = document.body;
@@ -16,7 +18,7 @@ class XUtils
             else
                 own = pOwner.HTML;
 
-        var elm = <Element>document.createElement(pType);
+        var elm = <Element>document.createElement(pTag);
 
         if (pClass != null)
             elm.className = pClass;

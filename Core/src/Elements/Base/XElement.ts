@@ -7,11 +7,11 @@
         return this._ID++
     }
 
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null, pTag: string | null = null)
     {
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
-        this.HTML = this.CreateContainer();
+        this.HTML = this.CreateContainer(pTag);
         if (pClass == null)
             pClass = this.constructor.name;
         this.Element = null;
@@ -155,7 +155,7 @@
     {
     }
 
-    protected CreateContainer(): HTMLElement 
+    protected CreateContainer(pTag: string | null = null): HTMLElement 
     {
         throw new Error("Method not implemented.");
     }
