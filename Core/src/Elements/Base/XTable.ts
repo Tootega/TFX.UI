@@ -40,27 +40,34 @@ class XDragUtils
 
 class XTableHCell extends XTableElement
 {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null, pTag: string | null = null)
+    constructor(pOwner: XTableHRow, pClass: string | null = null)
     {
-        super(pOwner, pClass, pTag);
+        super(pOwner, pClass, "th");
+        this.HRow = pOwner;
+        this.Table = this.HRow.Header.Table;
         this.Content = XUtils.AddElement<HTMLDivElement>(this, "div", "XTableHContent");
         this.Sizer = XUtils.AddElement<HTMLDivElement>(this.Content, "div", "XTableResizer");
-        this.Text = XUtils.AddElement<HTMLSpanElement>(this.Content, "div", "XTableHTitle");
+        this.TextArea = XUtils.AddElement<HTMLSpanElement>(this.Content, "div", "XTableHTitle");
+        this.Title = XUtils.AddElement<HTMLSpanElement>(this.TextArea, "span");
+        this.SortIcon = XUtils.AddElement<HTMLSpanElement>(this.TextArea, "span", "sort-icon");
         this.ResizerEvents()
         this.DragEvents()
+        this.Content.addEventListener('click', () => this.Table.Body.SortData(this));
     }
+    Table: XTable;
+    HRow: XTableHRow;
     Sizer: HTMLDivElement;
-    Text: HTMLSpanElement;
+    TextArea: HTMLSpanElement;
+    Title: HTMLSpanElement;
     Content: HTMLDivElement;
+    SortIcon: HTMLSpanElement;
     Data: XColumnConfig | any = null;
-    Table: XTable | any = null;
-    Row: number = -1;
 
 
     SetData(pCell: XColumnConfig)
     {
         this.Data = pCell;
-        this.Text.innerHTML = "<spans>" + this.Row + "</span>";
+        this.Title.innerHTML = "<spans>" + this.Data.Title + "</span>";
     }
 
     DragEvents()
@@ -87,7 +94,6 @@ class XTableHCell extends XTableElement
             var w = this.HTML.GetRect().Width;
             if (e.offsetX <= 5 || e.offsetX + 6 >= w)
                 return;
-            console.log(w + " " + e.offsetX);
 
             this.HTML.classList.remove('ldrag-over');
             this.HTML.classList.remove('rdrag-over');
@@ -108,16 +114,27 @@ class XTableHCell extends XTableElement
             e.preventDefault();
             this.HTML.classList.remove('ldrag-over');
             this.HTML.classList.remove('rdrag-over');
-            const elm = XDragUtils.GetData<XElement>();
+            const elm = XDragUtils.GetData<XTableHCell>();
             if (this.Owner instanceof XElement && elm.UUID != this.UUID)
             {
                 var w = this.HTML.clientWidth / 2;
                 if (e.offsetX > w)
-                    this.Owner.HTML.insertBefore(this.HTML, elm.HTML);
+                    this.MoveTo(this, elm);
                 else
-                    this.Owner.HTML.insertBefore(elm.HTML, this.HTML);
+                    this.MoveTo(elm, this);
             }
         });
+    }
+
+
+    MoveTo(pLeft: XTableHCell, pRight: XTableHCell)
+    {
+        if (this.Owner instanceof XElement)
+        {
+            this.Owner.HTML.insertBefore(pLeft.HTML, pRight.HTML);
+            this.Table.MoveTo(pLeft, pRight);
+        }
+
     }
 
     private ResizerEvents()
@@ -155,18 +172,16 @@ class XTableHCell extends XTableElement
             document.addEventListener('mouseup', handleMouseUp, { once: true });
         });
     }
+}
 
-
-    //private updateColumnWidths(field: string, width: number)
-    //{
-    //    const index = this.Columns.findIndex(c => c.Title === field);
-    //    if (index > -1)
-    //    {
-    //        this.Columns[index].Width = width;
-    //        document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
-    //            .forEach(el => (el as HTMLElement).style.width = `${width}px`);
-    //    }
-    //}
+class XTableHRow extends XTableElement
+{
+    constructor(pOwner: XTableHeader)
+    {
+        super(pOwner, null, "tr");
+        this.Header = pOwner;
+    }
+    Header: XTableHeader;
 }
 
 class XTableHeader extends XElement
@@ -174,16 +189,24 @@ class XTableHeader extends XElement
     constructor(pOwner: XTable)
     {
         super(pOwner, "XTableHeader");
-        this.TRows = new XTableElement(this, null, "tr");
+        this.TRows = new XTableHRow(this);
         this.Table = pOwner;
+        this.SortState = { Field: "", Direction: 'asc' };
     }
-    TRows: XTableElement;
-    Columns = new XArray<XTableElement>();
+    TRows: XTableHRow;
+    Columns = new XArray<XTableHCell>();
     Table: XTable;
+    SortState: { Field: string; Direction: 'asc' | 'desc' };
+
+    Clear()
+    {
+        this.SortState = { Field: "", Direction: 'asc' };
+        this.TRows.HTML.innerHTML = "";
+    }
 
     AddColumns(pClass: string): XTableHCell
     {
-        var cell = new XTableHCell(this.TRows, pClass, "th");
+        var cell = new XTableHCell(this.TRows, pClass);
         cell.Table = this.Table;
         this.Columns.Add(cell);
         return cell;
@@ -197,23 +220,126 @@ class XTableHeader extends XElement
 
 class XTableBody extends XElement
 {
-    constructor(pOwner: XElement | HTMLElement | null)
+
+    constructor(pOwner: XTable)
     {
         super(pOwner, "");
-        this.BRows = new XTableElement(this, null, "tr");
+        this.Table = pOwner;
+        this.BRows = new XTableRow(this);
     }
     BRows: XTableElement;
-    DataRows = new XArray<XTableElement>();
+    DataRows = new XArray<XTableRow>();
+    Table: XTable;
 
-    AddRow()
+    SortData(pCell: XTableHCell): any
     {
-        var row = new XTableElement(this, "XTableBR", "td");
+        let field = pCell.Data.Title;
+        var hd = this.Table.Header;
+        if (hd.SortState.Field === field)
+            hd.SortState.Direction = hd.SortState.Direction === 'asc' ? 'desc' : 'asc';
+        else
+            hd.SortState = { Field: field, Direction: 'asc' };
+        hd.Columns.ForEach(c => c.SortIcon.innerHTML = "");
+        pCell.SortIcon.innerHTML = hd.SortState.Direction === 'asc' ? ' ▲' : ' ▼';
+
+        this.DataRows.sort((a, b) =>
+        {
+
+            if (a.Tupla[field] > b.Tupla[field])
+                return hd.SortState.Direction === 'asc' ? 1 : -1;
+            if (a.Tupla[field] < b.Tupla[field])
+                return hd.SortState.Direction === 'asc' ? -1 : 1;
+            return 0;
+        });
+
+        while (this.HTML.firstChild)
+            this.HTML.removeChild(this.HTML.firstChild);
+
+        for (var i = 0; i < this.DataRows.length; i++)
+        {
+            var row = this.DataRows[i];
+            if (i % 2 != 0)
+                row.HTML.className = "XTableRowEven";
+            else
+                row.HTML.className = "XTableRow";
+            this.HTML.appendChild(row.HTML);
+        }
+    }
+
+    Clear()
+    {
+        this.HTML.innerHTML = "";
+    }
+
+    AddRow(): XTableRow
+    {
+        var row = new XTableRow(this);
         this.DataRows.Add(row);
+        return row;
     }
 
     protected override CreateContainer(): HTMLElement 
     {
         return XUtils.AddElement<HTMLTableElement>(null, "tbody", null);
+    }
+}
+
+class XTableRow extends XTableElement
+{
+    constructor(pOwner: XTableBody)
+    {
+        super(pOwner, "XTableRow", "tr");
+        this.Body = pOwner;
+        this.Table = pOwner.Table;
+    }
+    Table: XTable;
+    Body: XTableBody;
+    Tupla: any;
+    Cell = new XArray<XTableCell>();
+
+    SetData(pTupla: any)
+    {
+        this.Tupla = pTupla;
+        this.CreateCell();
+    }
+
+    CreateCell()
+    {
+        if (this.Table.Columns == null)
+            return;
+        for (var i = 0; i < this.Table.Columns.length; i++)
+        {
+            let cell = new XTableCell(this, "XTd");
+            cell.SetData(this.Tupla[this.Table.Columns[i].Title], this.Table.Header.Columns[i]);
+            this.Cell.Add(cell);
+        }
+    }
+}
+
+class XTableCell extends XTableElement
+{
+
+    constructor(pOwner: XTableRow, pClass: string)
+    {
+        super(pOwner, pClass, "td");
+        this.Content = XUtils.AddElement<HTMLDivElement>(this, "div", "XTableCellContent");
+        this.Table = pOwner.Body.Table;
+        this.Row = pOwner;
+        this.Text = XUtils.AddElement<HTMLSpanElement>(this.Content, "div", "XTableCellTitle");
+
+    }
+    Content: HTMLDivElement;
+    Text: HTMLSpanElement;
+    Table: XTable;
+    Row: XTableRow;
+    HCell: XTableHCell | any;
+    Data: any;
+
+    SetData(pData: any, pHCell: XTableHCell)
+    {
+        this.HCell = pHCell;
+        this.Data = pData
+        this.Text.innerHTML = "<spans>" + this.Data + "</span>";
     }
 }
 
@@ -227,9 +353,24 @@ class XTable extends XElement
     }
     Header: XTableHeader;
     Body: XTableBody;
-    private Columns: XColumnConfig[] | null = null;
+    Columns: XColumnConfig[] | null = null;
     protected DataSet: any[] = [];
     private RowNumberColumn: XColumnConfig = { Title: '#', Visible: true, Width: 50 };
+
+    MoveTo(pLeft: XTableHCell, pRight: XTableHCell)
+    {
+        if (this.Columns == null)
+            return;
+        var left = this.Body.DataRows[0].Cell.IndexOf(c => c.HCell == pLeft);
+        var right = this.Body.DataRows[0].Cell.IndexOf(c => c.HCell == pRight);
+        for (var i = 0; i < this.Body.DataRows.length; i++)
+        {
+            var row = this.Body.DataRows[i];
+            var cl = row.Cell[left];
+            var cr = row.Cell[right];
+            row.HTML.insertBefore(cl.HTML, cr.HTML);
+        }
+    }
 
     GetVisibleColumns(): Array<XColumnConfig>
     {
@@ -244,17 +385,32 @@ class XTable extends XElement
         const fields = Object.keys(this.DataSet[0] || {});
         this.Columns = fields.map(Title => ({ Title, Visible: true, Width: 120 }));
         this.CreateHeader();
+        this.CreateBody();
+    }
+
+    CreateBody()
+    {
+        this.Body.Clear();
+        if (this.Columns == null)
+            return;
+        for (var i = 0; i < this.DataSet.length; i++)
+        {
+            let row = this.Body.AddRow();
+            if (i % 2 != 0)
+                row.HTML.className = "XTableRowEven";
+            row.SetData(this.DataSet[i]);
+        }
     }
 
     CreateHeader()
     {
+        this.Body.Clear();
         if (this.Columns == null)
             return;
         for (var i = 0; i < this.Columns.length; i++)
         {
             let col = this.Columns[i];
             let cell = this.Header.AddColumns("XTh");
-            cell.Row = i;
             cell.SetData(col);
         }
     }

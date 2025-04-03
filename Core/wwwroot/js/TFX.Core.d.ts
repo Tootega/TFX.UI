@@ -814,41 +814,77 @@ declare class XDragUtils {
     static GetData<T>(): T;
 }
 declare class XTableHCell extends XTableElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
+    constructor(pOwner: XTableHRow, pClass?: string | null);
+    Table: XTable;
+    HRow: XTableHRow;
     Sizer: HTMLDivElement;
-    Text: HTMLSpanElement;
+    TextArea: HTMLSpanElement;
+    Title: HTMLSpanElement;
     Content: HTMLDivElement;
+    SortIcon: HTMLSpanElement;
     Data: XColumnConfig | any;
-    Table: XTable | any;
-    Row: number;
     SetData(pCell: XColumnConfig): void;
     DragEvents(): void;
+    MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
     private ResizerEvents;
+}
+declare class XTableHRow extends XTableElement {
+    constructor(pOwner: XTableHeader);
+    Header: XTableHeader;
 }
 declare class XTableHeader extends XElement {
     constructor(pOwner: XTable);
-    TRows: XTableElement;
-    Columns: XArray<XTableElement>;
+    TRows: XTableHRow;
+    Columns: XArray<XTableHCell>;
     Table: XTable;
+    SortState: {
+        Field: string;
+        Direction: 'asc' | 'desc';
+    };
+    Clear(): void;
     AddColumns(pClass: string): XTableHCell;
     protected CreateContainer(): HTMLElement;
 }
 declare class XTableBody extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null);
+    constructor(pOwner: XTable);
     BRows: XTableElement;
-    DataRows: XArray<XTableElement>;
-    AddRow(): void;
+    DataRows: XArray<XTableRow>;
+    Table: XTable;
+    SortData(pCell: XTableHCell): any;
+    Clear(): void;
+    AddRow(): XTableRow;
     protected CreateContainer(): HTMLElement;
+}
+declare class XTableRow extends XTableElement {
+    constructor(pOwner: XTableBody);
+    Table: XTable;
+    Body: XTableBody;
+    Tupla: any;
+    Cell: XArray<XTableCell>;
+    SetData(pTupla: any): void;
+    CreateCell(): void;
+}
+declare class XTableCell extends XTableElement {
+    constructor(pOwner: XTableRow, pClass: string);
+    Content: HTMLDivElement;
+    Text: HTMLSpanElement;
+    Table: XTable;
+    Row: XTableRow;
+    HCell: XTableHCell | any;
+    Data: any;
+    SetData(pData: any, pHCell: XTableHCell): void;
 }
 declare class XTable extends XElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     Header: XTableHeader;
     Body: XTableBody;
-    private Columns;
+    Columns: XColumnConfig[] | null;
     protected DataSet: any[];
     private RowNumberColumn;
+    MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
     GetVisibleColumns(): Array<XColumnConfig>;
     SetDataSet(pDataSet: any): void;
+    CreateBody(): void;
     CreateHeader(): void;
     protected CreateContainer(): HTMLElement;
 }
