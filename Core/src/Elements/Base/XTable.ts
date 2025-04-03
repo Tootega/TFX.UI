@@ -139,7 +139,6 @@ class XTableHCell extends XTableElement
         });
     }
 
-
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell)
     {
         if (this.Owner instanceof XElement)
@@ -180,6 +179,7 @@ class XTableHCell extends XTableElement
                 isResizing = false;
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
+                this.Table.ResizeColumn(this, this.Content.GetRect().Width, true);
             };
 
             document.addEventListener('mousemove', handleMouseMove);
@@ -399,11 +399,21 @@ class XTable extends XDiv
         this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
     }
 
-    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number)
+    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number, pCheck: boolean=false)
     {
         var dcell = this.Body.DataRows[0].Cell.FirstOrNull(c => c.HCell == pHeaderCell);
         if (dcell != null)
-            dcell.Content.style.width = `${pWidth}px`;
+        {
+            if (pCheck)
+            {
+                if (pWidth > dcell.Content.clientWidth)
+                    dcell.Content.style.width = `${pWidth}px`;
+                else
+                    pHeaderCell.Content.style.width = `${dcell.Content.GetRect().Width}px`;
+            }
+            else
+                dcell.Content.style.width = `${pWidth}px`;
+        }
     }
 
 

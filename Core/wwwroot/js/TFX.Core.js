@@ -1465,6 +1465,16 @@ class XCall {
         }
     }
 }
+class XHotkeyManager {
+    static OnKeyDown(pArg) {
+        let elm = pArg.target;
+        if (!X.IsEmpty(pArg.key) && pArg.key.length == 1 && pArg.altKey) {
+            pArg.preventDefault();
+            return false;
+        }
+        return true;
+    }
+}
 class XMath {
     //static AddCorner(pCorner: XPoint, pRound: number, pOut1: XPoint, pOut2: XPoint): XArray<XPoint>
     //{
@@ -3491,6 +3501,7 @@ class XTableHCell extends XTableElement {
                 isResizing = false;
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
+                this.Table.ResizeColumn(this, this.Content.GetRect().Width, true);
             };
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp, { once: true });
@@ -3636,10 +3647,18 @@ class XTable extends XDiv {
     PositioningHeader(pArg) {
         this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
     }
-    ResizeColumn(pHeaderCell, pWidth) {
+    ResizeColumn(pHeaderCell, pWidth, pCheck = false) {
         var dcell = this.Body.DataRows[0].Cell.FirstOrNull(c => c.HCell == pHeaderCell);
-        if (dcell != null)
-            dcell.Content.style.width = `${pWidth}px`;
+        if (dcell != null) {
+            if (pCheck) {
+                if (pWidth > dcell.Content.clientWidth)
+                    dcell.Content.style.width = `${pWidth}px`;
+                else
+                    pHeaderCell.Content.style.width = `${dcell.Content.GetRect().Width}px`;
+            }
+            else
+                dcell.Content.style.width = `${pWidth}px`;
+        }
     }
     MoveTo(pLeft, pRight) {
         if (this.Columns == null)
@@ -3969,14 +3988,4 @@ class XUtils {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
-class XHotkeyManager {
-    static OnKeyDown(pArg) {
-        let elm = pArg.target;
-        if (!X.IsEmpty(pArg.key) && pArg.key.length == 1 && pArg.altKey) {
-            pArg.preventDefault();
-            return false;
-        }
-        return true;
-    }
-}
 //# sourceMappingURL=TFX.Core.js.map

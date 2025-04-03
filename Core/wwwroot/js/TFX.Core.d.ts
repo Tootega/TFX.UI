@@ -342,6 +342,9 @@ declare class XCall {
     static RemoveAll(pElement: any): void;
     static Call(pCallScope: any, pEvent: any, pArg?: any[]): void;
 }
+declare class XHotkeyManager {
+    static OnKeyDown(pArg: KeyboardEvent): boolean;
+}
 interface XMouseEvent {
     (pArg: MouseEvent): void;
 }
@@ -885,7 +888,7 @@ declare class XTable extends XDiv {
     protected DataSet: any[];
     private RowNumberColumn;
     PositioningHeader(pArg: MouseEvent): void;
-    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number): void;
+    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number, pCheck?: boolean): void;
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
     GetVisibleColumns(): Array<XColumnConfig>;
     SetDataSet(pDataSet: any): void;
@@ -937,7 +940,4 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
-}
-declare class XHotkeyManager {
-    static OnKeyDown(pArg: KeyboardEvent): boolean;
 }

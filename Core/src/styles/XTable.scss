@@ -30,8 +30,6 @@
     border-right: 3px solid #2196F3 !important;
 }
 
-
-
 .XTable {
     position: absolute;
     border-collapse: collapse;
@@ -53,6 +51,7 @@
     white-space: nowrap;
     height: 42px;
     min-width: 100%;
+    background: linear-gradient(to right, transparent 0px, transparent calc(100% - 1px), #000a85 100%, transparent 100%)
 }
 
 .XTableCellContent {
@@ -60,16 +59,15 @@
     white-space: nowrap;
     min-width: 100%;
     height: 100%;
-    border-right: solid 0.5px #aabbcc3b
+    background: linear-gradient(to right, transparent 99%, transparent calc(100% - 1px), #ABC 100%, transparent 100%)
 }
-
 
 .XTableCellTitle {
     display: flex;
     align-items: center;
     white-space: nowrap;
     pointer-events: none;
-    padding: 0px 5px 0 5px;
+    padding: 0px 4px 0 4px;
     height: 100%;
 }
 
@@ -80,7 +78,7 @@
     white-space: nowrap;
     height: 42px;
     pointer-events: none;
-    padding: 0px 4px 0 5px;
+    padding: 0px 4px 0 4px;
 }
 
 .XTh {
@@ -102,6 +100,7 @@
 .XTableRow {
     background-color: white;
 }
+
 .XTableRow:hover {
     background-color: #ffcf4922;
 }
@@ -109,6 +108,7 @@
 .XTableRowEven {
     background-color: aliceblue;
 }
+
 .XTableRowEven:hover {
     background-color: #ffcf4922;
 }
@@ -137,7 +137,6 @@
     height: 100%;
     background-color: transparent;
     cursor: col-resize;
-    border-right: 1px solid #7c4141;
     z-index: 10;
 }
 
