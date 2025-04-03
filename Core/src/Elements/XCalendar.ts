@@ -1,4 +1,4 @@
-﻿/// <reference path="XPopupElement.ts" />
+﻿/// <reference path="Base/XPopupElement.ts" />
 class XCalendar extends XPopupElement
 {
 

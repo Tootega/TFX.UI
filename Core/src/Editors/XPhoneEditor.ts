@@ -55,19 +55,13 @@ class XPhoneEditor extends XBaseInput
     private handleKeyDown(e: KeyboardEvent): void
     {
         // Permitir navegação e comandos especiais
-        const allowedKeys = [
-            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
-            'Home', 'End', 'Tab', 'Control'
-        ];
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Tab', 'Control'];
 
         if (allowedKeys.Contains(e.key) || e.ctrlKey)
-        {
             return;
-        }
 
-        if (!/\d/.test(e.key) {
+        if (!/\d/.test(e.key))
             e.preventDefault();
-        }
     }
 
     private handleInput(): void

@@ -444,6 +444,14 @@ Node.prototype.Any = function (pPredicate) {
     }
     return false;
 };
+NodeList.prototype.FirstOrNull = function (pPredicate) {
+    for (var i = 0; i < this.length; i++) {
+        var item = this[i];
+        if (pPredicate == null || pPredicate(item))
+            return item;
+    }
+    return null;
+};
 Array.prototype.GroupBy = function (pValue) {
     var ar = new Array();
     var ord = this.OrderBy(e => pValue(e));
@@ -2035,11 +2043,13 @@ class XElement {
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer(pTag);
+        this.HTML.Object = this;
         if (pClass == null)
             pClass = this.constructor.name;
         this.Element = null;
         this.CreateChildren();
-        this.HTML.className = pClass;
+        if (!X.IsEmpty(pClass))
+            this.HTML.className = pClass;
         if (pOwner instanceof XElement)
             pOwner.HTML.appendChild(this.HTML);
         if (pOwner instanceof HTMLElement)
@@ -2554,16 +2564,11 @@ class XPhoneEditor extends XBaseInput {
     }
     handleKeyDown(e) {
         // Permitir navegação e comandos especiais
-        const allowedKeys = [
-            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
-            'Home', 'End', 'Tab', 'Control'
-        ];
-        if (allowedKeys.Contains(e.key) || e.ctrlKey) {
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Tab', 'Control'];
+        if (allowedKeys.Contains(e.key) || e.ctrlKey)
             return;
-        }
-        if (!/\d/.test(e.key)) {
+        if (!/\d/.test(e.key))
             e.preventDefault();
-        }
     }
     handleInput() {
         const prevValue = this.Input.value;
@@ -2611,6 +2616,443 @@ class XPhoneEditor extends XBaseInput {
             return;
         if (!isvalid)
             this.Input.classList.add('Error');
+    }
+}
+class XPopupElement extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.AutoClose = false;
+        this.OnPopupClosed = null;
+        this.ReferenceElement = null;
+        this.ReferenceElement = this;
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+    }
+    CallPopupClosed() {
+    }
+    Show(pValue = true) {
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+        super.Show(pValue);
+    }
+    CanClose(pElement) {
+        if (this.ReferenceElement != null)
+            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
+        return true;
+    }
+}
+/// <reference path="Base/XPopupElement.ts" />
+class XCalendar extends XPopupElement {
+    constructor(pOwner, pClass = null) {
+        super(pOwner, pClass);
+        this.CurrentPanel = 'days';
+        this.OnSelectdate = null;
+        this.Header = new XDiv(this.HTML, "XCalendar-Header");
+        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
+        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
+        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
+        this.DaysGrid = new XDiv(this, "XDaysGrid");
+        this.MonthsGrid = new XDiv(this, "XMonthsGrid");
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid = new XDiv(this, "XYearsGrid");
+        this.YearsGrid.IsVisible = false;
+        this.ViewDate = new Date();
+        this.SelectedDate = new Date();
+        this.UpdateCalendar();
+        this.CenterButton.HTML.addEventListener('click', () => {
+            this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
+            this.UpdateCalendar();
+        });
+        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
+        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
+    }
+    OnShow(pValue = true) {
+        this.CurrentPanel = 'days';
+        this.UpdateCalendar();
+    }
+    OnHide() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+    CallPopupClosed() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+    }
+    ShowYears() {
+        this.YearsGrid.IsVisible = true;
+        this.YearsGrid.HTML.innerHTML = "";
+        const currentYear = this.ViewDate.getFullYear();
+        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
+        const decadeEnd = decadeStart + 10;
+        const gridStartYear = decadeStart - (decadeStart % 16);
+        for (let year = gridStartYear; year < gridStartYear + 16; year++) {
+            const cell = document.createElement('div');
+            cell.className = 'YearCell';
+            cell.textContent = year.toString();
+            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
+            if (!isCurrentDecade)
+                cell.classList.add('Faded');
+            if (year === new Date().getFullYear())
+                cell.classList.add('Current');
+            cell.addEventListener('click', () => {
+                this.ViewDate.setFullYear(year);
+                this.CurrentPanel = 'months';
+                this.UpdateCalendar();
+            });
+            this.YearsGrid.HTML.appendChild(cell);
+        }
+    }
+    ShowMonths() {
+        this.MonthsGrid.IsVisible = true;
+        this.MonthsGrid.HTML.innerHTML = "";
+        for (let month = 0; month < 12; month++) {
+            const cell = document.createElement('div');
+            cell.className = 'MonthCell';
+            cell.textContent = new Date(this.ViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'long' });
+            if (month === new Date().getMonth() && this.ViewDate.getFullYear() === new Date().getFullYear())
+                cell.classList.add('Current');
+            cell.addEventListener('click', () => {
+                this.ViewDate.setMonth(month);
+                this.CurrentPanel = 'days';
+                this.UpdateCalendar();
+            });
+            this.MonthsGrid.HTML.appendChild(cell);
+        }
+    }
+    ShowDays() {
+        this.DaysGrid.IsVisible = true;
+        this.DaysGrid.HTML.innerHTML = '';
+        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
+            const cell = document.createElement('div');
+            cell.textContent = day;
+            cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
+            this.DaysGrid.HTML.appendChild(cell);
+        });
+        const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
+        const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
+        let date = new Date(firstDay);
+        date.setDate(date.getDate() - firstDay.getDay());
+        for (let i = 0; i < 42; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'DayCell';
+            const isCurrentMonth = date.getMonth() === this.ViewDate.getMonth();
+            const isToday = date.toDateString() === new Date().toDateString();
+            const isSelected = this.SelectedDate && date.toDateString() === this.SelectedDate.toDateString();
+            if (!isCurrentMonth)
+                cell.classList.add('Faded');
+            if (isToday)
+                cell.classList.add('Current');
+            if (isSelected)
+                cell.classList.add('Selected');
+            cell.textContent = date.getDate().toString();
+            let daydate = new Date(date);
+            cell.addEventListener('click', () => this.SelectDate(daydate));
+            if (date.getDay() === 0)
+                cell.classList.add('Sunday');
+            if (date.getDay() === 6)
+                cell.classList.add('Saturday');
+            this.DaysGrid.HTML.appendChild(cell);
+            date.setDate(date.getDate() + 1);
+        }
+    }
+    SelectDate(pDate) {
+        this.SelectedDate = pDate;
+        this.ViewDate = new Date(pDate);
+        this.UpdateCalendar();
+        if (this.OnSelectdate != null)
+            this.OnSelectdate.apply(this, [pDate]);
+    }
+    Navigate(pDirection) {
+        switch (this.CurrentPanel) {
+            case 'days':
+                this.ViewDate.setMonth(this.ViewDate.getMonth() + pDirection);
+                break;
+            case 'months':
+                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + pDirection);
+                break;
+            default:
+                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + (pDirection * 16));
+                break;
+        }
+        this.UpdateCalendar();
+    }
+    UpdateCalendar() {
+        this.DaysGrid.IsVisible = false;
+        this.MonthsGrid.IsVisible = false;
+        this.YearsGrid.IsVisible = false;
+        switch (this.CurrentPanel) {
+            case 'days':
+                this.ShowDays();
+                this.CenterButton.SetContent(this.ViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+                break;
+            case 'months':
+                this.ShowMonths();
+                this.CenterButton.SetContent(this.ViewDate.getFullYear().toString());
+                break;
+            default:
+                this.ShowYears();
+                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
+                this.CenterButton.SetContent(`${year} - ${year + 15}`);
+                break;
+        }
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+}
+/// <reference path="Base/XDiv.ts" />
+class XDataGrid extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        var data = [];
+        for (let i = 0; i < 100; i++) {
+            const row = {
+                id: i,
+                nome: `Nome ${i}`,
+                email: `email${i}@exemplo.com`,
+                cidade: `Cidade ${i % 100}`,
+                idade: 20 + (i % 50),
+                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa: `Empresa ${i % 20}`,
+                cargo: `Cargo ${i % 10}`,
+                salario: 2000 + (i % 50) * 100,
+                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
+                cargo1: `Cargo ${i % 10}`,
+                salario2: 2000 + (i % 50) * 100,
+                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                nome1: `Nome ${i}`,
+                email1: `email${i}@exemplo.com`,
+                cidade1: `Cidade ${i % 100}`,
+                idade1: 20 + (i % 50),
+                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa1: `Empresa ${i % 20}`,
+            };
+            data.push(row);
+        }
+        this.Table = new XTable(this, "XTable");
+        this.Table.SetDataSet(data);
+    }
+}
+class XDataGridx extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.data = [];
+        this.Table = null;
+        this.DataSet = [];
+        this._SortState = null;
+        this.rowNumberColumn = { Title: '#', Visible: true, Width: 50 };
+        for (let i = 0; i < 100; i++) {
+            const row = {
+                id: i,
+                nome: `Nome ${i}`,
+                email: `email${i}@exemplo.com`,
+                cidade: `Cidade ${i % 100}`,
+                idade: 20 + (i % 50),
+                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa: `Empresa ${i % 20}`,
+                cargo: `Cargo ${i % 10}`,
+                salario: 2000 + (i % 50) * 100,
+                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
+                cargo1: `Cargo ${i % 10}`,
+                salario2: 2000 + (i % 50) * 100,
+                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+                nome1: `Nome ${i}`,
+                email1: `email${i}@exemplo.com`,
+                cidade1: `Cidade ${i % 100}`,
+                idade1: 20 + (i % 50),
+                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+                empresa1: `Empresa ${i % 20}`,
+            };
+            this.DataSet.push(row);
+        }
+        this.Container = new XDiv(this, "XDataGrid");
+        this.container = this.Container.HTML;
+        const fields = Object.keys(this.DataSet[0] || {});
+        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
+        this.render();
+        this.addColumnVisibilityToggle();
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "div", null);
+    }
+    render() {
+        this.container.innerHTML = '';
+        this.Table = new XTable(this.Container, "");
+        const table = this.Table;
+        //table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
+        this.buildHeader(table);
+        //this.buildBody(table);
+        //this.container.appendChild(table);
+    }
+    buildHeader(table) {
+        this.Columns.filter(c => c.Visible).forEach(colConfig => {
+            const th = this.createHeaderTh(colConfig);
+            headerRow.appendChild(th);
+        });
+    }
+    createHeaderTh(colConfig) {
+        var _a;
+        const th = document.createElement('th');
+        th.textContent = colConfig.Title;
+        //th.style.width = `${colConfig.width}px`;
+        th.style.userSelect = 'none';
+        //if (colConfig.field !== '#')
+        th.draggable = colConfig.Title !== '#';
+        const sortIcon = document.createElement('span');
+        sortIcon.className = 'sort-icon';
+        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.Title) {
+            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
+        }
+        th.appendChild(sortIcon);
+        // Drag para reordenar colunas
+        th.addEventListener('dragstart', (e) => {
+            var _a;
+            (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData('text/plain', colConfig.Title);
+            th.classList.add('dragging');
+        });
+        th.addEventListener('dragend', () => {
+            th.classList.remove('dragging');
+        });
+        th.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!th.classList.contains('drag-over')) {
+                th.classList.add('drag-over');
+            }
+        });
+        th.addEventListener('dragleave', () => {
+            th.classList.remove('drag-over');
+        });
+        th.addEventListener('drop', (e) => {
+            var _a;
+            e.preventDefault();
+            th.classList.remove('drag-over');
+            const draggedField = (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.getData('text/plain');
+            const visibleColumns = this.getVisibleColumns();
+            const draggedIndex = visibleColumns.findIndex(c => c.Title === draggedField);
+            const targetIndex = visibleColumns.findIndex(c => c.Title === colConfig.Title);
+            if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex)
+                return;
+            // Reordenar colunas originais mantendo a referência
+            const originalDraggedIndex = this.Columns.findIndex(c => c.Title === draggedField);
+            const originalTargetIndex = this.Columns.findIndex(c => c.Title === colConfig.Title);
+            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
+                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
+            this.render();
+        });
+        // Redimensionador
+        const resizer = document.createElement('div');
+        resizer.className = 'resizer';
+        th.appendChild(resizer);
+        this.addResizerEvents(th, resizer, colConfig);
+        // Clique para ordenar
+        th.addEventListener('click', () => this.sortData(colConfig.Title));
+        return th;
+    }
+    addResizerEvents(th, resizer, colConfig) {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        resizer.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); // Impede a propagação para o elemento pai
+            e.preventDefault(); // Evita comportamento padrão indesejado
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = th.offsetWidth;
+            const handleMouseMove = (e) => {
+                if (!isResizing)
+                    return;
+                const newWidth = startWidth + (e.clientX - startX);
+                th.style.width = `${newWidth}px`;
+                colConfig.Width = newWidth;
+                this.updateColumnWidths(colConfig.Title, newWidth);
+            };
+            const handleMouseUp = () => {
+                isResizing = false;
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp, { once: true });
+        });
+    }
+    updateColumnWidths(field, width) {
+        const index = this.Columns.findIndex(c => c.Title === field);
+        if (index > -1) {
+            this.Columns[index].Width = width;
+            document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
+                .forEach(el => el.style.width = `${width}px`);
+        }
+    }
+    getVisibleColumns() {
+        return [this.rowNumberColumn, ...this.Columns.filter(c => c.Visible)];
+    }
+    sortData(field) {
+        var _a;
+        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
+            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
+        }
+        else {
+            this._SortState = { field, direction: 'asc' };
+        }
+        var self = this._SortState;
+        this.DataSet.sort((a, b) => {
+            var e = this;
+            if (a[field] > b[field])
+                return e._SortState.direction === 'asc' ? 1 : -1;
+            if (a[field] < b[field])
+                return e._SortState.direction === 'asc' ? -1 : 1;
+            return 0;
+        });
+        this.render();
+    }
+    addColumnVisibilityToggle() {
+        const button = document.createElement('button');
+        button.className = 'menu-button';
+        button.textContent = '☰';
+        const menu = document.createElement('div');
+        menu.className = 'column-menu';
+        this.Columns.forEach(col => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = col.Visible;
+            checkbox.addEventListener('change', () => {
+                col.Visible = checkbox.checked;
+                this.render();
+            });
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(col.Title));
+            menu.appendChild(label);
+        });
+        button.addEventListener('click', () => {
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+        this.HTML.appendChild(button);
+        this.HTML.appendChild(menu);
+    }
+    buildBody(table) {
+        const tbody = document.createElement('tbody');
+        this.DataSet.forEach((rowData, index) => {
+            const tr = document.createElement('tr');
+            // Número sequencial
+            const tdNumber = document.createElement('td');
+            tdNumber.textContent = (index + 1).toString();
+            tr.appendChild(tdNumber);
+            // Dados
+            this.Columns.filter(c => c.Visible).forEach(colConfig => {
+                const td = document.createElement('td');
+                td.dataset.field = colConfig.Title;
+                td.style.width = `${colConfig.Width}px`;
+                tr.appendChild(td);
+                const txt = document.createElement('span');
+                txt.innerText = rowData[colConfig.Title];
+                td.appendChild(txt);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
     }
 }
 /// <reference path="Base/XDiv.ts" />
@@ -2762,27 +3204,6 @@ class XBaseTextButton extends XBaseButton {
     }
     set Title(pValue) {
         this.Text.innerHTML = pValue;
-    }
-}
-class XPopupElement extends XDiv {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.AutoClose = false;
-        this.OnPopupClosed = null;
-        this.ReferenceElement = null;
-        this.ReferenceElement = this;
-        this.HTML.style.zIndex = XPopupManager.ZIndex();
-    }
-    CallPopupClosed() {
-    }
-    Show(pValue = true) {
-        this.HTML.style.zIndex = XPopupManager.ZIndex();
-        super.Show(pValue);
-    }
-    CanClose(pElement) {
-        if (this.ReferenceElement != null)
-            return !pElement.IsChildOf(this.ReferenceElement.HTML, true) && this.CheckClose(pElement) && this.IsVisible && !pElement.IsChildOf(this.HTML, true);
-        return true;
     }
 }
 /// <reference path="Base/XBaseTextButton.ts" />
@@ -2940,6 +3361,180 @@ class XTabControl extends XDiv {
     CreateTab() {
         return new XTabControlTab(this.Container);
         ;
+    }
+}
+/// <reference path="XDiv.ts" />
+class XTableElement extends XElement {
+    constructor(pOwner, pClass = null, pTag = null) {
+        super(pOwner, pClass, pTag);
+        this.Cells = new XArray();
+    }
+    AddCell(pClass) {
+        var cell = new XTableElement(this, pClass, "tr");
+        this.Cells.Add(cell);
+    }
+    CreateContainer(pTag = null) {
+        return XUtils.AddElement(null, pTag, null);
+    }
+}
+class XDragUtils {
+    static SetData(pData) {
+        this._Data = pData;
+    }
+    static GetData() {
+        return this._Data;
+    }
+}
+class XTableHCell extends XTableElement {
+    constructor(pOwner, pClass = null, pTag = null) {
+        super(pOwner, pClass, pTag);
+        this.Data = null;
+        this.Table = null;
+        this.Row = -1;
+        this.Content = XUtils.AddElement(this, "div", "XTableHContent");
+        this.Sizer = XUtils.AddElement(this.Content, "div", "XTableResizer");
+        this.Text = XUtils.AddElement(this.Content, "div", "XTableHTitle");
+        this.ResizerEvents();
+        this.DragEvents();
+    }
+    SetData(pCell) {
+        this.Data = pCell;
+        this.Text.innerHTML = "<spans>" + this.Row + "</span>";
+    }
+    DragEvents() {
+        this.HTML.draggable = true;
+        this.HTML.addEventListener('dragstart', (e) => {
+            XDragUtils.SetData(this);
+            this.HTML.classList.add('dragging');
+        });
+        this.HTML.addEventListener('dragend', (e) => {
+            this.HTML.classList.remove('dragging');
+        });
+        this.HTML.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            var elm = XDragUtils.GetData();
+            if (elm == null || elm.UUID == this.UUID)
+                return;
+            var w = this.HTML.GetRect().Width;
+            if (e.offsetX <= 5 || e.offsetX + 6 >= w)
+                return;
+            console.log(w + " " + e.offsetX);
+            this.HTML.classList.remove('ldrag-over');
+            this.HTML.classList.remove('rdrag-over');
+            if (e.offsetX > w / 2)
+                this.HTML.classList.add('rdrag-over');
+            else
+                this.HTML.classList.add('ldrag-over');
+        });
+        this.HTML.addEventListener('dragleave', () => {
+            this.HTML.classList.remove('ldrag-over');
+            this.HTML.classList.remove('rdrag-over');
+        });
+        this.HTML.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.HTML.classList.remove('ldrag-over');
+            this.HTML.classList.remove('rdrag-over');
+            const elm = XDragUtils.GetData();
+            if (this.Owner instanceof XElement && elm.UUID != this.UUID) {
+                var w = this.HTML.clientWidth / 2;
+                if (e.offsetX > w)
+                    this.Owner.HTML.insertBefore(this.HTML, elm.HTML);
+                else
+                    this.Owner.HTML.insertBefore(elm.HTML, this.HTML);
+            }
+        });
+    }
+    ResizerEvents() {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        this.Sizer.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = this.Content.offsetWidth;
+            const handleMouseMove = (e) => {
+                if (!isResizing)
+                    return;
+                const newWidth = startWidth + (e.clientX - startX);
+                this.Content.style.width = `${newWidth}px`;
+                this.Data.Width = newWidth;
+            };
+            const handleMouseUp = () => {
+                isResizing = false;
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp, { once: true });
+        });
+    }
+}
+class XTableHeader extends XElement {
+    constructor(pOwner) {
+        super(pOwner, "XTableHeader");
+        this.Columns = new XArray();
+        this.TRows = new XTableElement(this, null, "tr");
+        this.Table = pOwner;
+    }
+    AddColumns(pClass) {
+        var cell = new XTableHCell(this.TRows, pClass, "th");
+        cell.Table = this.Table;
+        this.Columns.Add(cell);
+        return cell;
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "thead", null);
+    }
+}
+class XTableBody extends XElement {
+    constructor(pOwner) {
+        super(pOwner, "");
+        this.DataRows = new XArray();
+        this.BRows = new XTableElement(this, null, "tr");
+    }
+    AddRow() {
+        var row = new XTableElement(this, "XTableBR", "td");
+        this.DataRows.Add(row);
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "tbody", null);
+    }
+}
+class XTable extends XElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.Columns = null;
+        this.DataSet = [];
+        this.RowNumberColumn = { Title: '#', Visible: true, Width: 50 };
+        this.Header = new XTableHeader(this);
+        this.Body = new XTableBody(this);
+        ;
+    }
+    GetVisibleColumns() {
+        if (this.Columns == null)
+            return new Array();
+        return [this.RowNumberColumn, ...this.Columns.filter(c => c.Visible)];
+    }
+    SetDataSet(pDataSet) {
+        this.DataSet = pDataSet;
+        const fields = Object.keys(this.DataSet[0] || {});
+        this.Columns = fields.map(Title => ({ Title, Visible: true, Width: 120 }));
+        this.CreateHeader();
+    }
+    CreateHeader() {
+        if (this.Columns == null)
+            return;
+        for (var i = 0; i < this.Columns.length; i++) {
+            let col = this.Columns[i];
+            let cell = this.Header.AddColumns("XTh");
+            cell.Row = i;
+            cell.SetData(col);
+        }
+    }
+    CreateContainer() {
+        return XUtils.AddElement(null, "table");
     }
 }
 class XType1 {
@@ -3158,7 +3753,7 @@ class XUtils {
     }
     static AddElement(pOwner, pTag, pClass = null, pInsert = false) {
         if (pTag == null)
-            throw new Error(`Parameter "pTag" can´t be null`);
+            throw new Error(`Parameter "pTag" can�t be null`);
         var own;
         if (pOwner == null)
             own = document.body;
@@ -3180,395 +3775,6 @@ class XUtils {
         return elm;
     }
 }
-/// <reference path="XPopupElement.ts" />
-class XCalendar extends XPopupElement {
-    constructor(pOwner, pClass = null) {
-        super(pOwner, pClass);
-        this.CurrentPanel = 'days';
-        this.OnSelectdate = null;
-        this.Header = new XDiv(this.HTML, "XCalendar-Header");
-        this.LeftArrow = new XBaseButton(this.Header, "XCalendarLeftArrow");
-        this.CenterButton = new XBaseButton(this.Header, "XCalendarCenterButton");
-        this.RightArrow = new XBaseButton(this.Header, "XCalendarRightArrow");
-        this.DaysGrid = new XDiv(this, "XDaysGrid");
-        this.MonthsGrid = new XDiv(this, "XMonthsGrid");
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid = new XDiv(this, "XYearsGrid");
-        this.YearsGrid.IsVisible = false;
-        this.ViewDate = new Date();
-        this.SelectedDate = new Date();
-        this.UpdateCalendar();
-        this.CenterButton.HTML.addEventListener('click', () => {
-            this.CurrentPanel = this.CurrentPanel === 'days' ? 'months' : 'years';
-            this.UpdateCalendar();
-        });
-        this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
-        this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
-    }
-    OnShow(pValue = true) {
-        this.CurrentPanel = 'days';
-        this.UpdateCalendar();
-    }
-    OnHide() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-    }
-    CallPopupClosed() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-    }
-    ShowYears() {
-        this.YearsGrid.IsVisible = true;
-        this.YearsGrid.HTML.innerHTML = "";
-        const currentYear = this.ViewDate.getFullYear();
-        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
-        const decadeEnd = decadeStart + 10;
-        const gridStartYear = decadeStart - (decadeStart % 16);
-        for (let year = gridStartYear; year < gridStartYear + 16; year++) {
-            const cell = document.createElement('div');
-            cell.className = 'YearCell';
-            cell.textContent = year.toString();
-            const isCurrentDecade = year >= (decadeStart + 1) && year <= decadeEnd;
-            if (!isCurrentDecade)
-                cell.classList.add('Faded');
-            if (year === new Date().getFullYear())
-                cell.classList.add('Current');
-            cell.addEventListener('click', () => {
-                this.ViewDate.setFullYear(year);
-                this.CurrentPanel = 'months';
-                this.UpdateCalendar();
-            });
-            this.YearsGrid.HTML.appendChild(cell);
-        }
-    }
-    ShowMonths() {
-        this.MonthsGrid.IsVisible = true;
-        this.MonthsGrid.HTML.innerHTML = "";
-        for (let month = 0; month < 12; month++) {
-            const cell = document.createElement('div');
-            cell.className = 'MonthCell';
-            cell.textContent = new Date(this.ViewDate.getFullYear(), month).toLocaleDateString('pt-BR', { month: 'long' });
-            if (month === new Date().getMonth() && this.ViewDate.getFullYear() === new Date().getFullYear())
-                cell.classList.add('Current');
-            cell.addEventListener('click', () => {
-                this.ViewDate.setMonth(month);
-                this.CurrentPanel = 'days';
-                this.UpdateCalendar();
-            });
-            this.MonthsGrid.HTML.appendChild(cell);
-        }
-    }
-    ShowDays() {
-        this.DaysGrid.IsVisible = true;
-        this.DaysGrid.HTML.innerHTML = '';
-        ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach((day, i) => {
-            const cell = document.createElement('div');
-            cell.textContent = day;
-            cell.className = `Day-Header ${i === 0 ? 'Sunday' : ''} ${i === 6 ? 'Saturday' : ''}`;
-            this.DaysGrid.HTML.appendChild(cell);
-        });
-        const firstDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth(), 1);
-        const lastDay = new Date(this.ViewDate.getFullYear(), this.ViewDate.getMonth() + 1, 0);
-        let date = new Date(firstDay);
-        date.setDate(date.getDate() - firstDay.getDay());
-        for (let i = 0; i < 42; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'DayCell';
-            const isCurrentMonth = date.getMonth() === this.ViewDate.getMonth();
-            const isToday = date.toDateString() === new Date().toDateString();
-            const isSelected = this.SelectedDate && date.toDateString() === this.SelectedDate.toDateString();
-            if (!isCurrentMonth)
-                cell.classList.add('Faded');
-            if (isToday)
-                cell.classList.add('Current');
-            if (isSelected)
-                cell.classList.add('Selected');
-            cell.textContent = date.getDate().toString();
-            let daydate = new Date(date);
-            cell.addEventListener('click', () => this.SelectDate(daydate));
-            if (date.getDay() === 0)
-                cell.classList.add('Sunday');
-            if (date.getDay() === 6)
-                cell.classList.add('Saturday');
-            this.DaysGrid.HTML.appendChild(cell);
-            date.setDate(date.getDate() + 1);
-        }
-    }
-    SelectDate(pDate) {
-        this.SelectedDate = pDate;
-        this.ViewDate = new Date(pDate);
-        this.UpdateCalendar();
-        if (this.OnSelectdate != null)
-            this.OnSelectdate.apply(this, [pDate]);
-    }
-    Navigate(pDirection) {
-        switch (this.CurrentPanel) {
-            case 'days':
-                this.ViewDate.setMonth(this.ViewDate.getMonth() + pDirection);
-                break;
-            case 'months':
-                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + pDirection);
-                break;
-            default:
-                this.ViewDate.setFullYear(this.ViewDate.getFullYear() + (pDirection * 16));
-                break;
-        }
-        this.UpdateCalendar();
-    }
-    UpdateCalendar() {
-        this.DaysGrid.IsVisible = false;
-        this.MonthsGrid.IsVisible = false;
-        this.YearsGrid.IsVisible = false;
-        switch (this.CurrentPanel) {
-            case 'days':
-                this.ShowDays();
-                this.CenterButton.SetContent(this.ViewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
-                break;
-            case 'months':
-                this.ShowMonths();
-                this.CenterButton.SetContent(this.ViewDate.getFullYear().toString());
-                break;
-            default:
-                this.ShowYears();
-                const year = this.ViewDate.getFullYear() - (this.ViewDate.getFullYear() % 16);
-                this.CenterButton.SetContent(`${year} - ${year + 15}`);
-                break;
-        }
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-}
-/// <reference path="XElement.ts" />
-class XDataGrid extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.data = [];
-        this.DataSet = [];
-        this._SortState = null;
-        this.rowNumberColumn = { field: '#', visible: true, width: 50 };
-        for (let i = 0; i < 100; i++) {
-            const row = {
-                id: i,
-                nome: `Nome ${i}`,
-                email: `email${i}@exemplo.com`,
-                cidade: `Cidade ${i % 100}`,
-                idade: 20 + (i % 50),
-                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-                empresa: `Empresa ${i % 20}`,
-                cargo: `Cargo ${i % 10}`,
-                salario: 2000 + (i % 50) * 100,
-                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
-                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
-                cargo1: `Cargo ${i % 10}`,
-                salario2: 2000 + (i % 50) * 100,
-                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
-                nome1: `Nome ${i}`,
-                email1: `email${i}@exemplo.com`,
-                cidade1: `Cidade ${i % 100}`,
-                idade1: 20 + (i % 50),
-                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-                empresa1: `Empresa ${i % 20}`,
-            };
-            this.DataSet.push(row);
-        }
-        this.Container = new XDiv(this, "XDataGrid");
-        this.container = this.Container.HTML;
-        const fields = Object.keys(this.DataSet[0] || {});
-        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
-        this.render();
-        this.addColumnVisibilityToggle();
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-    render() {
-        this.container.innerHTML = '';
-        const table = document.createElement('table');
-        //table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
-        this.buildHeader(table);
-        this.buildBody(table);
-        this.container.appendChild(table);
-    }
-    buildHeader(table) {
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        // Coluna de número sequencial
-        const rowNumberTh = this.createHeaderTh(this.rowNumberColumn);
-        headerRow.appendChild(rowNumberTh);
-        // Colunas do dataset
-        this.Columns.filter(c => c.visible).forEach(colConfig => {
-            const th = this.createHeaderTh(colConfig);
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-    }
-    createHeaderTh(colConfig) {
-        var _a;
-        const th = document.createElement('th');
-        th.textContent = colConfig.field;
-        //th.style.width = `${colConfig.width}px`;
-        th.style.userSelect = 'none';
-        //if (colConfig.field !== '#')
-        th.draggable = colConfig.field !== '#';
-        const sortIcon = document.createElement('span');
-        sortIcon.className = 'sort-icon';
-        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.field) {
-            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
-        }
-        th.appendChild(sortIcon);
-        // Drag para reordenar colunas
-        th.addEventListener('dragstart', (e) => {
-            var _a;
-            (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData('text/plain', colConfig.field);
-            th.classList.add('dragging');
-        });
-        th.addEventListener('dragend', () => {
-            th.classList.remove('dragging');
-        });
-        th.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (!th.classList.contains('drag-over')) {
-                th.classList.add('drag-over');
-            }
-        });
-        th.addEventListener('dragleave', () => {
-            th.classList.remove('drag-over');
-        });
-        th.addEventListener('drop', (e) => {
-            var _a;
-            e.preventDefault();
-            th.classList.remove('drag-over');
-            const draggedField = (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.getData('text/plain');
-            const visibleColumns = this.getVisibleColumns();
-            const draggedIndex = visibleColumns.findIndex(c => c.field === draggedField);
-            const targetIndex = visibleColumns.findIndex(c => c.field === colConfig.field);
-            if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex)
-                return;
-            // Reordenar colunas originais mantendo a referência
-            const originalDraggedIndex = this.Columns.findIndex(c => c.field === draggedField);
-            const originalTargetIndex = this.Columns.findIndex(c => c.field === colConfig.field);
-            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
-                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
-            this.render();
-        });
-        // Redimensionador
-        const resizer = document.createElement('div');
-        resizer.className = 'resizer';
-        th.appendChild(resizer);
-        this.addResizerEvents(th, resizer, colConfig);
-        // Clique para ordenar
-        th.addEventListener('click', () => this.sortData(colConfig.field));
-        return th;
-    }
-    addResizerEvents(th, resizer, colConfig) {
-        let isResizing = false;
-        let startX = 0;
-        let startWidth = 0;
-        resizer.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // Impede a propagação para o elemento pai
-            e.preventDefault(); // Evita comportamento padrão indesejado
-            isResizing = true;
-            startX = e.clientX;
-            startWidth = th.offsetWidth;
-            const handleMouseMove = (e) => {
-                if (!isResizing)
-                    return;
-                const newWidth = startWidth + (e.clientX - startX);
-                th.style.width = `${newWidth}px`;
-                colConfig.width = newWidth;
-                this.updateColumnWidths(colConfig.field, newWidth);
-            };
-            const handleMouseUp = () => {
-                isResizing = false;
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp, { once: true });
-        });
-    }
-    updateColumnWidths(field, width) {
-        const index = this.Columns.findIndex(c => c.field === field);
-        if (index > -1) {
-            this.Columns[index].width = width;
-            document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
-                .forEach(el => el.style.width = `${width}px`);
-        }
-    }
-    getVisibleColumns() {
-        return [this.rowNumberColumn, ...this.Columns.filter(c => c.visible)];
-    }
-    sortData(field) {
-        var _a;
-        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
-            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
-        }
-        else {
-            this._SortState = { field, direction: 'asc' };
-        }
-        var self = this._SortState;
-        this.DataSet.sort((a, b) => {
-            var e = this;
-            if (a[field] > b[field])
-                return e._SortState.direction === 'asc' ? 1 : -1;
-            if (a[field] < b[field])
-                return e._SortState.direction === 'asc' ? -1 : 1;
-            return 0;
-        });
-        this.render();
-    }
-    addColumnVisibilityToggle() {
-        const button = document.createElement('button');
-        button.className = 'menu-button';
-        button.textContent = '☰';
-        const menu = document.createElement('div');
-        menu.className = 'column-menu';
-        this.Columns.forEach(col => {
-            const label = document.createElement('label');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = col.visible;
-            checkbox.addEventListener('change', () => {
-                col.visible = checkbox.checked;
-                this.render();
-            });
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(col.field));
-            menu.appendChild(label);
-        });
-        button.addEventListener('click', () => {
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-        this.HTML.appendChild(button);
-        this.HTML.appendChild(menu);
-    }
-    buildBody(table) {
-        const tbody = document.createElement('tbody');
-        this.DataSet.forEach((rowData, index) => {
-            const tr = document.createElement('tr');
-            // Número sequencial
-            const tdNumber = document.createElement('td');
-            tdNumber.textContent = (index + 1).toString();
-            tr.appendChild(tdNumber);
-            // Dados
-            this.Columns.filter(c => c.visible).forEach(colConfig => {
-                const td = document.createElement('td');
-                td.dataset.field = colConfig.field;
-                td.style.width = `${colConfig.width}px`;
-                tr.appendChild(td);
-                const txt = document.createElement('span');
-                txt.innerText = rowData[colConfig.field];
-                td.appendChild(txt);
-            });
-            tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-    }
-}
 /// <reference path="src/XDefault.ts" />
 /// <reference path="src/XConst.ts" />
 /// <reference path="src/XInterfaces.ts" />
@@ -3588,6 +3794,7 @@ class XDataGrid extends XElement {
 /// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="src/Elements/Base/XPopupElement.ts" />
 /// <reference path="src/Elements/XMenu.ts" />
+/// <reference path="src/Elements/Base/XTable.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
 /// <reference path="src/Elements/XCalendar.ts" />
 /// <reference path="src/Elements/XDataGrid.ts" />
@@ -3596,52 +3803,4 @@ class XDataGrid extends XElement {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
-/// <reference path="XDiv.ts" />
-class XTableElement extends XElement {
-    constructor(pOwner, pClass = null, pTag = null) {
-        super(pOwner, pClass, pTag);
-    }
-    CreateContainer(pTag = null) {
-        return XUtils.AddElement(null, pTag, null);
-    }
-}
-class XTableHeader extends XElement {
-    constructor(pOwner) {
-        super(pOwner, "XTableHeader");
-        this.Columns = new XArray();
-        this.Row = new XTableElement(this, "XTableHR", "tr");
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "thead", null);
-    }
-    AddCell(pClass) {
-        var cell = new XTableElement(this.Row, pClass, "th");
-        this.Columns.Add(cell);
-    }
-}
-class XTableBody extends XElement {
-    constructor(pOwner) {
-        super(pOwner, "XTableBody");
-        this.Columns = new XArray();
-        this.Row = new XTableElement(this, "XTableBR", "tr");
-    }
-    AddCell(pClass) {
-        var cell = new XTableElement(this.Row, pClass, "td");
-        this.Columns.Add(cell);
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "tbody", null);
-    }
-}
-class XTable extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.Header = new XTableHeader(this);
-        this.Body = new XTableBody(this);
-        ;
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "table");
-    }
-}
 //# sourceMappingURL=TFX.Core.js.map

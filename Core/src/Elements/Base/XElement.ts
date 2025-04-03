@@ -12,11 +12,13 @@
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer(pTag);
+        this.HTML.Object = this;
         if (pClass == null)
             pClass = this.constructor.name;
         this.Element = null;
         this.CreateChildren();
-        this.HTML.className = pClass
+        if (!X.IsEmpty(pClass))
+            this.HTML.className = pClass
         if (pOwner instanceof XElement)
             pOwner.HTML.appendChild(this.HTML);
         if (pOwner instanceof HTMLElement)
@@ -41,7 +43,7 @@
 
     AddChildren(pElement: XElement)
     {
-        this.Children.Add(pElement);    
+        this.Children.Add(pElement);
     }
     get Rect(): XRect
     {

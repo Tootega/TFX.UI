@@ -59,33 +59,8 @@ interface Node
     Any(pPredicate: XFunc<Node>): boolean;
 
     Name: string;
-
 }
 
-Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
-{
-    var elm: Node | null = this;
-    if (pOrIsSelf && elm == pElement)
-        return true;
-    while (elm != null)
-    {
-        if (elm.parentElement == pElement)
-            return true;
-        elm = elm.parentElement;
-    }
-    return false;
-};
-Node.prototype.Any = function (pPredicate: XFunc<Node>): boolean
-{
-    var elm: Node | null = this;
-    while (elm != null)
-    {
-        if (pPredicate(elm))
-            return true;
-        elm = elm.parentElement;
-    }
-    return false;
-};
 
 Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
 {
@@ -112,6 +87,46 @@ Node.prototype.Any = function (pPredicate: XFunc<Node>): boolean
     return false;
 };
 
+Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
+{
+    var elm: Node | null = this;
+    if (pOrIsSelf && elm == pElement)
+        return true;
+    while (elm != null)
+    {
+        if (elm.parentElement == pElement)
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+Node.prototype.Any = function (pPredicate: XFunc<Node>): boolean
+{
+    var elm: Node | null = this;
+    while (elm != null)
+    {
+        if (pPredicate(elm))
+            return true;
+        elm = elm.parentElement;
+    }
+    return false;
+};
+
+interface NodeList
+{
+    FirstOrNull<T>(pPredicate?: XFunc<T>): T
+}
+
+NodeList.prototype.FirstOrNull = function <T>(pPredicate?: XFunc<T>): T
+{
+    for (var i = 0; i < this.length; i++)
+    {
+        var item = this[i];
+        if (pPredicate == null || pPredicate(<T>item))
+            return <T>item;
+    }
+    return <T>null;
+};
 
 interface Array<T>
 {

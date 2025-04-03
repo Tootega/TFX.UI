@@ -185,6 +185,9 @@ interface Node {
     Any(pPredicate: XFunc<Node>): boolean;
     Name: string;
 }
+interface NodeList {
+    FirstOrNull<T>(pPredicate?: XFunc<T>): T;
+}
 interface Array<T> {
     Order: any;
     ToArray(): Array<T>;
@@ -658,6 +661,64 @@ declare class XPhoneEditor extends XBaseInput {
     private calculateCursorPos;
     private updateValidation;
 }
+declare class XPopupElement extends XDiv implements XIPopupPanel {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    AutoClose: boolean;
+    OnPopupClosed: XPopupClosedEvent | null;
+    ReferenceElement: XElement | null;
+    CallPopupClosed(): void;
+    Show(pValue?: boolean): void;
+    CanClose(pElement: HTMLElement): boolean;
+}
+declare class XCalendar extends XPopupElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    protected Header: XDiv;
+    protected LeftArrow: XBaseButton;
+    protected CenterButton: XBaseButton;
+    protected RightArrow: XBaseButton;
+    protected DaysGrid: XDiv;
+    protected MonthsGrid: XDiv;
+    protected YearsGrid: XDiv;
+    private CurrentPanel;
+    private ViewDate;
+    SelectedDate: Date;
+    OnSelectdate: XMethod<Date> | null;
+    OnShow(pValue?: boolean): void;
+    OnHide(): void;
+    CallPopupClosed(): void;
+    private ShowYears;
+    private ShowMonths;
+    private ShowDays;
+    SelectDate(pDate: Date): void;
+    private Navigate;
+    UpdateCalendar(): void;
+    protected CreateContainer(): HTMLElement;
+}
+declare class XDataGrid extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Table: XTable;
+}
+declare class XDataGridx extends XElement {
+    data: any;
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Container: XDiv;
+    Table: XTable | null;
+    private container;
+    private DataSet;
+    private Columns;
+    private _SortState;
+    private rowNumberColumn;
+    protected CreateContainer(): HTMLElement;
+    private render;
+    private buildHeader;
+    private createHeaderTh;
+    private addResizerEvents;
+    private updateColumnWidths;
+    private getVisibleColumns;
+    private sortData;
+    private addColumnVisibilityToggle;
+    private buildBody;
+}
 declare class XMenuButtonItem extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any);
 }
@@ -698,15 +759,6 @@ declare class XBaseTextButton extends XBaseButton {
     get Title(): string;
     set Title(pValue: string);
 }
-declare class XPopupElement extends XDiv implements XIPopupPanel {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    AutoClose: boolean;
-    OnPopupClosed: XPopupClosedEvent | null;
-    ReferenceElement: XElement | null;
-    CallPopupClosed(): void;
-    Show(pValue?: boolean): void;
-    CanClose(pElement: HTMLElement): boolean;
-}
 declare class XTabControlButton extends XBaseTextButton {
     constructor(pOwner: XElement | HTMLElement | null);
     TabControl: XTabControl | null;
@@ -744,6 +796,61 @@ declare class XTabControl extends XDiv {
     SelectTab(pButton: XTabControlButton): void;
     AddTab(pTitle: string): void;
     CreateTab(): XTabControlTab;
+}
+interface XColumnConfig {
+    Title: string;
+    Visible: boolean;
+    Width: number;
+}
+declare class XTableElement extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
+    Cells: XArray<XTableElement>;
+    AddCell(pClass: string): void;
+    protected CreateContainer(pTag?: string | null): HTMLElement;
+}
+declare class XDragUtils {
+    private static _Data;
+    static SetData(pData: any): void;
+    static GetData<T>(): T;
+}
+declare class XTableHCell extends XTableElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
+    Sizer: HTMLDivElement;
+    Text: HTMLSpanElement;
+    Content: HTMLDivElement;
+    Data: XColumnConfig | any;
+    Table: XTable | any;
+    Row: number;
+    SetData(pCell: XColumnConfig): void;
+    DragEvents(): void;
+    private ResizerEvents;
+}
+declare class XTableHeader extends XElement {
+    constructor(pOwner: XTable);
+    TRows: XTableElement;
+    Columns: XArray<XTableElement>;
+    Table: XTable;
+    AddColumns(pClass: string): XTableHCell;
+    protected CreateContainer(): HTMLElement;
+}
+declare class XTableBody extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null);
+    BRows: XTableElement;
+    DataRows: XArray<XTableElement>;
+    AddRow(): void;
+    protected CreateContainer(): HTMLElement;
+}
+declare class XTable extends XElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Header: XTableHeader;
+    Body: XTableBody;
+    private Columns;
+    protected DataSet: any[];
+    private RowNumberColumn;
+    GetVisibleColumns(): Array<XColumnConfig>;
+    SetDataSet(pDataSet: any): void;
+    CreateHeader(): void;
+    protected CreateContainer(): HTMLElement;
 }
 declare class XType1 {
     Point: XPoint;
@@ -789,77 +896,4 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
-}
-declare class XCalendar extends XPopupElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
-    protected Header: XDiv;
-    protected LeftArrow: XBaseButton;
-    protected CenterButton: XBaseButton;
-    protected RightArrow: XBaseButton;
-    protected DaysGrid: XDiv;
-    protected MonthsGrid: XDiv;
-    protected YearsGrid: XDiv;
-    private CurrentPanel;
-    private ViewDate;
-    SelectedDate: Date;
-    OnSelectdate: XMethod<Date> | null;
-    OnShow(pValue?: boolean): void;
-    OnHide(): void;
-    CallPopupClosed(): void;
-    private ShowYears;
-    private ShowMonths;
-    private ShowDays;
-    SelectDate(pDate: Date): void;
-    private Navigate;
-    UpdateCalendar(): void;
-    protected CreateContainer(): HTMLElement;
-}
-interface XColumnConfig {
-    field: string;
-    visible: boolean;
-    width: number;
-}
-declare class XDataGrid extends XElement {
-    data: any;
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    Container: XDiv;
-    private container;
-    private DataSet;
-    private Columns;
-    private _SortState;
-    private rowNumberColumn;
-    protected CreateContainer(): HTMLElement;
-    private render;
-    private buildHeader;
-    private createHeaderTh;
-    private addResizerEvents;
-    private updateColumnWidths;
-    private getVisibleColumns;
-    private sortData;
-    private addColumnVisibilityToggle;
-    private buildBody;
-}
-declare class XTableElement extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
-    protected CreateContainer(pTag?: string | null): HTMLElement;
-}
-declare class XTableHeader extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Row: XTableElement;
-    Columns: XArray<XTableElement>;
-    protected CreateContainer(): HTMLElement;
-    AddCell(pClass: string): void;
-}
-declare class XTableBody extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Row: XTableElement;
-    Columns: XArray<XTableElement>;
-    AddCell(pClass: string): void;
-    protected CreateContainer(): HTMLElement;
-}
-declare class XTable extends XElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    Header: XTableHeader;
-    Body: XTableBody;
-    protected CreateContainer(): HTMLElement;
 }
