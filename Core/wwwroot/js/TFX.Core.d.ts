@@ -824,6 +824,10 @@ declare class XTableHCell extends XTableElement {
     Content: HTMLDivElement;
     SortIcon: HTMLSpanElement;
     Data: XColumnConfig | any;
+    SortState: {
+        Field: string;
+        Direction: 'asc' | 'desc';
+    };
     SetData(pCell: XColumnConfig): void;
     DragEvents(): void;
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
@@ -838,10 +842,6 @@ declare class XTableHeader extends XElement {
     TRows: XTableHRow;
     Columns: XArray<XTableHCell>;
     Table: XTable;
-    SortState: {
-        Field: string;
-        Direction: 'asc' | 'desc';
-    };
     Clear(): void;
     AddColumns(pClass: string): XTableHCell;
     protected CreateContainer(): HTMLElement;
@@ -851,7 +851,8 @@ declare class XTableBody extends XElement {
     BRows: XTableElement;
     DataRows: XArray<XTableRow>;
     Table: XTable;
-    SortData(pCell: XTableHCell): any;
+    SortCells: Array<XTableHCell>;
+    SortData(pCell: XTableHCell, pAction: number): any;
     Clear(): void;
     AddRow(): XTableRow;
     protected CreateContainer(): HTMLElement;
@@ -936,4 +937,7 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XHotkeyManager {
+    static OnKeyDown(pArg: KeyboardEvent): boolean;
 }

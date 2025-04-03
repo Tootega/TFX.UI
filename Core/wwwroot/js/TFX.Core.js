@@ -3291,20 +3291,20 @@ class XTabControl extends XDiv {
         });
         this.AddTab("Aninha");
         this.AddTab("Maria");
-        this.AddTab("Joana");
-        this.AddTab("Rebeca");
-        this.AddTab("Antonieta");
-        this.AddTab("Valentina");
-        this.AddTab("Amanda");
-        this.AddTab("Jaqueline");
-        this.AddTab("Helena");
-        this.AddTab("Fernanda");
-        this.AddTab("Sonia");
-        this.AddTab("Larissa");
-        this.AddTab("Eleonora");
-        this.AddTab("Sara");
-        this.AddTab("Sebastina");
-        this.AddTab("Sabrina");
+        //this.AddTab("Joana");
+        //this.AddTab("Rebeca");
+        //this.AddTab("Antonieta");
+        //this.AddTab("Valentina");
+        //this.AddTab("Amanda");
+        //this.AddTab("Jaqueline");
+        //this.AddTab("Helena");
+        //this.AddTab("Fernanda");
+        //this.AddTab("Sonia");
+        //this.AddTab("Larissa");
+        //this.AddTab("Eleonora");
+        //this.AddTab("Sara");
+        //this.AddTab("Sebastina");
+        //this.AddTab("Sabrina");
     }
     PopulateDropdown() {
         this.Dropdown.HTML.innerHTML = '';
@@ -3402,10 +3402,12 @@ class XTableHCell extends XTableElement {
         this.TextArea = XUtils.AddElement(this.Content, "div", "XTableHTitle");
         this.Title = XUtils.AddElement(this.TextArea, "span");
         this.SortIcon = XUtils.AddElement(this.TextArea, "span", "sort-icon");
+        this.SortState = { Field: "", Direction: 'asc' };
         this.ResizerEvents();
         this.DragEvents();
     }
     SetData(pCell) {
+        this.SortState = { Field: "", Direction: 'asc' };
         this.Data = pCell;
         this.Title.innerHTML = "<spans>" + this.Data.Title + "</span>";
     }
@@ -3413,7 +3415,12 @@ class XTableHCell extends XTableElement {
         this.Content.addEventListener('click', (e) => {
             if (e.target == this.Sizer)
                 return;
-            this.Table.Body.SortData(this);
+            var act = 0;
+            if (e.ctrlKey)
+                act = 1;
+            if (e.ctrlKey && e.shiftKey)
+                act = 2;
+            this.Table.Body.SortData(this, act);
         });
         this.HTML.draggable = true;
         this.HTML.addEventListener('dragstart', (e) => {
@@ -3502,10 +3509,8 @@ class XTableHeader extends XElement {
         this.Columns = new XArray();
         this.TRows = new XTableHRow(this);
         this.Table = pTable;
-        this.SortState = { Field: "", Direction: 'asc' };
     }
     Clear() {
-        this.SortState = { Field: "", Direction: 'asc' };
         this.TRows.HTML.innerHTML = "";
     }
     AddColumns(pClass) {
@@ -3522,23 +3527,41 @@ class XTableBody extends XElement {
     constructor(pOwner, pTable) {
         super(pOwner, "");
         this.DataRows = new XArray();
+        this.SortCells = new Array();
         this.Table = pTable;
         this.BRows = new XTableRow(this);
     }
-    SortData(pCell) {
+    SortData(pCell, pAction) {
+        switch (pAction) {
+            case 0:
+                this.SortCells = new Array();
+                break;
+            case 2:
+                this.SortCells.Remove(pCell);
+                break;
+        }
+        if (!this.SortCells.Any(c => c == pCell) && pAction != 2)
+            this.SortCells.Add(pCell);
         let field = pCell.Data.Title;
-        var hd = this.Table.Header;
-        if (hd.SortState.Field === field)
-            hd.SortState.Direction = hd.SortState.Direction === 'asc' ? 'desc' : 'asc';
-        else
-            hd.SortState = { Field: field, Direction: 'asc' };
-        hd.Columns.ForEach(c => c.SortIcon.innerHTML = "");
-        pCell.SortIcon.innerHTML = hd.SortState.Direction === 'asc' ? ' ▲' : ' ▼';
+        this.Table.Header.Columns.ForEach(c => {
+            if (!this.SortCells.Any(cc => cc == c))
+                c.SortIcon.innerHTML = "";
+        });
+        if (pAction != 2) {
+            if (!X.IsEmpty(pCell.SortIcon.innerHTML))
+                pCell.SortState.Direction = pCell.SortState.Direction === 'asc' ? 'desc' : 'asc';
+            else
+                pCell.SortState = { Field: field, Direction: 'asc' };
+            pCell.SortIcon.innerHTML = pCell.SortState.Direction === 'asc' ? ' ▲' : ' ▼';
+        }
         this.DataRows.sort((a, b) => {
-            if (a.Tupla[field] > b.Tupla[field])
-                return hd.SortState.Direction === 'asc' ? 1 : -1;
-            if (a.Tupla[field] < b.Tupla[field])
-                return hd.SortState.Direction === 'asc' ? -1 : 1;
+            for (var i = 0; i < this.SortCells.length; i++) {
+                let cell = this.SortCells[i];
+                if (a.Tupla[cell.Data.Title] > b.Tupla[cell.Data.Title])
+                    return cell.SortState.Direction === 'asc' ? 1 : -1;
+                if (a.Tupla[cell.Data.Title] < b.Tupla[cell.Data.Title])
+                    return cell.SortState.Direction === 'asc' ? -1 : 1;
+            }
             return 0;
         });
         while (this.HTML.firstChild)
@@ -3946,4 +3969,14 @@ class XUtils {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
+class XHotkeyManager {
+    static OnKeyDown(pArg) {
+        let elm = pArg.target;
+        if (!X.IsEmpty(pArg.key) && pArg.key.length == 1 && pArg.altKey) {
+            pArg.preventDefault();
+            return false;
+        }
+        return true;
+    }
+}
 //# sourceMappingURL=TFX.Core.js.map

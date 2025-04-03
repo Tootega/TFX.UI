@@ -844,6 +844,7 @@ th:active {
   white-space: nowrap;
   min-width: 100%;
   height: 100%;
+  border-right: solid 0.5px rgba(170, 187, 204, 0.231372549);
 }
 
 .XTableCellTitle {

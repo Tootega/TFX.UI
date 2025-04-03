@@ -50,6 +50,7 @@ class XTableHCell extends XTableElement
         this.TextArea = XUtils.AddElement<HTMLSpanElement>(this.Content, "div", "XTableHTitle");
         this.Title = XUtils.AddElement<HTMLSpanElement>(this.TextArea, "span");
         this.SortIcon = XUtils.AddElement<HTMLSpanElement>(this.TextArea, "span", "sort-icon");
+        this.SortState = { Field: "", Direction: 'asc' };
         this.ResizerEvents()
         this.DragEvents()
     }
@@ -61,10 +62,11 @@ class XTableHCell extends XTableElement
     Content: HTMLDivElement;
     SortIcon: HTMLSpanElement;
     Data: XColumnConfig | any = null;
-
+    SortState: { Field: string; Direction: 'asc' | 'desc' };
 
     SetData(pCell: XColumnConfig)
     {
+        this.SortState = { Field: "", Direction: 'asc' };
         this.Data = pCell;
         this.Title.innerHTML = "<spans>" + this.Data.Title + "</span>";
     }
@@ -75,7 +77,12 @@ class XTableHCell extends XTableElement
         {
             if (e.target == this.Sizer)
                 return;
-            this.Table.Body.SortData(this);
+            var act = 0;
+            if (e.ctrlKey)
+                act = 1;
+            if (e.ctrlKey && e.shiftKey)
+                act = 2;
+            this.Table.Body.SortData(this, act);
         });
 
         this.HTML.draggable = true;
@@ -198,16 +205,14 @@ class XTableHeader extends XElement
         super(pOwner, "XTableHeader");
         this.TRows = new XTableHRow(this);
         this.Table = pTable;
-        this.SortState = { Field: "", Direction: 'asc' };
+
     }
     TRows: XTableHRow;
     Columns = new XArray<XTableHCell>();
     Table: XTable;
-    SortState: { Field: string; Direction: 'asc' | 'desc' };
 
     Clear()
     {
-        this.SortState = { Field: "", Direction: 'asc' };
         this.TRows.HTML.innerHTML = "";
     }
 
@@ -236,25 +241,48 @@ class XTableBody extends XElement
     BRows: XTableElement;
     DataRows = new XArray<XTableRow>();
     Table: XTable;
+    SortCells: Array<XTableHCell> = new Array<XTableHCell>();
 
-    SortData(pCell: XTableHCell): any
+    SortData(pCell: XTableHCell, pAction: number): any
     {
+        switch (pAction)
+        {
+            case 0:
+                this.SortCells = new Array<XTableHCell>();
+                break;
+            case 2:
+                this.SortCells.Remove(pCell);
+                break;
+        }
+        if (!this.SortCells.Any(c => c == pCell) && pAction != 2)
+            this.SortCells.Add(pCell);
         let field = pCell.Data.Title;
-        var hd = this.Table.Header;
-        if (hd.SortState.Field === field)
-            hd.SortState.Direction = hd.SortState.Direction === 'asc' ? 'desc' : 'asc';
-        else
-            hd.SortState = { Field: field, Direction: 'asc' };
-        hd.Columns.ForEach(c => c.SortIcon.innerHTML = "");
-        pCell.SortIcon.innerHTML = hd.SortState.Direction === 'asc' ? ' ▲' : ' ▼';
+        this.Table.Header.Columns.ForEach(c =>
+        {
+            if (!this.SortCells.Any(cc => cc == c))
+                c.SortIcon.innerHTML = "";
+        });
+        if (pAction != 2)
+        {
+            if (!X.IsEmpty(pCell.SortIcon.innerHTML))
+                pCell.SortState.Direction = pCell.SortState.Direction === 'asc' ? 'desc' : 'asc';
+            else
+                pCell.SortState = { Field: field, Direction: 'asc' };
 
+            pCell.SortIcon.innerHTML = pCell.SortState.Direction === 'asc' ? ' ▲' : ' ▼';
+        }
         this.DataRows.sort((a, b) =>
         {
 
-            if (a.Tupla[field] > b.Tupla[field])
-                return hd.SortState.Direction === 'asc' ? 1 : -1;
-            if (a.Tupla[field] < b.Tupla[field])
-                return hd.SortState.Direction === 'asc' ? -1 : 1;
+            for (var i = 0; i < this.SortCells.length; i++)
+            {
+                let cell = this.SortCells[i];
+                if (a.Tupla[cell.Data.Title] > b.Tupla[cell.Data.Title])
+                    return cell.SortState.Direction === 'asc' ? 1 : -1;
+                if (a.Tupla[cell.Data.Title] < b.Tupla[cell.Data.Title])
+                    return cell.SortState.Direction === 'asc' ? -1 : 1;
+
+            }
             return 0;
         });
 
