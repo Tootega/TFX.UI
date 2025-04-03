@@ -28,17 +28,17 @@ class XTabControlHeader extends XDiv
 
     SelectionChanged()
     {
-        this.validateVisibility();
+        this.ValidateVisibility();
     }
 
     override SizeChanged()
     {
         if (this.DropdownButton != null)
             this.DropdownButton.IsVisible = this.HTML.scrollWidth > this.HTML.offsetWidth;
-        this.validateVisibility();
+        this.ValidateVisibility();
     }
 
-    private validateVisibility()
+    private ValidateVisibility()
     {
         const painelRect = this.HTML.getBoundingClientRect();
         this.HTML.childNodes.forEach(item =>
@@ -54,6 +54,7 @@ class XTabControlHeader extends XDiv
         });
     }
 }
+
 class XTabControlTab extends XDiv
 {
     constructor(pOwner: XElement | HTMLElement | null)
@@ -166,12 +167,18 @@ class XTabControl extends XDiv
             return;
         this.Tabs.ForEach(t =>
         {
-            t.Button?.HTML.classList.remove('Active');
-            t.Button?.Tab?.HTML.classList.remove('Active');
+            if (t.Button != null && t.Button.Tab != null)
+            {
+                t.Button?.HTML.classList.remove('Active');
+                t.Button.Tab.IsVisible = false;
+            }
         });
-        pButton?.Tab?.Button?.HTML.classList.add('Active');
-        pButton.HTML.classList.add('Active');
-        pButton.Tab?.HTML.classList.add('Active');
+        if (pButton != null && pButton.Tab != null && pButton.Tab.Button != null)
+        {
+            pButton.Tab.Button.HTML.classList.add('Active');
+            pButton.HTML.classList.add('Active');
+            pButton.Tab.IsVisible = true;
+        }
         var rbtn = pButton?.Tab?.Button?.HTML.getBoundingClientRect();
         var rctn = this.Header.HTML.getBoundingClientRect();
         var offw = (<HTMLElement>pButton?.Tab?.Button?.HTML?.previousElementSibling)?.offsetWidth ?? 0;
@@ -197,6 +204,7 @@ class XTabControl extends XDiv
         tab.Button = btn;
         btn.Tab = tab;
         this.Tabs.Add(tab);
+        tab.IsVisible = false;
         if (this.ActiveTab == null)
             this.SelectTab(<any>this.Tabs.FirstOrNull()?.Button);
     }

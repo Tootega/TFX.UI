@@ -328,7 +328,7 @@
   resize: none;
   top: 20px;
   text-align: right;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .XDataGridEditor:focus {
@@ -585,7 +585,7 @@
 
 .XTabControlTab {
   position: absolute;
-  display: none;
+  /*display: none;*/
   background: white;
   top: 0;
   left: 0;
@@ -817,12 +817,16 @@ th:active {
 }
 
 .XTable {
+  position: absolute;
   border-collapse: collapse;
-  background: white;
+  top: 42px;
+  width: 100%;
+  bottom: 0;
+  overflow: auto;
 }
 
 .XTableHeader {
-  position: sticky;
+  position: absolute;
   top: 0px;
   z-index: 2;
 }

@@ -308,6 +308,7 @@ var XEventType;
     XEventType["Click"] = "click";
     XEventType["FocusIn"] = "focusin";
     XEventType["Blur"] = "blur";
+    XEventType["Scroll"] = "scroll";
 })(XEventType || (XEventType = {}));
 class XCallOnce {
     constructor(pUUID, pEvent) {
@@ -2805,7 +2806,7 @@ class XDataGrid extends XDiv {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
         var data = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 200; i++) {
             const row = {
                 id: i,
                 nome: `Nome ${i}`,
@@ -3225,14 +3226,14 @@ class XTabControlHeader extends XDiv {
         this.DropdownButton = null;
     }
     SelectionChanged() {
-        this.validateVisibility();
+        this.ValidateVisibility();
     }
     SizeChanged() {
         if (this.DropdownButton != null)
             this.DropdownButton.IsVisible = this.HTML.scrollWidth > this.HTML.offsetWidth;
-        this.validateVisibility();
+        this.ValidateVisibility();
     }
-    validateVisibility() {
+    ValidateVisibility() {
         const painelRect = this.HTML.getBoundingClientRect();
         this.HTML.childNodes.forEach(item => {
             var elm = item;
@@ -3322,20 +3323,24 @@ class XTabControl extends XDiv {
         this.Dropdown.IsVisible = true;
     }
     SelectTab(pButton) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        var _a, _b, _c, _d, _e, _f, _g;
         if (pButton == null)
             return;
         this.Tabs.ForEach(t => {
-            var _a, _b, _c;
-            (_a = t.Button) === null || _a === void 0 ? void 0 : _a.HTML.classList.remove('Active');
-            (_c = (_b = t.Button) === null || _b === void 0 ? void 0 : _b.Tab) === null || _c === void 0 ? void 0 : _c.HTML.classList.remove('Active');
+            var _a;
+            if (t.Button != null && t.Button.Tab != null) {
+                (_a = t.Button) === null || _a === void 0 ? void 0 : _a.HTML.classList.remove('Active');
+                t.Button.Tab.IsVisible = false;
+            }
         });
-        (_b = (_a = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _a === void 0 ? void 0 : _a.Button) === null || _b === void 0 ? void 0 : _b.HTML.classList.add('Active');
-        pButton.HTML.classList.add('Active');
-        (_c = pButton.Tab) === null || _c === void 0 ? void 0 : _c.HTML.classList.add('Active');
-        var rbtn = (_e = (_d = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _d === void 0 ? void 0 : _d.Button) === null || _e === void 0 ? void 0 : _e.HTML.getBoundingClientRect();
+        if (pButton != null && pButton.Tab != null && pButton.Tab.Button != null) {
+            pButton.Tab.Button.HTML.classList.add('Active');
+            pButton.HTML.classList.add('Active');
+            pButton.Tab.IsVisible = true;
+        }
+        var rbtn = (_b = (_a = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _a === void 0 ? void 0 : _a.Button) === null || _b === void 0 ? void 0 : _b.HTML.getBoundingClientRect();
         var rctn = this.Header.HTML.getBoundingClientRect();
-        var offw = (_k = (_j = (_h = (_g = (_f = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _f === void 0 ? void 0 : _f.Button) === null || _g === void 0 ? void 0 : _g.HTML) === null || _h === void 0 ? void 0 : _h.previousElementSibling) === null || _j === void 0 ? void 0 : _j.offsetWidth) !== null && _k !== void 0 ? _k : 0;
+        var offw = (_g = (_f = (_e = (_d = (_c = pButton === null || pButton === void 0 ? void 0 : pButton.Tab) === null || _c === void 0 ? void 0 : _c.Button) === null || _d === void 0 ? void 0 : _d.HTML) === null || _e === void 0 ? void 0 : _e.previousElementSibling) === null || _f === void 0 ? void 0 : _f.offsetWidth) !== null && _g !== void 0 ? _g : 0;
         if (rbtn != null) {
             if (rbtn.left < rctn.left)
                 this.Header.HTML.scrollLeft -= (rctn.left - rbtn.left) + offw;
@@ -3355,6 +3360,7 @@ class XTabControl extends XDiv {
         tab.Button = btn;
         btn.Tab = tab;
         this.Tabs.Add(tab);
+        tab.IsVisible = false;
         if (this.ActiveTab == null)
             this.SelectTab((_a = this.Tabs.FirstOrNull()) === null || _a === void 0 ? void 0 : _a.Button);
     }
@@ -3398,13 +3404,17 @@ class XTableHCell extends XTableElement {
         this.SortIcon = XUtils.AddElement(this.TextArea, "span", "sort-icon");
         this.ResizerEvents();
         this.DragEvents();
-        this.Content.addEventListener('click', () => this.Table.Body.SortData(this));
     }
     SetData(pCell) {
         this.Data = pCell;
         this.Title.innerHTML = "<spans>" + this.Data.Title + "</span>";
     }
     DragEvents() {
+        this.Content.addEventListener('click', (e) => {
+            if (e.target == this.Sizer)
+                return;
+            this.Table.Body.SortData(this);
+        });
         this.HTML.draggable = true;
         this.HTML.addEventListener('dragstart', (e) => {
             XDragUtils.SetData(this);
@@ -3468,6 +3478,7 @@ class XTableHCell extends XTableElement {
                 const newWidth = startWidth + (e.clientX - startX);
                 this.Content.style.width = `${newWidth}px`;
                 this.Data.Width = newWidth;
+                this.Table.ResizeColumn(this, newWidth);
             };
             const handleMouseUp = () => {
                 isResizing = false;
@@ -3486,11 +3497,11 @@ class XTableHRow extends XTableElement {
     }
 }
 class XTableHeader extends XElement {
-    constructor(pOwner) {
+    constructor(pOwner, pTable) {
         super(pOwner, "XTableHeader");
         this.Columns = new XArray();
         this.TRows = new XTableHRow(this);
-        this.Table = pOwner;
+        this.Table = pTable;
         this.SortState = { Field: "", Direction: 'asc' };
     }
     Clear() {
@@ -3508,10 +3519,10 @@ class XTableHeader extends XElement {
     }
 }
 class XTableBody extends XElement {
-    constructor(pOwner) {
+    constructor(pOwner, pTable) {
         super(pOwner, "");
         this.DataRows = new XArray();
-        this.Table = pOwner;
+        this.Table = pTable;
         this.BRows = new XTableRow(this);
     }
     SortData(pCell) {
@@ -3588,15 +3599,24 @@ class XTableCell extends XTableElement {
         this.Text.innerHTML = "<spans>" + this.Data + "</span>";
     }
 }
-class XTable extends XElement {
+class XTable extends XDiv {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
         this.Columns = null;
         this.DataSet = [];
         this.RowNumberColumn = { Title: '#', Visible: true, Width: 50 };
-        this.Header = new XTableHeader(this);
-        this.Body = new XTableBody(this);
-        ;
+        this.Container = XUtils.AddElement(this, "table");
+        this.Header = new XTableHeader(this.Owner, this);
+        this.Body = new XTableBody(this.Container, this);
+        XEventManager.AddEvent(this, this.HTML, XEventType.Scroll, this.PositioningHeader);
+    }
+    PositioningHeader(pArg) {
+        this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
+    }
+    ResizeColumn(pHeaderCell, pWidth) {
+        var dcell = this.Body.DataRows[0].Cell.FirstOrNull(c => c.HCell == pHeaderCell);
+        if (dcell != null)
+            dcell.Content.style.width = `${pWidth}px`;
     }
     MoveTo(pLeft, pRight) {
         if (this.Columns == null)
@@ -3632,6 +3652,22 @@ class XTable extends XElement {
                 row.HTML.className = "XTableRowEven";
             row.SetData(this.DataSet[i]);
         }
+        XEventManager.SetTiemOut(this, this.AdjustCollumnWidth, 100);
+    }
+    AdjustCollumnWidth() {
+        if (this.Body.DataRows.length > 0) {
+            var row = this.Body.DataRows[0];
+            for (var i = 0; i < row.Cell.length; i++) {
+                let bcell = row.Cell[i];
+                let hcell = this.Header.Columns[i];
+                let bw = bcell.HTML.clientWidth;
+                let hw = hcell.HTML.clientWidth;
+                if (bw > hw)
+                    hcell.Content.style.width = `${bw}px`;
+                else
+                    bcell.Content.style.width = `${hw}px`;
+            }
+        }
     }
     CreateHeader() {
         this.Body.Clear();
@@ -3642,9 +3678,6 @@ class XTable extends XElement {
             let cell = this.Header.AddColumns("XTh");
             cell.SetData(col);
         }
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "table");
     }
 }
 class XType1 {
@@ -3738,7 +3771,7 @@ class XForm extends XDiv {
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
         edt = new XDataGridEditor(this);
-        edt.Rows = 8;
+        edt.Rows = 7;
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(edt);

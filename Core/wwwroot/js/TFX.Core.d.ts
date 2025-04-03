@@ -147,7 +147,8 @@ declare enum XEventType {
     LostFocus = "focusout",
     Click = "click",
     FocusIn = "focusin",
-    Blur = "blur"
+    Blur = "blur",
+    Scroll = "scroll"
 }
 declare class XCallOnce {
     constructor(pUUID: string, pEvent: any);
@@ -769,7 +770,7 @@ declare class XTabControlHeader extends XDiv {
     DropdownButton: XTabControlButtonList | null;
     SelectionChanged(): void;
     SizeChanged(): void;
-    private validateVisibility;
+    private ValidateVisibility;
 }
 declare class XTabControlTab extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
@@ -833,7 +834,7 @@ declare class XTableHRow extends XTableElement {
     Header: XTableHeader;
 }
 declare class XTableHeader extends XElement {
-    constructor(pOwner: XTable);
+    constructor(pOwner: XElement | HTMLElement | null, pTable: XTable);
     TRows: XTableHRow;
     Columns: XArray<XTableHCell>;
     Table: XTable;
@@ -846,7 +847,7 @@ declare class XTableHeader extends XElement {
     protected CreateContainer(): HTMLElement;
 }
 declare class XTableBody extends XElement {
-    constructor(pOwner: XTable);
+    constructor(pOwner: XElement | HTMLElement, pTable: XTable);
     BRows: XTableElement;
     DataRows: XArray<XTableRow>;
     Table: XTable;
@@ -874,19 +875,22 @@ declare class XTableCell extends XTableElement {
     Data: any;
     SetData(pData: any, pHCell: XTableHCell): void;
 }
-declare class XTable extends XElement {
+declare class XTable extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Container: HTMLDivElement;
     Header: XTableHeader;
     Body: XTableBody;
     Columns: XColumnConfig[] | null;
     protected DataSet: any[];
     private RowNumberColumn;
+    PositioningHeader(pArg: MouseEvent): void;
+    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number): void;
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
     GetVisibleColumns(): Array<XColumnConfig>;
     SetDataSet(pDataSet: any): void;
     CreateBody(): void;
+    private AdjustCollumnWidth;
     CreateHeader(): void;
-    protected CreateContainer(): HTMLElement;
 }
 declare class XType1 {
     Point: XPoint;

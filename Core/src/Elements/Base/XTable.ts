@@ -52,7 +52,6 @@ class XTableHCell extends XTableElement
         this.SortIcon = XUtils.AddElement<HTMLSpanElement>(this.TextArea, "span", "sort-icon");
         this.ResizerEvents()
         this.DragEvents()
-        this.Content.addEventListener('click', () => this.Table.Body.SortData(this));
     }
     Table: XTable;
     HRow: XTableHRow;
@@ -72,6 +71,13 @@ class XTableHCell extends XTableElement
 
     DragEvents()
     {
+        this.Content.addEventListener('click', (e) =>
+        {
+            if (e.target == this.Sizer)
+                return;
+            this.Table.Body.SortData(this);
+        });
+
         this.HTML.draggable = true;
         this.HTML.addEventListener('dragstart', (e) =>
         {
@@ -159,6 +165,7 @@ class XTableHCell extends XTableElement
                 const newWidth = startWidth + (e.clientX - startX);
                 this.Content.style.width = `${newWidth}px`;
                 this.Data.Width = newWidth;
+                this.Table.ResizeColumn(this, newWidth);
             };
 
             const handleMouseUp = () =>
@@ -186,11 +193,11 @@ class XTableHRow extends XTableElement
 
 class XTableHeader extends XElement
 {
-    constructor(pOwner: XTable)
+    constructor(pOwner: XElement | HTMLElement | null, pTable: XTable)
     {
         super(pOwner, "XTableHeader");
         this.TRows = new XTableHRow(this);
-        this.Table = pOwner;
+        this.Table = pTable;
         this.SortState = { Field: "", Direction: 'asc' };
     }
     TRows: XTableHRow;
@@ -220,11 +227,10 @@ class XTableHeader extends XElement
 
 class XTableBody extends XElement
 {
-
-    constructor(pOwner: XTable)
+    constructor(pOwner: XElement | HTMLElement, pTable: XTable)
     {
         super(pOwner, "");
-        this.Table = pOwner;
+        this.Table = pTable;
         this.BRows = new XTableRow(this);
     }
     BRows: XTableElement;
@@ -343,19 +349,35 @@ class XTableCell extends XTableElement
     }
 }
 
-class XTable extends XElement
+class XTable extends XDiv
 {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
     {
         super(pOwner, pClass);
-        this.Header = new XTableHeader(this);
-        this.Body = new XTableBody(this);;
+        this.Container = XUtils.AddElement<HTMLDivElement>(this, "table");
+        this.Header = new XTableHeader(this.Owner, this);
+        this.Body = new XTableBody(this.Container, this);
+        XEventManager.AddEvent(this, this.HTML, XEventType.Scroll, this.PositioningHeader);
     }
+    Container: HTMLDivElement;
     Header: XTableHeader;
     Body: XTableBody;
     Columns: XColumnConfig[] | null = null;
     protected DataSet: any[] = [];
     private RowNumberColumn: XColumnConfig = { Title: '#', Visible: true, Width: 50 };
+
+    PositioningHeader(pArg: MouseEvent)
+    {
+        this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
+    }
+
+    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number)
+    {
+        var dcell = this.Body.DataRows[0].Cell.FirstOrNull(c => c.HCell == pHeaderCell);
+        if (dcell != null)
+            dcell.Content.style.width = `${pWidth}px`;
+    }
+
 
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell)
     {
@@ -400,6 +422,28 @@ class XTable extends XElement
                 row.HTML.className = "XTableRowEven";
             row.SetData(this.DataSet[i]);
         }
+        XEventManager.SetTiemOut(this, this.AdjustCollumnWidth, 100);
+    }
+
+    private AdjustCollumnWidth()
+    {
+        if (this.Body.DataRows.length > 0)
+        {
+            var row = this.Body.DataRows[0];
+            for (var i = 0; i < row.Cell.length; i++)
+            {
+                let bcell = row.Cell[i];
+                let hcell = this.Header.Columns[i];
+                let bw = bcell.HTML.clientWidth;
+                let hw = hcell.HTML.clientWidth;
+                if (bw > hw)
+                    hcell.Content.style.width = `${bw}px`;
+
+                else
+                    bcell.Content.style.width = `${hw}px`;
+
+            }
+        }
     }
 
     CreateHeader()
@@ -413,10 +457,5 @@ class XTable extends XElement
             let cell = this.Header.AddColumns("XTh");
             cell.SetData(col);
         }
-    }
-
-    protected override CreateContainer(): HTMLElement 
-    {
-        return XUtils.AddElement<HTMLTableElement>(null, "table");
     }
 }

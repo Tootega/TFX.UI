@@ -45,6 +45,7 @@
     {
         this.Children.Add(pElement);
     }
+
     get Rect(): XRect
     {
         return this.HTML.GetRect();

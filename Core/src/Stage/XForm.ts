@@ -103,7 +103,7 @@ class XForm extends XDiv
         this.Fields.Add(<any>edt);
 
         edt = new XDataGridEditor(this);
-        edt.Rows = 8;
+        edt.Rows = 7;
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(<any>edt);
