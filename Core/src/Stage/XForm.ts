@@ -102,6 +102,12 @@ class XForm extends XDiv
         edt.OrderIndex = 3;
         this.Fields.Add(<any>edt);
 
+        edt = new XDataLoockupEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 8;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+
         edt = new XDataGridEditor(this);
         edt.Rows = 7;
         edt.Cols = 32;

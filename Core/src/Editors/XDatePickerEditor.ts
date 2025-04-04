@@ -9,7 +9,6 @@ class XDatePickerEditor extends XBaseButtonInput
         this.Calendar.IsVisible = false;
         this.Calendar.OnSelectdate = (d) => this.Selected(d);
         this.Calendar.ReferenceElement = this;
-        XPopupManager.Add(this.Calendar);
         this.Input.placeholder = 'dd/mm/aaaa';
         XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
         this.Title = "Digite uma Data";

@@ -2083,35 +2083,6 @@ class XElement {
         if (this.OnResize != null)
             this.OnResize.apply(this, [this]);
     }
-    BindTo(pElement) {
-        const editorRect = pElement.HTML.getBoundingClientRect();
-        const dropdownRect = this.HTML.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        let top;
-        const spaceBelow = viewportHeight - editorRect.bottom;
-        const spaceAbove = editorRect.top;
-        if (dropdownRect.height <= spaceBelow)
-            top = editorRect.bottom;
-        else if (dropdownRect.height <= spaceAbove)
-            top = editorRect.top - dropdownRect.height;
-        else
-            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
-        let left;
-        const spaceRight = viewportWidth - editorRect.left;
-        if (dropdownRect.width <= spaceRight)
-            left = editorRect.left;
-        else {
-            const spaceLeft = editorRect.right;
-            if (dropdownRect.width <= spaceLeft)
-                left = editorRect.right - dropdownRect.width;
-            else
-                left = Math.max(0, viewportWidth - dropdownRect.width);
-        }
-        this.HTML.style.position = 'fixed';
-        this.HTML.style.top = `${top}px`;
-        this.HTML.style.left = `${left}px`;
-    }
     CheckClose(pElement) {
         return true;
     }
@@ -2227,7 +2198,6 @@ class XDatePickerEditor extends XBaseButtonInput {
         this.Calendar.IsVisible = false;
         this.Calendar.OnSelectdate = (d) => this.Selected(d);
         this.Calendar.ReferenceElement = this;
-        XPopupManager.Add(this.Calendar);
         this.Input.placeholder = 'dd/mm/aaaa';
         XEventManager.AddEvent(this, this.Input, XEventType.Input, this.HandleInput);
         this.Title = "Digite uma Data";
@@ -2637,6 +2607,7 @@ class XPopupElement extends XDiv {
         this.ReferenceElement = null;
         this.ReferenceElement = this;
         this.HTML.style.zIndex = XPopupManager.ZIndex();
+        XPopupManager.Add(this);
     }
     CallPopupClosed() {
     }
@@ -2650,8 +2621,47 @@ class XPopupElement extends XDiv {
         return true;
     }
 }
+class XDropDownElement extends XPopupElement {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.IsVisible = false;
+    }
+    Selected() {
+        XPopupManager.HideAll();
+    }
+    BindTo(pElement) {
+        const editorRect = pElement.HTML.getBoundingClientRect();
+        const dropdownRect = this.HTML.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let top;
+        const spaceBelow = viewportHeight - editorRect.bottom;
+        const spaceAbove = editorRect.top;
+        if (dropdownRect.height <= spaceBelow)
+            top = editorRect.bottom;
+        else if (dropdownRect.height <= spaceAbove)
+            top = editorRect.top - dropdownRect.height;
+        else
+            top = spaceBelow > spaceAbove ? editorRect.bottom : editorRect.top - dropdownRect.height;
+        let left;
+        const spaceRight = viewportWidth - editorRect.left;
+        if (dropdownRect.width <= spaceRight)
+            left = editorRect.left;
+        else {
+            const spaceLeft = editorRect.right;
+            if (dropdownRect.width <= spaceLeft)
+                left = editorRect.right - dropdownRect.width;
+            else
+                left = Math.max(0, viewportWidth - dropdownRect.width);
+        }
+        this.HTML.style.position = 'fixed';
+        this.HTML.style.top = `${top}px`;
+        this.HTML.style.left = `${left}px`;
+    }
+}
 /// <reference path="Base/XPopupElement.ts" />
-class XCalendar extends XPopupElement {
+/// <reference path="Base/XDropDownElement.ts" />
+class XCalendar extends XDropDownElement {
     constructor(pOwner, pClass = null) {
         super(pOwner, pClass);
         this.CurrentPanel = 'days';
@@ -2680,6 +2690,8 @@ class XCalendar extends XPopupElement {
         this.UpdateCalendar();
     }
     OnHide() {
+        if (this.DaysGrid == null)
+            return;
         this.DaysGrid.IsVisible = false;
         this.MonthsGrid.IsVisible = false;
         this.YearsGrid.IsVisible = false;
@@ -2845,227 +2857,256 @@ class XDataGrid extends XDiv {
         this.Table.SetDataSet(data);
     }
 }
-class XDataGridx extends XElement {
-    constructor(pOwner, pClass) {
-        super(pOwner, pClass);
-        this.data = [];
-        this.Table = null;
-        this.DataSet = [];
-        this._SortState = null;
-        this.rowNumberColumn = { Title: '#', Visible: true, Width: 50 };
-        for (let i = 0; i < 100; i++) {
-            const row = {
-                id: i,
-                nome: `Nome ${i}`,
-                email: `email${i}@exemplo.com`,
-                cidade: `Cidade ${i % 100}`,
-                idade: 20 + (i % 50),
-                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-                empresa: `Empresa ${i % 20}`,
-                cargo: `Cargo ${i % 10}`,
-                salario: 2000 + (i % 50) * 100,
-                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
-                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
-                cargo1: `Cargo ${i % 10}`,
-                salario2: 2000 + (i % 50) * 100,
-                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
-                nome1: `Nome ${i}`,
-                email1: `email${i}@exemplo.com`,
-                cidade1: `Cidade ${i % 100}`,
-                idade1: 20 + (i % 50),
-                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-                empresa1: `Empresa ${i % 20}`,
-            };
-            this.DataSet.push(row);
-        }
-        this.Container = new XDiv(this, "XDataGrid");
-        this.container = this.Container.HTML;
-        const fields = Object.keys(this.DataSet[0] || {});
-        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
-        this.render();
-        this.addColumnVisibilityToggle();
-    }
-    CreateContainer() {
-        return XUtils.AddElement(null, "div", null);
-    }
-    render() {
-        this.container.innerHTML = '';
-        this.Table = new XTable(this.Container, "");
-        const table = this.Table;
-        //table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
-        this.buildHeader(table);
-        //this.buildBody(table);
-        //this.container.appendChild(table);
-    }
-    buildHeader(table) {
-        this.Columns.filter(c => c.Visible).forEach(colConfig => {
-            const th = this.createHeaderTh(colConfig);
-            headerRow.appendChild(th);
-        });
-    }
-    createHeaderTh(colConfig) {
-        var _a;
-        const th = document.createElement('th');
-        th.textContent = colConfig.Title;
-        //th.style.width = `${colConfig.width}px`;
-        th.style.userSelect = 'none';
-        //if (colConfig.field !== '#')
-        th.draggable = colConfig.Title !== '#';
-        const sortIcon = document.createElement('span');
-        sortIcon.className = 'sort-icon';
-        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === colConfig.Title) {
-            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
-        }
-        th.appendChild(sortIcon);
-        // Drag para reordenar colunas
-        th.addEventListener('dragstart', (e) => {
-            var _a;
-            (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData('text/plain', colConfig.Title);
-            th.classList.add('dragging');
-        });
-        th.addEventListener('dragend', () => {
-            th.classList.remove('dragging');
-        });
-        th.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (!th.classList.contains('drag-over')) {
-                th.classList.add('drag-over');
-            }
-        });
-        th.addEventListener('dragleave', () => {
-            th.classList.remove('drag-over');
-        });
-        th.addEventListener('drop', (e) => {
-            var _a;
-            e.preventDefault();
-            th.classList.remove('drag-over');
-            const draggedField = (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.getData('text/plain');
-            const visibleColumns = this.getVisibleColumns();
-            const draggedIndex = visibleColumns.findIndex(c => c.Title === draggedField);
-            const targetIndex = visibleColumns.findIndex(c => c.Title === colConfig.Title);
-            if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex)
-                return;
-            // Reordenar colunas originais mantendo a referência
-            const originalDraggedIndex = this.Columns.findIndex(c => c.Title === draggedField);
-            const originalTargetIndex = this.Columns.findIndex(c => c.Title === colConfig.Title);
-            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
-                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
-            this.render();
-        });
-        // Redimensionador
-        const resizer = document.createElement('div');
-        resizer.className = 'resizer';
-        th.appendChild(resizer);
-        this.addResizerEvents(th, resizer, colConfig);
-        // Clique para ordenar
-        th.addEventListener('click', () => this.sortData(colConfig.Title));
-        return th;
-    }
-    addResizerEvents(th, resizer, colConfig) {
-        let isResizing = false;
-        let startX = 0;
-        let startWidth = 0;
-        resizer.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // Impede a propagação para o elemento pai
-            e.preventDefault(); // Evita comportamento padrão indesejado
-            isResizing = true;
-            startX = e.clientX;
-            startWidth = th.offsetWidth;
-            const handleMouseMove = (e) => {
-                if (!isResizing)
-                    return;
-                const newWidth = startWidth + (e.clientX - startX);
-                th.style.width = `${newWidth}px`;
-                colConfig.Width = newWidth;
-                this.updateColumnWidths(colConfig.Title, newWidth);
-            };
-            const handleMouseUp = () => {
-                isResizing = false;
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp, { once: true });
-        });
-    }
-    updateColumnWidths(field, width) {
-        const index = this.Columns.findIndex(c => c.Title === field);
-        if (index > -1) {
-            this.Columns[index].Width = width;
-            document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
-                .forEach(el => el.style.width = `${width}px`);
-        }
-    }
-    getVisibleColumns() {
-        return [this.rowNumberColumn, ...this.Columns.filter(c => c.Visible)];
-    }
-    sortData(field) {
-        var _a;
-        if (((_a = this._SortState) === null || _a === void 0 ? void 0 : _a.field) === field) {
-            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
-        }
-        else {
-            this._SortState = { field, direction: 'asc' };
-        }
-        var self = this._SortState;
-        this.DataSet.sort((a, b) => {
-            var e = this;
-            if (a[field] > b[field])
-                return e._SortState.direction === 'asc' ? 1 : -1;
-            if (a[field] < b[field])
-                return e._SortState.direction === 'asc' ? -1 : 1;
-            return 0;
-        });
-        this.render();
-    }
-    addColumnVisibilityToggle() {
-        const button = document.createElement('button');
-        button.className = 'menu-button';
-        button.textContent = '☰';
-        const menu = document.createElement('div');
-        menu.className = 'column-menu';
-        this.Columns.forEach(col => {
-            const label = document.createElement('label');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = col.Visible;
-            checkbox.addEventListener('change', () => {
-                col.Visible = checkbox.checked;
-                this.render();
-            });
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(col.Title));
-            menu.appendChild(label);
-        });
-        button.addEventListener('click', () => {
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-        this.HTML.appendChild(button);
-        this.HTML.appendChild(menu);
-    }
-    buildBody(table) {
-        const tbody = document.createElement('tbody');
-        this.DataSet.forEach((rowData, index) => {
-            const tr = document.createElement('tr');
-            // Número sequencial
-            const tdNumber = document.createElement('td');
-            tdNumber.textContent = (index + 1).toString();
-            tr.appendChild(tdNumber);
-            // Dados
-            this.Columns.filter(c => c.Visible).forEach(colConfig => {
-                const td = document.createElement('td');
-                td.dataset.field = colConfig.Title;
-                td.style.width = `${colConfig.Width}px`;
-                tr.appendChild(td);
-                const txt = document.createElement('span');
-                txt.innerText = rowData[colConfig.Title];
-                td.appendChild(txt);
-            });
-            tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-    }
-}
+//class XDataGridx extends XElement
+//{
+//    data: any = [];
+//    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
+//    {
+//        super(pOwner, pClass);
+//        for (let i = 0; i < 100; i++)
+//        {
+//            const row: any = {
+//                id: i,
+//                nome: `Nome ${i}`,
+//                email: `email${i}@exemplo.com`,
+//                cidade: `Cidade ${i % 100}`,
+//                idade: 20 + (i % 50),
+//                telefone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+//                empresa: `Empresa ${i % 20}`,
+//                cargo: `Cargo ${i % 10}`,
+//                salario: 2000 + (i % 50) * 100,
+//                dataAdmissao: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+//                status: i % 4 === 0 ? 'Ativo' : 'Inativo',
+//                cargo1: `Cargo ${i % 10}`,
+//                salario2: 2000 + (i % 50) * 100,
+//                dataAdmissao3: `${(i % 28 + 1).toString().LPad(2, '0')}/01/2023`,
+//                nome1: `Nome ${i}`,
+//                email1: `email${i}@exemplo.com`,
+//                cidade1: `Cidade ${i % 100}`,
+//                idade1: 20 + (i % 50),
+//                telefone1: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+//                empresa1: `Empresa ${i % 20}`,
+//            };
+//            this.DataSet.push(row);
+//        }
+//        this.Container = new XDiv(this, "XDataGrid");
+//        this.container = this.Container.HTML;
+//        const fields = Object.keys(this.DataSet[0] || {});
+//        this.Columns = fields.map(field => ({ field, visible: true, width: 120 }));
+//        this.render();
+//        this.addColumnVisibilityToggle();
+//    }
+//    Container: XDiv;
+//    Table: XTable | null = null;
+//    private container: HTMLElement;
+//    private DataSet: any[] = [];
+//    private Columns: XColumnConfig[];
+//    private _SortState: { field: string; direction: 'asc' | 'desc' } | null = null;
+//    private rowNumberColumn: XColumnConfig = { Title: '#', Visible: true, Width: 50 };
+//    protected override CreateContainer(): HTMLElement 
+//    {
+//        return XUtils.AddElement<HTMLElement>(null, "div", null);
+//    }
+//    private render()
+//    {
+//        this.container.innerHTML = '';
+//        this.Table = new XTable(this.Container, "");
+//        const table = this.Table;
+//        //table.style.minWidth = `${this.columns.reduce((acc, col) => acc + (col.visible ? col.width : 0), this.rowNumberColumn.width)}px`;
+//        this.buildHeader(table);
+//        //this.buildBody(table);
+//        //this.container.appendChild(table);
+//    }
+//    private buildHeader(table: XTable)
+//    {
+//        this.Columns.filter(c => c.Visible).forEach(colConfig =>
+//        {
+//            const th = this.createHeaderTh(colConfig);
+//            headerRow.appendChild(th);
+//        });
+//    }
+//    private createHeaderTh(colConfig: XColumnConfig): HTMLTableCellElement
+//    {
+//        const th = document.createElement('th');
+//        th.textContent = colConfig.Title;
+//        //th.style.width = `${colConfig.width}px`;
+//        th.style.userSelect = 'none';
+//        //if (colConfig.field !== '#')
+//        th.draggable = colConfig.Title !== '#';
+//        const sortIcon = document.createElement('span');
+//        sortIcon.className = 'sort-icon';
+//        if (this._SortState?.field === colConfig.Title)
+//        {
+//            sortIcon.textContent = this._SortState.direction === 'asc' ? ' ▲' : ' ▼';
+//        }
+//        th.appendChild(sortIcon);
+//        // Drag para reordenar colunas
+//        th.addEventListener('dragstart', (e) =>
+//        {
+//            e.dataTransfer?.setData('text/plain', colConfig.Title);
+//            th.classList.add('dragging');
+//        });
+//        th.addEventListener('dragend', () =>
+//        {
+//            th.classList.remove('dragging');
+//        });
+//        th.addEventListener('dragover', (e) =>
+//        {
+//            e.preventDefault();
+//            if (!th.classList.contains('drag-over'))
+//            {
+//                th.classList.add('drag-over');
+//            }
+//        });
+//        th.addEventListener('dragleave', () =>
+//        {
+//            th.classList.remove('drag-over');
+//        });
+//        th.addEventListener('drop', (e) =>
+//        {
+//            e.preventDefault();
+//            th.classList.remove('drag-over');
+//            const draggedField = e.dataTransfer?.getData('text/plain');
+//            const visibleColumns = this.getVisibleColumns();
+//            const draggedIndex = visibleColumns.findIndex(c => c.Title === draggedField);
+//            const targetIndex = visibleColumns.findIndex(c => c.Title === colConfig.Title);
+//            if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) return;
+//            // Reordenar colunas originais mantendo a referência
+//            const originalDraggedIndex = this.Columns.findIndex(c => c.Title === draggedField);
+//            const originalTargetIndex = this.Columns.findIndex(c => c.Title === colConfig.Title);
+//            [this.Columns[originalDraggedIndex], this.Columns[originalTargetIndex]] =
+//                [this.Columns[originalTargetIndex], this.Columns[originalDraggedIndex]];
+//            this.render();
+//        });
+//        // Redimensionador
+//        const resizer = document.createElement('div');
+//        resizer.className = 'resizer';
+//        th.appendChild(resizer);
+//        this.addResizerEvents(th, resizer, colConfig);
+//        // Clique para ordenar
+//        th.addEventListener('click', () => this.sortData(colConfig.Title));
+//        return th;
+//    }
+//    private addResizerEvents(th: HTMLTableCellElement, resizer: HTMLDivElement, colConfig: XColumnConfig)
+//    {
+//        let isResizing = false;
+//        let startX = 0;
+//        let startWidth = 0;
+//        resizer.addEventListener('mousedown', (e) =>
+//        {
+//            e.stopPropagation(); // Impede a propagação para o elemento pai
+//            e.preventDefault(); // Evita comportamento padrão indesejado
+//            isResizing = true;
+//            startX = e.clientX;
+//            startWidth = th.offsetWidth;
+//            const handleMouseMove = (e: MouseEvent) =>
+//            {
+//                if (!isResizing) return;
+//                const newWidth = startWidth + (e.clientX - startX);
+//                th.style.width = `${newWidth}px`;
+//                colConfig.Width = newWidth;
+//                this.updateColumnWidths(colConfig.Title, newWidth);
+//            };
+//            const handleMouseUp = () =>
+//            {
+//                isResizing = false;
+//                document.removeEventListener('mousemove', handleMouseMove);
+//                document.removeEventListener('mouseup', handleMouseUp);
+//            };
+//            document.addEventListener('mousemove', handleMouseMove);
+//            document.addEventListener('mouseup', handleMouseUp, { once: true });
+//        });
+//    }
+//    private updateColumnWidths(field: string, width: number)
+//    {
+//        const index = this.Columns.findIndex(c => c.Title === field);
+//        if (index > -1)
+//        {
+//            this.Columns[index].Width = width;
+//            document.querySelectorAll(`th[data-field="${field}"], td[data-field="${field}"]`)
+//                .forEach(el => (el as HTMLElement).style.width = `${width}px`);
+//        }
+//    }
+//    private getVisibleColumns(): XColumnConfig[]
+//    {
+//        return [this.rowNumberColumn, ...this.Columns.filter(c => c.Visible)];
+//    }
+//    private sortData(field: string)
+//    {
+//        if (this._SortState?.field === field)
+//        {
+//            this._SortState.direction = this._SortState.direction === 'asc' ? 'desc' : 'asc';
+//        } else
+//        {
+//            this._SortState = { field, direction: 'asc' };
+//        }
+//        var self = this._SortState;
+//        this.DataSet.sort((a, b) =>
+//        {
+//            var e: any = this;
+//            if (a[field] > b[field])
+//                return e._SortState.direction === 'asc' ? 1 : -1;
+//            if (a[field] < b[field])
+//                return e._SortState.direction === 'asc' ? -1 : 1;
+//            return 0;
+//        });
+//        this.render();
+//    }
+//    private addColumnVisibilityToggle()
+//    {
+//        const button = document.createElement('button');
+//        button.className = 'menu-button';
+//        button.textContent = '☰';
+//        const menu = document.createElement('div');
+//        menu.className = 'column-menu';
+//        this.Columns.forEach(col =>
+//        {
+//            const label = document.createElement('label');
+//            const checkbox = document.createElement('input');
+//            checkbox.type = 'checkbox';
+//            checkbox.checked = col.Visible;
+//            checkbox.addEventListener('change', () =>
+//            {
+//                col.Visible = checkbox.checked;
+//                this.render();
+//            });
+//            label.appendChild(checkbox);
+//            label.appendChild(document.createTextNode(col.Title));
+//            menu.appendChild(label);
+//        });
+//        button.addEventListener('click', () =>
+//        {
+//            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+//        });
+//        this.HTML.appendChild(button);
+//        this.HTML.appendChild(menu);
+//    }
+//    private buildBody(table: HTMLTableElement)
+//    {
+//        const tbody = document.createElement('tbody');
+//        this.DataSet.forEach((rowData, index) =>
+//        {
+//            const tr = document.createElement('tr');
+//            // Número sequencial
+//            const tdNumber = document.createElement('td');
+//            tdNumber.textContent = (index + 1).toString();
+//            tr.appendChild(tdNumber);
+//            // Dados
+//            this.Columns.filter(c => c.Visible).forEach(colConfig =>
+//            {
+//                const td = document.createElement('td');
+//                td.dataset.field = colConfig.Title;
+//                td.style.width = `${colConfig.Width}px`;
+//                tr.appendChild(td);
+//                const txt = document.createElement('span');
+//                txt.innerText = rowData[colConfig.Title];
+//                td.appendChild(txt);
+//            });
+//            tbody.appendChild(tr);
+//        });
+//        table.appendChild(tbody);
+//    }
+//}
 /// <reference path="Base/XDiv.ts" />
 class XMenuButtonItem extends XDiv {
     constructor(pOwner, pItem) {
@@ -3431,6 +3472,7 @@ class XTableHCell extends XTableElement {
             if (e.ctrlKey && e.shiftKey)
                 act = 2;
             this.Table.Body.SortData(this, act);
+            this.Table.ResizeColumn(this, this.HTML.GetRect().Width);
         });
         this.HTML.draggable = true;
         this.HTML.addEventListener('dragstart', (e) => {
@@ -3555,8 +3597,10 @@ class XTableBody extends XElement {
             this.SortCells.Add(pCell);
         let field = pCell.Data.Title;
         this.Table.Header.Columns.ForEach(c => {
-            if (!this.SortCells.Any(cc => cc == c))
+            if (!this.SortCells.Any(cc => cc == c)) {
                 c.SortIcon.innerHTML = "";
+                c.Table.ResizeColumn(c, c.HTML.GetRect().Width);
+            }
         });
         if (pAction != 2) {
             if (!X.IsEmpty(pCell.SortIcon.innerHTML))
@@ -3604,6 +3648,7 @@ class XTableRow extends XTableElement {
         this.Cell = new XArray();
         this.Body = pOwner;
         this.Table = pOwner.Table;
+        XEventManager.AddEvent(this.Table, this.HTML, XEventType.Click, () => this.Table.DoSelectRow(this));
     }
     SetData(pTupla) {
         this.Tupla = pTupla;
@@ -3639,10 +3684,15 @@ class XTable extends XDiv {
         this.Columns = null;
         this.DataSet = [];
         this.RowNumberColumn = { Title: '#', Visible: true, Width: 50 };
+        this.OnRowClick = null;
         this.Container = XUtils.AddElement(this, "table");
         this.Header = new XTableHeader(this.Owner, this);
         this.Body = new XTableBody(this.Container, this);
         XEventManager.AddEvent(this, this.HTML, XEventType.Scroll, this.PositioningHeader);
+    }
+    DoSelectRow(pRow) {
+        if (this.OnRowClick != null)
+            this.OnRowClick.apply(this, [[pRow]]);
     }
     PositioningHeader(pArg) {
         this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
@@ -3812,6 +3862,11 @@ class XForm extends XDiv {
         edt.Cols = 4;
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
+        edt = new XDataLoockupEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 8;
+        edt.OrderIndex = 3;
+        this.Fields.Add(edt);
         edt = new XDataGridEditor(this);
         edt.Rows = 7;
         edt.Cols = 32;
@@ -3960,6 +4015,19 @@ class XUtils {
         return elm;
     }
 }
+/// <reference path="XBaseInput.ts" />
+class XBaseLoockupInput extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Button = new XBaseButton(this, "XLookupButton");
+        this.DropDownContent = new XDropDownElement(pOwner, "XDropDown");
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    OnClick(pArg) {
+        this.DropDownContent.BindTo(this);
+        this.DropDownContent.Show();
+    }
+}
 /// <reference path="src/XDefault.ts" />
 /// <reference path="src/XConst.ts" />
 /// <reference path="src/XInterfaces.ts" />
@@ -3978,6 +4046,8 @@ class XUtils {
 /// <reference path="src/Elements/Base/XBaseInput.ts" />
 /// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="src/Elements/Base/XPopupElement.ts" />
+/// <reference path="src/Elements/Base/XDropDownElement.ts" />
+/// <reference path="src/Elements/Base/XBaseLoockupInput.ts" />
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/Base/XTable.ts" />
 /// <reference path="src/Elements/XTabControl.ts" />
@@ -3988,4 +4058,24 @@ class XUtils {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
+/// <reference path="../Elements/Base/XBaseLoockupInput.ts" />
+class XDropDownDataGrid extends XDataGrid {
+    constructor(pOwner, pClass) {
+        super(pOwner.DropDownContent, pClass);
+        this.Editor = pOwner;
+    }
+}
+class XDataLoockupEditor extends XBaseLoockupInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Input.className = "XDataLoockupEditor";
+        this.Title = "Digite uma Data";
+        this.DataGrid = new XDropDownDataGrid(this, "XDropDownGrid");
+        this.DataGrid.Table.OnRowClick = (rows) => this.OnSelected(rows);
+    }
+    OnSelected(pRows) {
+        this.Input.value = pRows[0].Tupla.nome;
+        this.DropDownContent.Selected();
+    }
+}
 //# sourceMappingURL=TFX.Core.js.map

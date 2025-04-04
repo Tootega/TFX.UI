@@ -17,6 +17,8 @@
 /// <reference path="src/Elements/Base/XBaseInput.ts" />
 /// <reference path="src/Elements/Base/XBaseButtonInput.ts" />
 /// <reference path="src/Elements/Base/XPopupElement.ts" />
+/// <reference path="src/Elements/Base/XDropDownElement.ts" />
+/// <reference path="src/Elements/Base/XBaseLoockupInput.ts" />
 
 /// <reference path="src/Elements/XMenu.ts" />
 /// <reference path="src/Elements/Base/XTable.ts" />

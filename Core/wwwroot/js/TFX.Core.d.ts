@@ -563,7 +563,6 @@ declare class XElement {
     get Rect(): XRect;
     set Rect(pValue: XRect);
     SizeChanged(): void;
-    BindTo(pElement: XElement): void;
     CheckClose(pElement: HTMLElement): boolean;
     get IsDrawed(): boolean;
     OnHide(): void;
@@ -674,7 +673,12 @@ declare class XPopupElement extends XDiv implements XIPopupPanel {
     Show(pValue?: boolean): void;
     CanClose(pElement: HTMLElement): boolean;
 }
-declare class XCalendar extends XPopupElement {
+declare class XDropDownElement extends XPopupElement {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Selected(): void;
+    BindTo(pElement: XElement): void;
+}
+declare class XCalendar extends XDropDownElement {
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
     protected Header: XDiv;
     protected LeftArrow: XBaseButton;
@@ -701,27 +705,6 @@ declare class XCalendar extends XPopupElement {
 declare class XDataGrid extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
     Table: XTable;
-}
-declare class XDataGridx extends XElement {
-    data: any;
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    Container: XDiv;
-    Table: XTable | null;
-    private container;
-    private DataSet;
-    private Columns;
-    private _SortState;
-    private rowNumberColumn;
-    protected CreateContainer(): HTMLElement;
-    private render;
-    private buildHeader;
-    private createHeaderTh;
-    private addResizerEvents;
-    private updateColumnWidths;
-    private getVisibleColumns;
-    private sortData;
-    private addColumnVisibilityToggle;
-    private buildBody;
 }
 declare class XMenuButtonItem extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any);
@@ -887,6 +870,8 @@ declare class XTable extends XDiv {
     Columns: XColumnConfig[] | null;
     protected DataSet: any[];
     private RowNumberColumn;
+    OnRowClick: XMethod<XArray<XTableRow>> | null;
+    DoSelectRow(pRow: XTableRow): void;
     PositioningHeader(pArg: MouseEvent): void;
     ResizeColumn(pHeaderCell: XTableHCell, pWidth: number, pCheck?: boolean): void;
     MoveTo(pLeft: XTableHCell, pRight: XTableHCell): void;
@@ -940,4 +925,19 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XBaseLoockupInput extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Button: XBaseButton;
+    DropDownContent: XDropDownElement;
+    OnClick(pArg: KeyboardEvent): void;
+}
+declare class XDropDownDataGrid extends XDataGrid {
+    constructor(pOwner: XDataLoockupEditor, pClass: string);
+    Editor: XDataLoockupEditor;
+}
+declare class XDataLoockupEditor extends XBaseLoockupInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    DataGrid: XDataGrid;
+    OnSelected(pRows: XArray<XTableRow>): void;
 }

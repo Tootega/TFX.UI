@@ -5,6 +5,7 @@
         super(pOwner, pClass);
         this.ReferenceElement = this;
         this.HTML.style.zIndex = XPopupManager.ZIndex();
+        XPopupManager.Add(this);
     }
     AutoClose: boolean = false;
     OnPopupClosed: XPopupClosedEvent | null = null;

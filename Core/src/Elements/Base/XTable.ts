@@ -83,6 +83,7 @@ class XTableHCell extends XTableElement
             if (e.ctrlKey && e.shiftKey)
                 act = 2;
             this.Table.Body.SortData(this, act);
+            this.Table.ResizeColumn(this, this.HTML.GetRect().Width);
         });
 
         this.HTML.draggable = true;
@@ -260,7 +261,11 @@ class XTableBody extends XElement
         this.Table.Header.Columns.ForEach(c =>
         {
             if (!this.SortCells.Any(cc => cc == c))
+            {
                 c.SortIcon.innerHTML = "";
+                c.Table.ResizeColumn(c, c.HTML.GetRect().Width);
+
+            }
         });
         if (pAction != 2)
         {
@@ -325,6 +330,7 @@ class XTableRow extends XTableElement
         super(pOwner, "XTableRow", "tr");
         this.Body = pOwner;
         this.Table = pOwner.Table;
+        XEventManager.AddEvent(this.Table, this.HTML, XEventType.Click, () => this.Table.DoSelectRow(this));
     }
     Table: XTable;
     Body: XTableBody;
@@ -393,13 +399,21 @@ class XTable extends XDiv
     Columns: XColumnConfig[] | null = null;
     protected DataSet: any[] = [];
     private RowNumberColumn: XColumnConfig = { Title: '#', Visible: true, Width: 50 };
+    OnRowClick: XMethod<XArray<XTableRow>> | null = null;
+
+    DoSelectRow(pRow: XTableRow)
+    {
+        if (this.OnRowClick != null)
+            this.OnRowClick.apply(this, [[pRow]]);
+    }
+
 
     PositioningHeader(pArg: MouseEvent)
     {
         this.Header.HTML.style.left = `-${this.HTML.scrollLeft}px`;
     }
 
-    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number, pCheck: boolean=false)
+    ResizeColumn(pHeaderCell: XTableHCell, pWidth: number, pCheck: boolean = false)
     {
         var dcell = this.Body.DataRows[0].Cell.FirstOrNull(c => c.HCell == pHeaderCell);
         if (dcell != null)

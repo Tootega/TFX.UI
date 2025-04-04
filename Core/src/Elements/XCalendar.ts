@@ -1,5 +1,6 @@
 ﻿/// <reference path="Base/XPopupElement.ts" />
-class XCalendar extends XPopupElement
+/// <reference path="Base/XDropDownElement.ts" />
+class XCalendar extends XDropDownElement
 {
 
     constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
@@ -50,6 +51,8 @@ class XCalendar extends XPopupElement
 
     override OnHide()
     {
+        if (this.DaysGrid == null)
+            return;
         this.DaysGrid.IsVisible = false;
         this.MonthsGrid.IsVisible = false;
         this.YearsGrid.IsVisible = false;
