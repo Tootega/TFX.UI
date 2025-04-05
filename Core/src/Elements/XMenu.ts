@@ -1,4 +1,4 @@
-﻿/// <reference path="Base/XDiv.ts" />
+﻿/// <reference path="XDiv.ts" />
 
 class XMenuButtonItem extends XDiv
 {

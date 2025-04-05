@@ -113,6 +113,15 @@ class XForm extends XDiv
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(<any>edt);
+
+
+        edt = new XButtonEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 1;
+        edt.OrderIndex = 3;
+        this.Fields.Add(<any>edt);
+
+
         var cn = 1;
         this.Fields.ForEach(e => e.OrderIndex = cn++);
         this.Fields = this.Fields.OrderBy(e => e.OrderIndex);

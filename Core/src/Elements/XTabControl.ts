@@ -1,5 +1,6 @@
 ﻿/// <reference path="Base/XBaseTextButton.ts" />
 /// <reference path="Base/XPopupElement.ts" />
+
 class XTabControlButton extends XBaseTextButton
 {
     constructor(pOwner: XElement | HTMLElement | null)
@@ -13,12 +14,10 @@ class XTabControlButton extends XBaseTextButton
 
     TabControl: XTabControl | null = null;
     Tab: XTabControlTab | null = null;
-
 }
 
 class XTabControlHeader extends XDiv
 {
-
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XTabControlHeader");
@@ -55,13 +54,16 @@ class XTabControlHeader extends XDiv
     }
 }
 
-class XTabControlTab extends XDiv
+class XTabControlTab extends XDiv implements XIDialogContainer
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XTabControlTab");
+        this.DialogContainer = new XDialogContainer(this, "XDialogContainer");
     }
     Button: XTabControlButton | null = null;
+    DialogContainer: XDialogContainer;
+    IsDialogContainer: boolean = true;
 }
 
 class XTabControlContainer extends XDiv
@@ -71,9 +73,10 @@ class XTabControlContainer extends XDiv
         super(pOwner, "XTabControlContainer");
     }
 }
+
 class XTabControlDropdown extends XPopupElement
 {
-    constructor(pOwner: XElement | HTMLElement | null)
+    constructor(pOwner: XElement)
     {
         super(pOwner, "XTabControlDropdown");
         this.HTML.addEventListener('wheel', function (event)
@@ -96,16 +99,17 @@ class XTabControlButtonList extends XBaseTextButton
     }
 }
 
-class XTabControl extends XDiv
+class XTabControl extends XDiv implements XIDialogContainer
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner, "XTabControl");
+        this.IsDialogContainer = true;
+        this.DialogContainer = new XDialogContainer(this, "XDialogContainer");
         this.Header = new XTabControlHeader(this);
         this.Container = new XTabControlContainer(this);
         this.Dropdown = new XTabControlDropdown(this);
         XPopupManager.Add(this.Dropdown);
-        this.Dropdown.IsVisible = true;
         this.ButtonList = new XTabControlButtonList(this);
         this.ButtonList.Title = "Abas";
         this.Header.DropdownButton = this.ButtonList;
@@ -114,31 +118,16 @@ class XTabControl extends XDiv
         {
             this.PopulateDropdown();
         });
-        this.AddTab("Aninha");
-        this.AddTab("Maria");
-        //this.AddTab("Joana");
-        //this.AddTab("Rebeca");
-        //this.AddTab("Antonieta");
-        //this.AddTab("Valentina");
-        //this.AddTab("Amanda");
-        //this.AddTab("Jaqueline");
-        //this.AddTab("Helena");
-        //this.AddTab("Fernanda");
-        //this.AddTab("Sonia");
-        //this.AddTab("Larissa");
-        //this.AddTab("Eleonora");
-        //this.AddTab("Sara");
-        //this.AddTab("Sebastina");
-        //this.AddTab("Sabrina");
+
     }
     Header: XTabControlHeader;
     Container: XTabControlContainer;
     Dropdown: XTabControlDropdown;
     ButtonList: XTabControlButtonList;
+    DialogContainer: XDialogContainer;
     ActiveTab: XTabControlTab | null = null;
-
     protected Tabs: XArray<XTabControlTab> = new XArray<XTabControlTab>();
-
+    IsDialogContainer: boolean = false;
 
     private PopulateDropdown()
     {
@@ -159,7 +148,6 @@ class XTabControl extends XDiv
         });
         this.Dropdown.IsVisible = true;
     }
-
 
     SelectTab(pButton: XTabControlButton)
     {

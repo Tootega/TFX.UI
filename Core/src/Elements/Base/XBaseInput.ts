@@ -1,4 +1,4 @@
-﻿/// <reference path="XDiv.ts" />
+﻿/// <reference path="../XDiv.ts" />
 class XBaseInput extends XDiv implements XIEditor
 {
     constructor(pOwner: XElement | HTMLElement | null)

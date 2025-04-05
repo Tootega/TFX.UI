@@ -89,7 +89,7 @@ class XSizeableElement extends XDiv
 
     get DragHeight(): number
     {
-        return 25;
+        return this.DragRect.Height;
     }
 
     get ResizeWidth(): number
@@ -129,6 +129,7 @@ class XSizeableElement extends XDiv
             }
         }
     }
+
     StartMouseDown(pArg: MouseEvent)
     {
     }
@@ -137,7 +138,10 @@ class XSizeableElement extends XDiv
     {
         let dt = pStart.LocationType(pClientWidth, pClientHeight, pResizeWidth, pDragHeight);
         if (dt == XDragType.Drag && this.DragRect != null && !this.DragRect.Contains(pStart))
+        {
+            this.DragRect.Contains(pStart);
             return XDragType.Error;
+        }
         return dt;
     }
 
@@ -148,6 +152,7 @@ class XSizeableElement extends XDiv
 
     OnMouseUp(pArg: MouseEvent)
     {
+        this.StartMouseDown(pArg);
         if (XDragUtils.HasDrag != null && XDragUtils.HasDrag == this && this.HTML.parentElement != null)
         {
             pArg.stopPropagation();

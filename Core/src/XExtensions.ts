@@ -59,7 +59,7 @@ interface Node
     Any(pPredicate: XFunc<Node>): boolean;
 
     Name: string;
-    
+
 }
 
 Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
@@ -580,7 +580,7 @@ interface HTMLElement
     GetRect(pInternal?: boolean): XRect;
     StyleValue(pItemName: string): number;
     StyleStrValue(pItemName: string): string;
-    SetRect(pRect: XRect):void;
+    SetRect(pRect: XRect): void;
 }
 
 HTMLElement.prototype.SetRect = function (pRect: XRect): void
@@ -620,6 +620,8 @@ HTMLElement.prototype.GetRect = function (pInternal: boolean = false): XRect
         let bt = this.StyleValue("border-top");
         let br = this.StyleValue("border-right");
         let bb = this.StyleValue("border-bottom");
+        if (Number.isNaN(bl) || Number.isNaN(bt) || Number.isNaN(br) || Number.isNaN(bb))
+            return r;
         return new XRect(r.Left - bl, r.Top - bt, r.Width - bl - br, r.Height - bt - bb);
     }
     return new XRect(or);

@@ -775,6 +775,8 @@ HTMLElement.prototype.GetRect = function (pInternal = false) {
         let bt = this.StyleValue("border-top");
         let br = this.StyleValue("border-right");
         let bb = this.StyleValue("border-bottom");
+        if (Number.isNaN(bl) || Number.isNaN(bt) || Number.isNaN(br) || Number.isNaN(bb))
+            return r;
         return new XRect(r.Left - bl, r.Top - bt, r.Width - bl - br, r.Height - bt - bb);
     }
     return new XRect(or);
@@ -1783,7 +1785,7 @@ class XUtils {
     }
     static AddElement(pOwner, pTag, pClass = null, pInsert = false) {
         if (pTag == null)
-            throw new Error(`Parameter "pTag" can´t be null`);
+            throw new Error(`Parameter "pTag" can�t be null`);
         var own;
         if (pOwner == null)
             own = document.body;
@@ -2160,9 +2162,12 @@ class XElement {
         while (p != null) {
             if (pPredicate(p))
                 return p;
-            p = p.Ow;
+            p = p.Owner;
         }
         return null;
+    }
+    GetDialogContainer() {
+        return this.GetOwner(o => o.IsDialogContainer === true);
     }
     IncZIndex() {
         this.HTML.style.zIndex = XPopupManager.ZIndex();
@@ -2200,7 +2205,8 @@ class XElement {
     OnShow() {
     }
     Show(pValue = true) {
-        this.IncZIndex();
+        if (this.AutoIncZIndex)
+            this.IncZIndex();
         var old = this.IsDrawed;
         this._IsVisible = pValue;
         if (pValue === true) {
@@ -2236,7 +2242,7 @@ class XElement {
     }
 }
 XElement._ID = 0;
-/// <reference path="XElement.ts" />
+/// <reference path="Base/XElement.ts" />
 class XDiv extends XElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
@@ -2245,7 +2251,7 @@ class XDiv extends XElement {
         return XUtils.AddElement(null, "div", null);
     }
 }
-/// <reference path="XDiv.ts" />
+/// <reference path="../XDiv.ts" />
 class XBaseInput extends XDiv {
     constructor(pOwner) {
         super(pOwner, "InputContainer");
@@ -2292,7 +2298,7 @@ class XBaseLoockupInput extends XBaseInput {
         this.DropDownContent.Show();
     }
 }
-/// <reference path="Base/XDiv.ts" />
+/// <reference path="XDiv.ts" />
 class XDataGrid extends XDiv {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
@@ -2622,7 +2628,7 @@ class XDatePickerEditor extends XBaseLoockupInput {
         this.Title = "Digite uma Data";
     }
     CreateDropDown() {
-        this.Calendar = new XCalendar(this.Owner);
+        this.Calendar = new XCalendar(this.Owner, "XCalendar");
         return this.Calendar;
     }
     Selected(pDate) {
@@ -3087,7 +3093,7 @@ class XSizeableElement extends XDiv {
         return cnt;
     }
     get DragHeight() {
-        return 25;
+        return this.DragRect.Height;
     }
     get ResizeWidth() {
         return 4;
@@ -3122,14 +3128,17 @@ class XSizeableElement extends XDiv {
     }
     GetLocationType(pStart, pClientWidth, pClientHeight, pResizeWidth, pDragHeight) {
         let dt = pStart.LocationType(pClientWidth, pClientHeight, pResizeWidth, pDragHeight);
-        if (dt == XDragType.Drag && this.DragRect != null && !this.DragRect.Contains(pStart))
+        if (dt == XDragType.Drag && this.DragRect != null && !this.DragRect.Contains(pStart)) {
+            this.DragRect.Contains(pStart);
             return XDragType.Error;
+        }
         return dt;
     }
     GetPos(pSource, pTarget) {
         return pSource.Postion(pTarget);
     }
     OnMouseUp(pArg) {
+        this.StartMouseDown(pArg);
         if (XDragUtils.HasDrag != null && XDragUtils.HasDrag == this && this.HTML.parentElement != null) {
             pArg.stopPropagation();
             XEventManager.RemoveEvent(XDragUtils.HasDrag, window, XEventType.MouseUp);
@@ -3253,12 +3262,21 @@ class XPopupElement extends XSizeableElement {
         this.OnPopupClosed = null;
         this.ReferenceElement = null;
         this.ReferenceElement = this;
+        this.HTML.style.visibility = 'hidden';
         this.HTML.style.zIndex = XPopupManager.ZIndex();
         XPopupManager.Add(this);
     }
     CallPopupClosed() {
     }
     Show(pValue = true) {
+        var _a;
+        if (this._DialogContainer == null) {
+            this._DialogContainer = this.GetDialogContainer();
+            if (this._DialogContainer.HTML != this.HTML) {
+                (_a = this.HTML.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(this.HTML);
+                this._DialogContainer.HTML.appendChild(this.HTML);
+            }
+        }
         super.Show(pValue);
     }
     CanClose(pElement) {
@@ -3471,7 +3489,7 @@ class XCalendar extends XDropDownElement {
         return XUtils.AddElement(null, "div", null);
     }
 }
-/// <reference path="Base/XDiv.ts" />
+/// <reference path="XDiv.ts" />
 class XMenuButtonItem extends XDiv {
     constructor(pOwner, pItem) {
         super(pOwner, "hover-item");
@@ -3601,6 +3619,7 @@ class XMenu extends XDiv {
         }
     }
 }
+/// <reference path="XElement.ts" />
 class XBaseButton extends XElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
@@ -3664,6 +3683,8 @@ class XTabControlTab extends XDiv {
     constructor(pOwner) {
         super(pOwner, "XTabControlTab");
         this.Button = null;
+        this.IsDialogContainer = true;
+        this.DialogContainer = new XDialogContainer(this, "XDialogContainer");
     }
 }
 class XTabControlContainer extends XDiv {
@@ -3693,33 +3714,19 @@ class XTabControl extends XDiv {
         super(pOwner, "XTabControl");
         this.ActiveTab = null;
         this.Tabs = new XArray();
+        this.IsDialogContainer = false;
+        this.IsDialogContainer = true;
+        this.DialogContainer = new XDialogContainer(this, "XDialogContainer");
         this.Header = new XTabControlHeader(this);
         this.Container = new XTabControlContainer(this);
         this.Dropdown = new XTabControlDropdown(this);
         XPopupManager.Add(this.Dropdown);
-        this.Dropdown.IsVisible = true;
         this.ButtonList = new XTabControlButtonList(this);
         this.ButtonList.Title = "Abas";
         this.Header.DropdownButton = this.ButtonList;
         this.ButtonList.HTML.addEventListener('click', () => {
             this.PopulateDropdown();
         });
-        this.AddTab("Aninha");
-        this.AddTab("Maria");
-        //this.AddTab("Joana");
-        //this.AddTab("Rebeca");
-        //this.AddTab("Antonieta");
-        //this.AddTab("Valentina");
-        //this.AddTab("Amanda");
-        //this.AddTab("Jaqueline");
-        //this.AddTab("Helena");
-        //this.AddTab("Fernanda");
-        //this.AddTab("Sonia");
-        //this.AddTab("Larissa");
-        //this.AddTab("Eleonora");
-        //this.AddTab("Sara");
-        //this.AddTab("Sebastina");
-        //this.AddTab("Sabrina");
     }
     PopulateDropdown() {
         this.Dropdown.HTML.innerHTML = '';
@@ -3784,7 +3791,7 @@ class XTabControl extends XDiv {
         ;
     }
 }
-/// <reference path="XDiv.ts" />
+/// <reference path="../XDiv.ts" />
 class XTableElement extends XElement {
     constructor(pOwner, pClass = null, pTag = null) {
         super(pOwner, pClass, pTag);
@@ -4236,6 +4243,11 @@ class XForm extends XDiv {
         edt.Cols = 32;
         edt.OrderIndex = 3;
         this.Fields.Add(edt);
+        edt = new XButtonEditor(this);
+        edt.Rows = 1;
+        edt.Cols = 1;
+        edt.OrderIndex = 3;
+        this.Fields.Add(edt);
         var cn = 1;
         this.Fields.ForEach(e => e.OrderIndex = cn++);
         this.Fields = this.Fields.OrderBy(e => e.OrderIndex);
@@ -4305,7 +4317,7 @@ class XForm extends XDiv {
         });
     }
 }
-/// <reference path="../Elements/Base/XDiv.ts" />
+/// <reference path="../Elements/XDiv.ts" />
 class XStage extends XDiv {
     static Run() {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
@@ -4334,13 +4346,31 @@ class XStage extends XDiv {
 class XStageTabControlTab extends XTabControlTab {
     constructor(pOwner) {
         super(pOwner);
+        this.IsDialogContainer = true;
         this.Form = new XForm(this);
     }
 }
 class XStageTabControl extends XTabControl {
     constructor(pOwner) {
         super(pOwner);
+        this.IsDialogContainer = true;
         this.HTML.classList.add("Main");
+        this.AddTab("Aninha");
+        this.AddTab("Maria");
+        //this.AddTab("Joana");
+        //this.AddTab("Rebeca");
+        //this.AddTab("Antonieta");
+        //this.AddTab("Valentina");
+        //this.AddTab("Amanda");
+        //this.AddTab("Jaqueline");
+        //this.AddTab("Helena");
+        //this.AddTab("Fernanda");
+        //this.AddTab("Sonia");
+        //this.AddTab("Larissa");
+        //this.AddTab("Eleonora");
+        //this.AddTab("Sara");
+        //this.AddTab("Sebastina");
+        //this.AddTab("Sabrina");
     }
     CreateTab() {
         return new XStageTabControlTab(this.Container);
@@ -4364,7 +4394,7 @@ class XTopBar extends XDiv {
 /// <reference path="src/XPopupManager.ts" />
 /// <reference path="src/XEventManager.ts" />
 /// <reference path="src/Elements/Base/XElement.ts" />
-/// <reference path="src/Elements/Base/XDiv.ts" />
+/// <reference path="src/Elements/XDiv.ts" />
 /// <reference path="src/Elements/Base/XBaseButton.ts" />
 /// <reference path="src/Elements/Base/XBaseTextButton.ts" />
 /// <reference path="src/Elements/Base/XBaseInput.ts" />
@@ -4382,19 +4412,105 @@ class XTopBar extends XDiv {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
-/// <reference path="XSizeableElement.ts" />
-class XBaseDialog extends XSizeableElement {
-    constructor(pOwner, pClass) {
-        var _a;
-        super(pOwner, pClass);
-        (_a = this.HTML.parentElement) === null || _a === void 0 ? void 0 : _a.remove();
+/// <reference path="XDiv.ts" />
+class XWrapPanel extends XDiv {
+    constructor(pOwner, pClass = null) {
+        super(pOwner, pClass !== null && pClass !== void 0 ? pClass : "XWrapPanel");
     }
-    ShowDialog(pMessage) {
-        if (this.HTML.parentElement == null) {
-            let ow = this.GetOwner(a => {
-                return true;
-            });
+}
+/// <reference path="XSizeableElement.ts" />
+/// <reference path="../XWrapPanel.ts" />
+class XBaseDialogCaption extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.ELMTitle = new XDiv(this, "XDialogTitle");
+    }
+    get Title() {
+        return this.ELMTitle.HTML.innerHTML;
+    }
+    set Title(pValue) {
+        this.ELMTitle.HTML.innerHTML = pValue;
+    }
+}
+class XBaseButtonBar extends XWrapPanel {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.Cancel = new XBaseTextButton(this, "XDialogButton");
+        this.Cancel.Title = "Cancelar";
+    }
+}
+class XBaseDialog extends XSizeableElement {
+    constructor(pOwner) {
+        var _a;
+        super(pOwner, "XDialog");
+        this.IsDialog = true;
+        (_a = this.HTML.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(this.HTML);
+        this.AutoIncZIndex = true;
+        this.Caption = new XBaseDialogCaption(this, "XDialogCaption");
+        this.ButtonBar = new XBaseButtonBar(this, "XButtonBar Right");
+        XEventManager.AddEvent(this, this.ButtonBar.Cancel.HTML, XEventType.Click, this.Cancel);
+    }
+    Cancel(pArg) {
+        if (this.HTML.parentElement == null)
+            return;
+        this.IsVisible = false;
+    }
+    get Title() {
+        return this.Caption.Title;
+    }
+    set Title(pValue) {
+        this.Caption.Title = pValue;
+    }
+    ShowDialog() {
+        this.IsVisible = true;
+        this.StartMouseDown(null);
+    }
+    StartMouseDown(pArg) {
+        var r = this.Caption.HTML.GetRect();
+        var lb = this.HTML.StyleValue("border-left");
+        var tb = this.HTML.StyleValue("border-top");
+        this.DragRect = new XRect(lb, tb, r.Width, r.Height);
+    }
+    IncZIndex() {
+        this.HTML.style.zIndex = `${999 + XPopupManager.ZIndex()}`;
+    }
+    Show(pValue = true) {
+        var _a;
+        if (this._DialogContainer == null) {
+            this._DialogContainer = this.GetDialogContainer();
+            if (this._DialogContainer.HTML != this.HTML) {
+                (_a = this.HTML.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(this.HTML);
+                this._DialogContainer.DialogContainer.HTML.appendChild(this.HTML);
+            }
         }
+        super.Show(pValue);
+        this._DialogContainer.DialogContainer.IsVisible = pValue;
+    }
+}
+/// <reference path="../Elements/Base/XBaseInput.ts" />
+class XButtonEditor extends XBaseInput {
+    constructor(pOwner) {
+        super(pOwner);
+        this.Title = "Clique no Botão";
+        XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
+    }
+    CreateInput() {
+        this.Button = new XBaseButton(this, "XLookupButton");
+        return this.Button.HTML;
+    }
+    OnClick(pArg) {
+        var con = this.GetDialogContainer();
+        var dlg = new XBaseDialog(con);
+        dlg.Title = "Mostrando o Dialogo";
+        dlg.ShowDialog();
+    }
+}
+/// <reference path="XDiv.ts" />
+class XDialogContainer extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this.IsVisible = false;
+        this.AutoIncZIndex = true;
     }
 }
 //# sourceMappingURL=TFX.Core.js.map

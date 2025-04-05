@@ -19,7 +19,7 @@ class XDatePickerEditor extends XBaseLoockupInput
 
     protected CreateDropDown(): XDropDownElement
     {
-        this.Calendar = new XCalendar(this.Owner);
+        this.Calendar = new XCalendar(<any>this.Owner, "XCalendar");
         return this.Calendar;
     }
 

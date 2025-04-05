@@ -42,18 +42,22 @@
     Children: XArray<XElement> = new XArray<XElement>();
     AutoIncZIndex: boolean = false;
 
-    public GetOwner<T extends XIElement | null>(pPredicate: XFunc<T>): T
+    GetOwner<T extends XIElement | null>(pPredicate: XFunc<T>): T
     {
         var p: XElement | any = this.Owner;
         while (p != null)
         {
             if (pPredicate(p))
                 return <T>p;
-            p = p.Ow;
+            p = p.Owner;
         }
         return <T>null;
     }
 
+    GetDialogContainer(): XIDialogContainer
+    {
+        return this.GetOwner(o => o.IsDialogContainer === true);
+    }
 
     IncZIndex()
     {
@@ -111,7 +115,8 @@
 
     Show(pValue: boolean = true)
     {
-        this.IncZIndex();
+        if (this.AutoIncZIndex)
+            this.IncZIndex();
         var old = this.IsDrawed;
         this._IsVisible = pValue;
         if (pValue === true)

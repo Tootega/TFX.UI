@@ -14,7 +14,7 @@ class XBaseLoockupInput extends XBaseInput
 
     protected CreateDropDown(): XDropDownElement
     {
-        return new XDropDownElement(this.Owner, "XDropDown");
+        return new XDropDownElement(<any>this.Owner, "XDropDown");
     }
 
     OnClick(pArg: KeyboardEvent)

@@ -1,4 +1,4 @@
-﻿/// <reference path="XDiv.ts" />
+﻿/// <reference path="../XDiv.ts" />
 interface XColumnConfig
 {
     Title: string;

@@ -2,7 +2,6 @@
 /// <reference path="Base/XDropDownElement.ts" />
 class XCalendar extends XDropDownElement
 {
-
     constructor(pOwner: XElement, pClass: string)
     {
         super(pOwner, pClass);

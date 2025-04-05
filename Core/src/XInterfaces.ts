@@ -10,10 +10,13 @@ interface XIElement
 
 interface XIDialog
 {
+    IsDialog: boolean;
 }
 
 interface XIDialogContainer extends XIElement
 {
+    IsDialogContainer: boolean;
+    DialogContainer: XDialogContainer;
 }
 
 interface Window 

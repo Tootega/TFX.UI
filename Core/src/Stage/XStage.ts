@@ -1,4 +1,4 @@
-﻿/// <reference path="../Elements/Base/XDiv.ts" />
+﻿/// <reference path="../Elements/XDiv.ts" />
 
 class XStage extends XDiv
 {

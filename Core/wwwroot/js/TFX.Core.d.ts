@@ -355,8 +355,11 @@ interface XIElement {
     Owner: XElement | HTMLElement | null;
 }
 interface XIDialog {
+    IsDialog: boolean;
 }
 interface XIDialogContainer extends XIElement {
+    IsDialogContainer: boolean;
+    DialogContainer: XDialogContainer;
 }
 interface Window {
     ErrorDialog: any;
@@ -579,6 +582,7 @@ declare class XElement implements XIElement {
     Children: XArray<XElement>;
     AutoIncZIndex: boolean;
     GetOwner<T extends XIElement | null>(pPredicate: XFunc<T>): T;
+    GetDialogContainer(): XIDialogContainer;
     IncZIndex(): void;
     AddChildren(pElement: XElement): void;
     get Rect(): XRect;
@@ -754,6 +758,7 @@ declare class XPopupElement extends XSizeableElement implements XIPopupPanel {
     AutoClose: boolean;
     OnPopupClosed: XPopupClosedEvent | null;
     ReferenceElement: XElement | null;
+    private _DialogContainer;
     CallPopupClosed(): void;
     Show(pValue?: boolean): void;
     CanClose(pElement: HTMLElement): boolean;
@@ -841,27 +846,31 @@ declare class XTabControlHeader extends XDiv {
     SizeChanged(): void;
     private ValidateVisibility;
 }
-declare class XTabControlTab extends XDiv {
+declare class XTabControlTab extends XDiv implements XIDialogContainer {
     constructor(pOwner: XElement | HTMLElement | null);
     Button: XTabControlButton | null;
+    DialogContainer: XDialogContainer;
+    IsDialogContainer: boolean;
 }
 declare class XTabControlContainer extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
 }
 declare class XTabControlDropdown extends XPopupElement {
-    constructor(pOwner: XElement | HTMLElement | null);
+    constructor(pOwner: XElement);
 }
 declare class XTabControlButtonList extends XBaseTextButton {
     constructor(pOwner: XElement | HTMLElement | null);
 }
-declare class XTabControl extends XDiv {
+declare class XTabControl extends XDiv implements XIDialogContainer {
     constructor(pOwner: XElement | HTMLElement | null);
     Header: XTabControlHeader;
     Container: XTabControlContainer;
     Dropdown: XTabControlDropdown;
     ButtonList: XTabControlButtonList;
+    DialogContainer: XDialogContainer;
     ActiveTab: XTabControlTab | null;
     protected Tabs: XArray<XTabControlTab>;
+    IsDialogContainer: boolean;
     private PopulateDropdown;
     SelectTab(pButton: XTabControlButton): void;
     AddTab(pTitle: string): void;
@@ -995,18 +1004,51 @@ declare class XStage extends XDiv {
     SizeChanged(): void;
     MenuResize(): void;
 }
-declare class XStageTabControlTab extends XTabControlTab {
+declare class XStageTabControlTab extends XTabControlTab implements XIDialogContainer {
     constructor(pOwner: XElement | HTMLElement | null);
+    IsDialogContainer: boolean;
     Form: XForm;
 }
-declare class XStageTabControl extends XTabControl {
+declare class XStageTabControl extends XTabControl implements XIDialogContainer {
     constructor(pOwner: XElement | HTMLElement | null);
     CreateTab(): XTabControlTab;
 }
 declare class XTopBar extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
 }
-declare class XBaseDialog extends XSizeableElement implements XIDialog {
+declare class XWrapPanel extends XDiv {
+    constructor(pOwner: XElement, pClass?: string | null);
+}
+declare class XBaseDialogCaption extends XDiv {
     constructor(pOwner: XElement, pClass: string);
-    ShowDialog(pMessage: string): void;
+    protected ELMTitle: XDiv;
+    get Title(): string;
+    set Title(pValue: string);
+}
+declare class XBaseButtonBar extends XWrapPanel {
+    constructor(pOwner: XElement, pClass: string);
+    Cancel: XBaseTextButton;
+}
+declare class XBaseDialog extends XSizeableElement implements XIDialog {
+    Caption: XBaseDialogCaption;
+    constructor(pOwner: XElement);
+    IsDialog: boolean;
+    ButtonBar: XBaseButtonBar;
+    private _DialogContainer;
+    Cancel(pArg: MouseEvent): void;
+    get Title(): string;
+    set Title(pValue: string);
+    ShowDialog(): void;
+    StartMouseDown(pArg: MouseEvent): void;
+    IncZIndex(): void;
+    Show(pValue?: boolean): void;
+}
+declare class XButtonEditor extends XBaseInput {
+    constructor(pOwner: XElement);
+    Button: XBaseButton | any;
+    CreateInput(): HTMLInputElement;
+    OnClick(pArg: MouseEvent): void;
+}
+declare class XDialogContainer extends XDiv {
+    constructor(pOwner: XElement, pClass: string);
 }

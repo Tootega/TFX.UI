@@ -153,3 +153,77 @@ html {
     resize: none;
     overflow: hidden;
 }
+
+.XDropDownGrid {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+}
+
+.XDialog {
+    position: absolute;
+    height: 250px;
+    width: 350px;
+    left: calc((100% - 350px)/2);
+    top: calc((100% - 250px)/4);
+    background-color: #abc;
+    border: solid 3px #8eadcb;
+}
+
+.XDialogCaption {
+    position: absolute;
+    height: 35px;
+    width: 100%;
+    background-color: #2266a97c;
+    pointer-events: none;
+}
+
+.XDialogContainer {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: #a4891e31;
+    overflow: hidden;
+}
+
+.XDialogTitle {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    padding-left: 7px;
+    top: 5px;
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+.XButtonBar {
+    position: absolute;
+    height: 30px;
+    width: 100%;
+    bottom: 0px;
+    text-align: end;
+    background-color: #2266a97c;
+}
+
+
+.XDialogButton {
+    display: inline-block;
+    text-align: center;
+    min-width: 83px;
+    height: calc(100% - 10px);
+    margin: 6px;
+    background: #98b7d5;
+    border: 1px solid #999;
+    vertical-align: top;
+    white-space: normal;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.XDialogButton::after {
+    content: '';
+    display: inline-block;
+    width: 100%;
+}

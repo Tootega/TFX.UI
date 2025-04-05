@@ -1,46 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Drag and Drop Example</title>
     <style>
-        #dropzone {
-            width: 300px;
-            height: 150px;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px dashed #cccccc;
+        .parent-panel {
+            width: 600px;
+            height: 200px; /* Altura fixa para scroll vertical */
+            border: 2px solid #333;
+            overflow-y: auto;
+            position: relative;
+            background: #f8f8f8;
+        }
+
+        .ltr {
+            text-align: left;
+        }
+
+        /* Direção direita para esquerda */
+        .rtl {
+            text-align: right;
+        }
+
+        .child-panel {
+            display: inline-block;
+            min-width: 180px;
+            height: 50px; /* Altura fixa dos filhos */
+            margin: 5px;
+            background: #e0e0e0;
+            border: 1px solid #999;
+            vertical-align: top; /* Alinhamento vertical no topo */
+            white-space: normal;
+        }
+
+        /* Garante que novos itens mantenham o fluxo correto */
+        .parent-panel::after {
+            content: '';
+            display: inline-block;
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <div id="draggable" draggable="true" style="width: 100px; height: 100px; background-color: blue;">Drag me!</div>
-    <div id="dropzone">Drop here</div>
+    <!-- Use a classe 'rtl' ou 'ltr' no container para mudar a direção -->
+    <div class="parent-panel rtl" id="container">
+        <div class="child-panel">Item 1</div>
+        <div class="child-panel">Item 2</div>
+        <!--<div class="child-panel">Item 3</div>
+    <div class="child-panel">Item 4</div>
+    <div class="child-panel">Item 5</div>
+    <div class="child-panel">Item 6</div>
+    <div class="child-panel">Item 7</div>
+    <div class="child-panel">Item 8</div>
+    <div class="child-panel">Item 9</div>
+    <div class="child-panel">Item 10</div>
+    <div class="child-panel">Item 11</div>
+    <div class="child-panel">Item 12</div>
+    <div class="child-panel">Item 13</div>
+    <div class="child-panel">Item 14</div>
+    <div class="child-panel">Item 15</div>
+    <div class="child-panel">Item 16</div>
+    <div class="child-panel">Item 17</div>
+    <div class="child-panel">Item 18</div>
+    <div class="child-panel">Item 19</div>
+    <div class="child-panel">Item 20</div>-->
+    </div>
 
     <script>
-    const draggable = document.getElementById('draggable');
-    const dropzone = document.getElementById('dropzone');
+        // Opcional: Alternar entre direções
+        const container = document.getElementById('container');
 
-    draggable.addEventListener('dragstart', function (event) {
-        event.dataTransfer.setData("text/plain", "This is the draggable element.");
-    });
-
-    dropzone.addEventListener('dragenter', function (event) {
-        event.preventDefault();
-        console.log('Drag Enter');
-    });
-
-    dropzone.addEventListener('dragover', function (event) {
-        event.preventDefault();
-        console.log('Drag Over');
-    });
-
-    dropzone.addEventListener('drop', function (event) {
-        event.preventDefault();
-        console.log('Dropped');
-    });
+        // Exemplo: Alternar direção ao clicar
+        container.addEventListener('click', () =>
+        {
+            container.classList.toggle('rtl');
+            container.classList.toggle('ltr');
+        });
     </script>
 </body>
 </html>
