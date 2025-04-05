@@ -3,7 +3,7 @@
 class XCalendar extends XDropDownElement
 {
 
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null = null)
+    constructor(pOwner: XElement, pClass: string)
     {
         super(pOwner, pClass);
         this.Header = new XDiv(this.HTML, "XCalendar-Header");
@@ -42,6 +42,8 @@ class XCalendar extends XDropDownElement
     private ViewDate: Date;
     SelectedDate: Date;
     OnSelectdate: XMethod<Date> | null = null;
+    override get CanDrag(): boolean { return false; }
+    override get CanResize(): boolean { return false; }
 
     override OnShow(pValue: boolean = true)
     {
@@ -72,8 +74,8 @@ class XCalendar extends XDropDownElement
 
         const currentYear = this.ViewDate.getFullYear();
 
-        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1; 
-        const decadeEnd = decadeStart + 10; 
+        const decadeStart = currentYear - ((currentYear - 1) % 10) - 1;
+        const decadeEnd = decadeStart + 10;
         const gridStartYear = decadeStart - (decadeStart % 16);
 
         for (let year = gridStartYear; year < gridStartYear + 16; year++)

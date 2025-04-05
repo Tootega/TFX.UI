@@ -1,6 +1,7 @@
-﻿class XPopupElement extends XDiv implements XIPopupPanel
+﻿/// <reference path="XSizeableElement.ts" />
+class XPopupElement extends XSizeableElement implements XIPopupPanel
 {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
+    constructor(pOwner: XElement, pClass: string)
     {
         super(pOwner, pClass);
         this.ReferenceElement = this;
@@ -15,10 +16,8 @@
     {
     }
 
-
     override Show(pValue: boolean = true)
     {
-        this.HTML.style.zIndex = XPopupManager.ZIndex();
         super.Show(pValue);
     }
 

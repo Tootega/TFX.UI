@@ -60,16 +60,17 @@ class XEventManager
         observer.observe(pContext.HTML, pConfig);
     }
 
-    static AddEvent(pContext: any, pElement: any, pEvent: string, pMethod: any, pCheckSource: boolean = false)
+    static AddEvent(pContext: any, pElement: HTMLElement, pEvent: XEventType, pMethod: any, pCheckSource: boolean = false)
     {
-        if (pElement.Method == null)
-            pElement.Method = new Object();
+        var elm: any = pElement;
+        if (elm.Method == null)
+            elm.Method = new Object();
         XEventManager.RemoveEvent(pContext, pElement, pEvent);
-        pElement.Method[pContext.UUID + "-" + pEvent] = (arg: any) =>
+        elm.Method[pContext.UUID + "-" + pEvent] = (arg: any) =>
         {
             XEventManager.Call(pContext, pMethod, pElement, pCheckSource, arg);
         }
-        pElement.addEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
+        pElement.addEventListener(pEvent, elm.Method[pContext.UUID + "-" + pEvent]);
     }
 
     static RemoveEvent(pContext: any, pElement: any, pEvent: string)

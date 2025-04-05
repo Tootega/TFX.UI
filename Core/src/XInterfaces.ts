@@ -3,7 +3,18 @@ interface Element
 {
     Owner: XElement | null;
 }
+interface XIElement
+{
+    Owner: XElement | HTMLElement | null;
+}
 
+interface XIDialog
+{
+}
+
+interface XIDialogContainer extends XIElement
+{
+}
 
 interface Window 
 {
@@ -44,7 +55,7 @@ interface XIEditor extends XIElement
 interface XIPopupPanel extends XIElement
 {
     CallPopupClosed(): void;
-    Show():void;
+    Show(): void;
 
     AutoClose: boolean;
     OnPopupClosed: XPopupClosedEvent | null;

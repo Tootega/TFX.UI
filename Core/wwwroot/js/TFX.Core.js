@@ -336,13 +336,14 @@ class XEventManager {
         observer.observe(pContext.HTML, pConfig);
     }
     static AddEvent(pContext, pElement, pEvent, pMethod, pCheckSource = false) {
-        if (pElement.Method == null)
-            pElement.Method = new Object();
+        var elm = pElement;
+        if (elm.Method == null)
+            elm.Method = new Object();
         XEventManager.RemoveEvent(pContext, pElement, pEvent);
-        pElement.Method[pContext.UUID + "-" + pEvent] = (arg) => {
+        elm.Method[pContext.UUID + "-" + pEvent] = (arg) => {
             XEventManager.Call(pContext, pMethod, pElement, pCheckSource, arg);
         };
-        pElement.addEventListener(pEvent, pElement.Method[pContext.UUID + "-" + pEvent]);
+        pElement.addEventListener(pEvent, elm.Method[pContext.UUID + "-" + pEvent]);
     }
     static RemoveEvent(pContext, pElement, pEvent) {
         if (pElement.Method != null && pElement.Method[pContext.UUID + "-" + pEvent] != null) {
@@ -1730,6 +1731,90 @@ class XSort {
         pArray[pRight] = tmp;
     }
 }
+class XUtils {
+    static SetCursor(pElement, pType) {
+        switch (pType) {
+            case XDragType.LeftTop:
+                pElement.style.cursor = "nw-resize;";
+                break;
+            case XDragType.Top:
+                pElement.style.cursor = "n-resize";
+                break;
+            case XDragType.RightTop:
+                pElement.style.cursor = "ne-resize";
+                break;
+            case XDragType.Right:
+                pElement.style.cursor = "e-resize";
+                break;
+            case XDragType.RightBottom:
+                pElement.style.cursor = "se-resize";
+                break;
+            case XDragType.Bottom:
+                pElement.style.cursor = "s-resize";
+                break;
+            case XDragType.LeftBottom:
+                pElement.style.cursor = "sw-resize";
+                break;
+            case XDragType.Left:
+                pElement.style.cursor = "w-resize";
+                break;
+            case XDragType.Drag:
+                pElement.style.cursor = "move";
+                break;
+            default:
+                pElement.style.cursor = "default";
+                break;
+        }
+    }
+    static Location(pElement) {
+        var prect = null;
+        if (pElement.parentElement != null)
+            prect = pElement.parentElement.getBoundingClientRect();
+        var rect = pElement.getBoundingClientRect();
+        if (prect != null)
+            return new XPoint(rect.left - prect.left, rect.top - prect.top);
+        return new XPoint(rect.left, rect.top);
+    }
+    static IsOut(pRect, pLocation, pWidth, pHeight) {
+        return (pLocation.IsLessZero || (pRect.width < pWidth + pLocation.X) || (pRect.height < pHeight + pLocation.Y));
+    }
+    static IsNumber(pValue) {
+        return !isNaN(parseFloat(pValue)) && isFinite(pValue);
+    }
+    static AddElement(pOwner, pTag, pClass = null, pInsert = false) {
+        if (pTag == null)
+            throw new Error(`Parameter "pTag" can´t be null`);
+        var own;
+        if (pOwner == null)
+            own = document.body;
+        else if (pOwner instanceof HTMLElement)
+            own = pOwner;
+        else
+            own = pOwner.HTML;
+        var elm = document.createElement(pTag);
+        if (pClass != null)
+            elm.className = pClass;
+        if (pInsert && own.childNodes.length > 0)
+            own.insertBefore(elm, elm.childNodes[0]);
+        else
+            own.appendChild(elm);
+        if (pOwner == null)
+            elm.Owner = pOwner;
+        else if (pOwner instanceof XElement)
+            elm.Owner = pOwner;
+        return elm;
+    }
+}
+/// <reference path="Utils/XUtils.ts" />
+class XSize {
+    constructor(pWidth = 0, pHeight = 0) {
+        this.Width = pWidth;
+        this.Height = pHeight;
+    }
+    Equal(pOther) {
+        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
+    }
+}
 class XArray extends Array {
     constructor(pArg) {
         super();
@@ -1876,6 +1961,9 @@ class XHSLColor {
     }
 }
 class XPoint {
+    static get Empty() {
+        return this._Empty;
+    }
     constructor(pX = Number.NaN, pY = Number.NaN) {
         this.X = pX;
         this.Y = pY;
@@ -1916,7 +2004,11 @@ class XPoint {
         return "X=" + this.X + " Y=" + this.Y;
     }
 }
+XPoint._Empty = new XPoint(0, 0);
 class XRect {
+    static get Empty() {
+        return this._Empty;
+    }
     static FromPoints(pLeftTop, pRightBottom) {
         return new XRect(pLeftTop.X, pLeftTop.Y, pRightBottom.X - pLeftTop.X, pRightBottom.Y - pLeftTop.Y);
     }
@@ -2030,15 +2122,7 @@ class XRect {
         return XDragType.Error;
     }
 }
-class XSize {
-    constructor(pWidth = 0, pHeight = 0) {
-        this.Width = pWidth;
-        this.Height = pHeight;
-    }
-    Equal(pOther) {
-        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
-    }
-}
+XRect._Empty = new XRect(0, 0, 0, 0);
 class XElement {
     static NextID() {
         return this._ID++;
@@ -2051,6 +2135,7 @@ class XElement {
         this.Rows = 0;
         this.Cols = 0;
         this.Children = new XArray();
+        this.AutoIncZIndex = false;
         this.UUID = XElement.NextID();
         this.Owner = pOwner;
         this.HTML = this.CreateContainer(pTag);
@@ -2069,6 +2154,18 @@ class XElement {
         this._ResizeObserver.observe(this.HTML);
         if (pOwner instanceof XElement)
             pOwner.AddChildren(this);
+    }
+    GetOwner(pPredicate) {
+        var p = this.Owner;
+        while (p != null) {
+            if (pPredicate(p))
+                return p;
+            p = p.Ow;
+        }
+        return null;
+    }
+    IncZIndex() {
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
     }
     AddChildren(pElement) {
         this.Children.Add(pElement);
@@ -2103,6 +2200,7 @@ class XElement {
     OnShow() {
     }
     Show(pValue = true) {
+        this.IncZIndex();
         var old = this.IsDrawed;
         this._IsVisible = pValue;
         if (pValue === true) {
@@ -2199,7 +2297,7 @@ class XDataGrid extends XDiv {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
         var data = [];
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 20; i++) {
             const row = {
                 id: i,
                 nome: `Nome ${i}`,
@@ -2550,17 +2648,15 @@ class XDatePickerEditor extends XBaseLoockupInput {
         // Monta a string
         let resultado = '';
         // Formata a data se necessário
-        if (formatoData) {
+        if (formatoData)
             resultado = `${dia}/${mes}/${ano}`;
-        }
         // Formata a hora se necessário
         if (formatoHora) {
             const separador = resultado ? ' ' : ''; // Espaço se já tiver data
             let horaFormatada = `${horas}:${minutos}`;
             // Adiciona segundos se necessário
-            if (formatoHora.toLowerCase().includes('ss')) {
+            if (formatoHora.toLowerCase().includes('ss'))
                 horaFormatada += `:${segundos}`;
-            }
             resultado += separador + horaFormatada;
         }
         return resultado;
@@ -2924,7 +3020,233 @@ class XPhoneEditor extends XBaseInput {
             this.Input.classList.add('Error');
     }
 }
-class XPopupElement extends XDiv {
+class XSizeableElement extends XDiv {
+    constructor(pOwner, pClass) {
+        super(pOwner, pClass);
+        this._Location = XPoint.Empty;
+        this._Start = XPoint.Empty;
+        this._StartPos = XPoint.Empty;
+        this.DragType = XDragType.Error;
+        this.IsCaptured = false;
+        this.AutoPosition = true;
+        this.CustomSizePosition = false;
+        this.ParentConstraint = true;
+        this.DragRect = XRect.Empty;
+        this._CanDrag = true;
+        this._CanResize = true;
+        this.PrepareEvents();
+    }
+    get CanDrag() { return this._CanDrag; }
+    get CanResize() { return this._CanResize; }
+    set CanDrag(pValue) { this._CanDrag = pValue; }
+    set CanResize(pValue) { this._CanResize = pValue; }
+    PrepareEvents() {
+        if (!this.CanDrag && !this.CanResize)
+            return;
+        XEventManager.AddEvent(this, this.HTML, XEventType.MouseDown, this.OnMouseDown, true);
+        XEventManager.AddEvent(this, this.HTML, XEventType.MouseMove, this.OnMouseMove);
+        XEventManager.AddEvent(this, this.HTML, XEventType.MouseLeave, this.OnMouseLeave, true);
+        XEventManager.AddEvent(this, this.HTML, XEventType.MouseUp, this.OnMouseUp, true);
+    }
+    SelectionChanged() {
+        //if (this.IsSelected)
+        //    this.HTML.setAttribute("IsSelected", "true");
+        //else
+        //    this.HTML.removeAttribute("IsSelected");
+    }
+    get IsDraging() {
+        return XDragUtils.HasDrag == this;
+    }
+    Focus() {
+    }
+    Resize() {
+        if (this.AutoPosition)
+            this.DoAutoPosition();
+        if (this.DragPanelSizeEvent != null)
+            this.DragPanelSizeEvent(this);
+        this.Focus();
+    }
+    DoAutoPosition() {
+        if (this.HTML.parentElement == null)
+            return;
+        if (this.HTML.clientWidth > 0 && this.HTML.clientHeight > 0) {
+            this.HTML.style.left = ((this.HTML.parentElement.clientWidth - this.HTML.clientWidth) / 2) + "px";
+            this.HTML.style.top = ((this.HTML.parentElement.clientHeight - this.HTML.clientHeight) / 2) + "px";
+        }
+    }
+    GetLineCount(pRect) {
+        var cnt = new XArray([0, 0, 0, 0, 0]);
+        if (cnt[0] > 0)
+            cnt[0] = pRect.Height / (cnt[0] + 1);
+        if (cnt[1] > 0)
+            cnt[1] = pRect.Width / (cnt[1] + 1);
+        if (cnt[2] > 0)
+            cnt[2] = pRect.Height / (cnt[2] + 1);
+        if (cnt[3] > 0)
+            cnt[3] = pRect.Width / (cnt[3] + 1);
+        return cnt;
+    }
+    get DragHeight() {
+        return 25;
+    }
+    get ResizeWidth() {
+        return 4;
+    }
+    OnMouseLeave(pArg) {
+        if (!XDragUtils.HasDrag && this.HTML.parentElement != null) {
+            pArg.stopPropagation();
+            this.HTML.parentElement.style.cursor = "unset";
+        }
+    }
+    OnMouseDown(pArg) {
+        this.StartMouseDown(pArg);
+        if (this.AutoIncZIndex)
+            this.IncZIndex();
+        if (!pArg.ctrlKey && pArg.button == 0) {
+            XPopupManager.HideAll(pArg);
+            var rect = this.HTML.GetRect();
+            this._Start = new XPoint(pArg.pageX - rect.Left, pArg.pageY - rect.Top);
+            this._StartPos = new XPoint(pArg.pageX, pArg.pageY);
+            this.DragType = this.CanExecute(this.GetLocationType(this._Start, this.HTML.offsetWidth, this.HTML.offsetHeight, this.ResizeWidth, this.DragHeight));
+            if (this.DragType != XDragType.Error) {
+                pArg.stopPropagation();
+                XEventManager.AddEvent(this, window, XEventType.MouseUp, this.OnMouseUp);
+                XDragUtils.HasDrag = this;
+                XEventManager.AddEvent(this, document.body, XEventType.MouseMove, this.DragMouseMove);
+                XDragUtils.HasDrag.IsCaptured = true;
+                this._Location = XUtils.Location(this.HTML);
+            }
+        }
+    }
+    StartMouseDown(pArg) {
+    }
+    GetLocationType(pStart, pClientWidth, pClientHeight, pResizeWidth, pDragHeight) {
+        let dt = pStart.LocationType(pClientWidth, pClientHeight, pResizeWidth, pDragHeight);
+        if (dt == XDragType.Drag && this.DragRect != null && !this.DragRect.Contains(pStart))
+            return XDragType.Error;
+        return dt;
+    }
+    GetPos(pSource, pTarget) {
+        return pSource.Postion(pTarget);
+    }
+    OnMouseUp(pArg) {
+        if (XDragUtils.HasDrag != null && XDragUtils.HasDrag == this && this.HTML.parentElement != null) {
+            pArg.stopPropagation();
+            XEventManager.RemoveEvent(XDragUtils.HasDrag, window, XEventType.MouseUp);
+            XEventManager.RemoveEvent(XDragUtils.HasDrag, document.body, XEventType.MouseMove);
+            XDragUtils.HasDrag.IsCaptured = false;
+            var oldtype = XDragUtils.HasDrag.DragType;
+            this.HTML.parentElement.style.cursor = "unset";
+            XDragUtils.HasDrag = null;
+            if (oldtype == XDragType.Drag)
+                this.EndDrag();
+            else if (oldtype != XDragType.Error)
+                this.EndSize();
+        }
+    }
+    EndDrag() { }
+    EndSize() {
+    }
+    OnMouseMove(pArg) {
+        if (this.HTML.parentElement == null)
+            return;
+        if (pArg.target == this.HTML && XDragUtils.HasDrag == null && !pArg.ctrlKey) {
+            pArg.stopPropagation();
+            var rect = this.HTML.GetRect();
+            var pt = new XPoint(pArg.pageX - rect.Left, pArg.pageY - rect.Top);
+            this.DragType = this.CanExecute(this.GetLocationType(pt, this.HTML.offsetWidth, this.HTML.offsetHeight, this.ResizeWidth, this.DragHeight));
+            XUtils.SetCursor(this.HTML.parentElement, this.DragType);
+            if (this.IsCaptured)
+                this.DragMouseMove(pArg);
+        }
+        else
+            XUtils.SetCursor(this.HTML.parentElement, XDragType.Error);
+    }
+    CanExecute(pType) {
+        if (!this.CanDrag && pType == XDragType.Drag)
+            return XDragType.Error;
+        if (!this.CanResize && pType != XDragType.Drag)
+            return XDragType.Error;
+        return pType;
+    }
+    DragMouseMove(pArg) {
+        if (this.HTML.parentElement == null)
+            return;
+        pArg.stopPropagation();
+        var x = this.HTML.parentElement.scrollLeft;
+        var y = this.HTML.parentElement.scrollTop;
+        var mx = pArg.pageX - this._StartPos.X;
+        var my = pArg.pageY - this._StartPos.Y;
+        this._StartPos = new XPoint(pArg.pageX, pArg.pageY);
+        switch (this.DragType) {
+            case XDragType.LeftTop:
+                this._Location = new XPoint(this._Location.X + mx, this._Location.Y + my);
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth - mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.left = x + this._Location.X + "px";
+                this.HTML.style.top = y + this._Location.Y + "px";
+                this.HTML.style.width = (this.HTML.clientWidth - mx) + "px";
+                this.HTML.style.height = (this.HTML.clientHeight - my) + "px";
+                break;
+            case XDragType.Top:
+                this._Location = new XPoint(this._Location.X, this._Location.Y + my);
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth - mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.top = y + this._Location.Y + "px";
+                this.HTML.style.height = (this.HTML.clientHeight - my) + "px";
+                break;
+            case XDragType.RightTop:
+                this._Location = new XPoint(this._Location.X + mx, this._Location.Y + my);
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth + mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.top = y + this._Location.Y + "px";
+                this.HTML.style.width = (this.HTML.clientWidth + mx) + "px";
+                this.HTML.style.height = (this.HTML.clientHeight - my) + "px";
+                break;
+            case XDragType.Right:
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth + mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.width = (this.HTML.clientWidth + mx) + "px";
+                break;
+            case XDragType.RightBottom:
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth + mx), (this.HTML.clientHeight + my)))
+                    break;
+                this.HTML.style.width = (this.HTML.clientWidth + mx) + "px";
+                this.HTML.style.height = (this.HTML.clientHeight + my) + "px";
+                break;
+            case XDragType.Bottom:
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth + mx), (this.HTML.clientHeight + my)))
+                    break;
+                this.HTML.style.height = (this.HTML.clientHeight + my) + "px";
+                break;
+            case XDragType.LeftBottom:
+                this._Location = new XPoint(this._Location.X + mx, this._Location.Y + my);
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth - mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.left = x + this._Location.X + "px";
+                this.HTML.style.width = (this.HTML.clientWidth - mx) + "px";
+                this.HTML.style.height = (this.HTML.clientHeight + my) + "px";
+                break;
+            case XDragType.Left:
+                this._Location = new XPoint(this._Location.X + mx, this._Location.Y);
+                if (this.ParentConstraint && XUtils.IsOut(this.HTML.parentElement.getBoundingClientRect(), this._Location, (this.HTML.clientWidth - mx), (this.HTML.clientHeight - my)))
+                    break;
+                this.HTML.style.left = x + this._Location.X + "px";
+                this.HTML.style.width = (this.HTML.clientWidth - mx) + "px";
+                break;
+            case XDragType.Drag:
+                this._Location = new XPoint(this._Location.X + mx, this._Location.Y + my);
+                this.HTML.style.left = x + this._Location.X + "px";
+                this.HTML.style.top = y + this._Location.Y + "px";
+                break;
+        }
+        this.CustomSizePosition = true;
+        this.Draging();
+    }
+    Draging() { }
+}
+/// <reference path="XSizeableElement.ts" />
+class XPopupElement extends XSizeableElement {
     constructor(pOwner, pClass) {
         super(pOwner, pClass);
         this.AutoClose = false;
@@ -2937,7 +3259,6 @@ class XPopupElement extends XDiv {
     CallPopupClosed() {
     }
     Show(pValue = true) {
-        this.HTML.style.zIndex = XPopupManager.ZIndex();
         super.Show(pValue);
     }
     CanClose(pElement) {
@@ -2987,7 +3308,7 @@ class XDropDownElement extends XPopupElement {
 /// <reference path="Base/XPopupElement.ts" />
 /// <reference path="Base/XDropDownElement.ts" />
 class XCalendar extends XDropDownElement {
-    constructor(pOwner, pClass = null) {
+    constructor(pOwner, pClass) {
         super(pOwner, pClass);
         this.CurrentPanel = 'days';
         this.OnSelectdate = null;
@@ -3010,6 +3331,8 @@ class XCalendar extends XDropDownElement {
         this.LeftArrow.HTML.addEventListener('click', () => this.Navigate(-1));
         this.RightArrow.HTML.addEventListener('click', () => this.Navigate(1));
     }
+    get CanDrag() { return false; }
+    get CanResize() { return false; }
     OnShow(pValue = true) {
         this.CurrentPanel = 'days';
         this.UpdateCalendar();
@@ -3986,6 +4309,7 @@ class XForm extends XDiv {
 class XStage extends XDiv {
     static Run() {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        window.onkeydown = (a) => XHotkeyManager.OnKeyDown(a);
         this.Instance = new XStage();
     }
     constructor() {
@@ -4028,34 +4352,6 @@ class XTopBar extends XDiv {
         super(pOwner, "XTopBar");
     }
 }
-class XUtils {
-    static IsNumber(pValue) {
-        return !isNaN(parseFloat(pValue)) && isFinite(pValue);
-    }
-    static AddElement(pOwner, pTag, pClass = null, pInsert = false) {
-        if (pTag == null)
-            throw new Error(`Parameter "pTag" can�t be null`);
-        var own;
-        if (pOwner == null)
-            own = document.body;
-        else if (pOwner instanceof HTMLElement)
-            own = pOwner;
-        else
-            own = pOwner.HTML;
-        var elm = document.createElement(pTag);
-        if (pClass != null)
-            elm.className = pClass;
-        if (pInsert && own.childNodes.length > 0)
-            own.insertBefore(elm, elm.childNodes[0]);
-        else
-            own.appendChild(elm);
-        if (pOwner == null)
-            elm.Owner = pOwner;
-        else if (pOwner instanceof XElement)
-            elm.Owner = pOwner;
-        return elm;
-    }
-}
 /// <reference path="src/XDefault.ts" />
 /// <reference path="src/XConst.ts" />
 /// <reference path="src/XInterfaces.ts" />
@@ -4086,4 +4382,19 @@ class XUtils {
 /// <reference path="src/Editors/XNormalEditor.ts" />
 /// <reference path="src/Editors/XDataGridEditor.ts" />
 /// <reference path="src/Stage/XStage.ts" />
+/// <reference path="XSizeableElement.ts" />
+class XBaseDialog extends XSizeableElement {
+    constructor(pOwner, pClass) {
+        var _a;
+        super(pOwner, pClass);
+        (_a = this.HTML.parentElement) === null || _a === void 0 ? void 0 : _a.remove();
+    }
+    ShowDialog(pMessage) {
+        if (this.HTML.parentElement == null) {
+            let ow = this.GetOwner(a => {
+                return true;
+            });
+        }
+    }
+}
 //# sourceMappingURL=TFX.Core.js.map

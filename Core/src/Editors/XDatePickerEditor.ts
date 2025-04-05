@@ -55,9 +55,7 @@ class XDatePickerEditor extends XBaseLoockupInput
 
         // Formata a data se necessário
         if (formatoData)
-        {
             resultado = `${dia}/${mes}/${ano}`;
-        }
 
         // Formata a hora se necessário
         if (formatoHora)
@@ -67,9 +65,7 @@ class XDatePickerEditor extends XBaseLoockupInput
 
             // Adiciona segundos se necessário
             if (formatoHora.toLowerCase().includes('ss'))
-            {
                 horaFormatada += `:${segundos}`;
-            }
 
             resultado += separador + horaFormatada;
         }

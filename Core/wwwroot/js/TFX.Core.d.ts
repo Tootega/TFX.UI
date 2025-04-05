@@ -161,7 +161,7 @@ declare class XEventManager {
     static AddExecOnce(pUUID: string, pEvent: any): void;
     static ExecOnce(pUUID: string): void;
     static AddObserver(pContext: any, pConfig: any, pEvent: any): void;
-    static AddEvent(pContext: any, pElement: any, pEvent: string, pMethod: any, pCheckSource?: boolean): void;
+    static AddEvent(pContext: any, pElement: HTMLElement, pEvent: XEventType, pMethod: any, pCheckSource?: boolean): void;
     static RemoveEvent(pContext: any, pElement: any, pEvent: string): void;
     static Call(pCallScope: any, pEvent: any, pHTM: any, pCheckSource: boolean, pArg: any): void;
     static DelayedEvent(pContext: any, pEvent: any, pTime?: number): void;
@@ -351,6 +351,13 @@ interface XMouseEvent {
 interface Element {
     Owner: XElement | null;
 }
+interface XIElement {
+    Owner: XElement | HTMLElement | null;
+}
+interface XIDialog {
+}
+interface XIDialogContainer extends XIElement {
+}
 interface Window {
     ErrorDialog: any;
     Wait: any;
@@ -433,6 +440,19 @@ declare class XSort {
     private static QuickSort;
     static Swap<T>(pArray: Array<T>, pLeft: number, pRight: number): void;
 }
+declare class XUtils {
+    static SetCursor(pElement: HTMLElement, pType: XDragType): void;
+    static Location(pElement: HTMLElement): XPoint;
+    static IsOut(pRect: DOMRect, pLocation: XPoint, pWidth: number, pHeight: number): Boolean;
+    static IsNumber(pValue: any): boolean;
+    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
+}
+declare class XSize {
+    constructor(pWidth?: number, pHeight?: number);
+    Width: number;
+    Height: number;
+    Equal(pOther: XSize): boolean;
+}
 declare class XArray<T> extends Array<T> {
     constructor(pArg?: number | T[] | any);
 }
@@ -498,6 +518,8 @@ declare class XHSLColor {
     static HSLToRGB(pH: number, pS: number, pL: number, pA: number): string;
 }
 declare class XPoint {
+    static _Empty: XPoint;
+    static get Empty(): XPoint;
     constructor(pX?: number, pY?: number);
     X: number;
     Y: number;
@@ -509,6 +531,8 @@ declare class XPoint {
     toString(): string;
 }
 declare class XRect {
+    static _Empty: XRect;
+    static get Empty(): XRect;
     static FromPoints(pLeftTop: XPoint, pRightBottom: XPoint): XRect;
     constructor(pLeft?: number | any, pTop?: number, pWidth?: number, pHeight?: number);
     Left: number;
@@ -538,13 +562,7 @@ declare class XRect {
     Contains(pPoint: XPoint): boolean;
     Postion(pTarget: XRect): XDragType;
 }
-declare class XSize {
-    constructor(pWidth?: number, pHeight?: number);
-    Width: number;
-    Height: number;
-    Equal(pOther: XSize): boolean;
-}
-declare class XElement {
+declare class XElement implements XIElement {
     static _ID: number;
     static NextID(): number;
     constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null, pTag?: string | null);
@@ -559,6 +577,9 @@ declare class XElement {
     Rows: number;
     Cols: number;
     Children: XArray<XElement>;
+    AutoIncZIndex: boolean;
+    GetOwner<T extends XIElement | null>(pPredicate: XFunc<T>): T;
+    IncZIndex(): void;
     AddChildren(pElement: XElement): void;
     get Rect(): XRect;
     set Rect(pValue: XRect);
@@ -685,8 +706,51 @@ declare class XPhoneEditor extends XBaseInput {
     private calculateCursorPos;
     private updateValidation;
 }
-declare class XPopupElement extends XDiv implements XIPopupPanel {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+interface XSizeableElementSizeEvent {
+    (pSender: XElement): void;
+}
+declare class XSizeableElement extends XDiv {
+    constructor(pOwner: XElement, pClass: string);
+    protected _Location: XPoint;
+    protected _Start: XPoint;
+    protected _StartPos: XPoint;
+    DragType: XDragType;
+    IsCaptured: boolean;
+    protected AutoPosition: boolean;
+    CustomSizePosition: boolean;
+    ParentConstraint: boolean;
+    DragPanelSizeEvent: XSizeableElementSizeEvent | any;
+    DragRect: XRect;
+    private _CanDrag;
+    private _CanResize;
+    get CanDrag(): boolean;
+    get CanResize(): boolean;
+    set CanDrag(pValue: boolean);
+    set CanResize(pValue: boolean);
+    PrepareEvents(): void;
+    SelectionChanged(): void;
+    get IsDraging(): boolean;
+    Focus(): void;
+    Resize(): void;
+    protected DoAutoPosition(): void;
+    GetLineCount(pRect: XRect): number[];
+    get DragHeight(): number;
+    get ResizeWidth(): number;
+    OnMouseLeave(pArg: MouseEvent): void;
+    OnMouseDown(pArg: MouseEvent): void;
+    StartMouseDown(pArg: MouseEvent): void;
+    GetLocationType(pStart: XPoint, pClientWidth: number, pClientHeight: number, pResizeWidth: number, pDragHeight: number): XDragType;
+    GetPos(pSource: XRect, pTarget: XRect): XDragType;
+    OnMouseUp(pArg: MouseEvent): void;
+    EndDrag(): void;
+    EndSize(): void;
+    OnMouseMove(pArg: MouseEvent): void;
+    CanExecute(pType: XDragType): XDragType;
+    DragMouseMove(pArg: MouseEvent): void;
+    Draging(): void;
+}
+declare class XPopupElement extends XSizeableElement implements XIPopupPanel {
+    constructor(pOwner: XElement, pClass: string);
     AutoClose: boolean;
     OnPopupClosed: XPopupClosedEvent | null;
     ReferenceElement: XElement | null;
@@ -695,12 +759,12 @@ declare class XPopupElement extends XDiv implements XIPopupPanel {
     CanClose(pElement: HTMLElement): boolean;
 }
 declare class XDropDownElement extends XPopupElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    constructor(pOwner: XElement, pClass: string);
     Selected(): void;
     BindTo(pElement: XElement): void;
 }
 declare class XCalendar extends XDropDownElement {
-    constructor(pOwner: XElement | HTMLElement | null, pClass?: string | null);
+    constructor(pOwner: XElement, pClass: string);
     protected Header: XDiv;
     protected LeftArrow: XBaseButton;
     protected CenterButton: XBaseButton;
@@ -712,6 +776,8 @@ declare class XCalendar extends XDropDownElement {
     private ViewDate;
     SelectedDate: Date;
     OnSelectdate: XMethod<Date> | null;
+    get CanDrag(): boolean;
+    get CanResize(): boolean;
     OnShow(pValue?: boolean): void;
     OnHide(): void;
     CallPopupClosed(): void;
@@ -816,6 +882,7 @@ declare class XDragUtils {
     private static _Data;
     static SetData(pData: any): void;
     static GetData<T>(): T;
+    static HasDrag: any;
 }
 declare class XTableHCell extends XTableElement {
     constructor(pOwner: XTableHRow, pClass?: string | null);
@@ -939,7 +1006,7 @@ declare class XStageTabControl extends XTabControl {
 declare class XTopBar extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null);
 }
-declare class XUtils {
-    static IsNumber(pValue: any): boolean;
-    static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
+declare class XBaseDialog extends XSizeableElement implements XIDialog {
+    constructor(pOwner: XElement, pClass: string);
+    ShowDialog(pMessage: string): void;
 }

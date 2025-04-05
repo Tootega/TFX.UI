@@ -8,7 +8,7 @@ class XDataGrid extends XDiv
     {
         super(pOwner, pClass);
         var data = [];
-        for (let i = 0; i < 200; i++)
+        for (let i = 0; i < 20; i++)
         {
             const row: any = {
                 id: i,

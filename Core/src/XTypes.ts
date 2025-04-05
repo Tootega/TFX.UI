@@ -1,4 +1,20 @@
-﻿
+﻿/// <reference path="Utils/XUtils.ts" />
+class XSize
+{
+    constructor(pWidth: number = 0, pHeight: number = 0)
+    {
+        this.Width = pWidth;
+        this.Height = pHeight;
+    }
+
+    public Width: number;
+    public Height: number;
+
+    Equal(pOther: XSize): boolean
+    {
+        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
+    }
+}
 class XArray<T> extends Array<T>
 {
     constructor(pArg?: number | T[] | any)
@@ -193,6 +209,13 @@ class XHSLColor
 
 class XPoint
 {
+    static _Empty = new XPoint(0, 0);
+
+    static get Empty()
+    {
+        return this._Empty;
+    }
+
     constructor(pX: number = Number.NaN, pY: number = Number.NaN)
     {
         this.X = pX;
@@ -259,6 +282,13 @@ class XPoint
 
 class XRect
 {
+    static _Empty = new XRect(0, 0, 0, 0);
+
+    static get Empty()
+    {
+        return this._Empty;
+    }
+
     static FromPoints(pLeftTop: XPoint, pRightBottom: XPoint): XRect
     {
         return new XRect(pLeftTop.X, pLeftTop.Y, pRightBottom.X - pLeftTop.X, pRightBottom.Y - pLeftTop.Y);
@@ -411,19 +441,3 @@ class XRect
     }
 }
 
-class XSize
-{
-    constructor(pWidth: number = 0, pHeight: number = 0)
-    {
-        this.Width = pWidth;
-        this.Height = pHeight;
-    }
-
-    public Width: number;
-    public Height: number;
-
-    Equal(pOther: XSize): boolean
-    {
-        return pOther != null && pOther.Width == this.Width && pOther.Height == this.Height;
-    }
-}

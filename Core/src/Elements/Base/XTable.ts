@@ -36,6 +36,7 @@ class XDragUtils
     {
         return <T>this._Data;
     }
+    static HasDrag: any;
 }
 
 class XTableHCell extends XTableElement

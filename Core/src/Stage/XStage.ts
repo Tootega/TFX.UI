@@ -8,6 +8,8 @@ class XStage extends XDiv
     static Run()
     {
         window.onmousedown = (arg) => XPopupManager.HideAll(arg);
+        window.onkeydown = (a) => XHotkeyManager.OnKeyDown(a);
+
         this.Instance = new XStage();
     }
 

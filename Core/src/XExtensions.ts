@@ -59,8 +59,8 @@ interface Node
     Any(pPredicate: XFunc<Node>): boolean;
 
     Name: string;
+    
 }
-
 
 Node.prototype.IsChildOf = function (pElement: Node, pOrIsSelf?: boolean): boolean
 {

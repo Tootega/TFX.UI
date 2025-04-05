@@ -1,7 +1,6 @@
 ﻿class XDropDownElement extends XPopupElement 
 {
-    
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null)
+    constructor(pOwner: XElement, pClass: string)
     {
         super(pOwner, pClass);
         this.IsVisible = false;

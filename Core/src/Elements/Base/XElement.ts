@@ -1,4 +1,4 @@
-﻿class XElement
+﻿class XElement implements XIElement
 {
     static _ID = 0;
 
@@ -40,6 +40,25 @@
     Rows: number = 0;
     Cols: number = 0;
     Children: XArray<XElement> = new XArray<XElement>();
+    AutoIncZIndex: boolean = false;
+
+    public GetOwner<T extends XIElement | null>(pPredicate: XFunc<T>): T
+    {
+        var p: XElement | any = this.Owner;
+        while (p != null)
+        {
+            if (pPredicate(p))
+                return <T>p;
+            p = p.Ow;
+        }
+        return <T>null;
+    }
+
+
+    IncZIndex()
+    {
+        this.HTML.style.zIndex = XPopupManager.ZIndex();
+    }
 
     AddChildren(pElement: XElement)
     {
@@ -92,6 +111,7 @@
 
     Show(pValue: boolean = true)
     {
+        this.IncZIndex();
         var old = this.IsDrawed;
         this._IsVisible = pValue;
         if (pValue === true)
