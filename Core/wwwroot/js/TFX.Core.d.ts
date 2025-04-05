@@ -594,15 +594,36 @@ declare class XDataGridEditor extends XBaseInput {
     DataGrid: XDataGrid;
     CreateInput(): HTMLInputElement;
 }
+declare class XBaseLoockupInput extends XBaseInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    Button: XBaseButton;
+    DropDownContent: XDropDownElement;
+    protected CreateDropDown(): XDropDownElement;
+    OnClick(pArg: KeyboardEvent): void;
+}
+declare class XDataGrid extends XDiv {
+    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
+    Table: XTable;
+}
+declare class XDropDownDataGrid extends XDataGrid {
+    constructor(pOwner: XDataLoockupEditor, pClass: string);
+    Editor: XDataLoockupEditor;
+}
+declare class XDataLoockupEditor extends XBaseLoockupInput {
+    constructor(pOwner: XElement | HTMLElement | null);
+    DataGrid: XDataGrid;
+    OnSelected(pRows: XArray<XTableRow>): void;
+}
 declare class XBaseButtonInput extends XBaseInput {
     constructor(pOwner: XElement | HTMLElement | null);
     Button: XBaseButton;
     OnClick(pArg: KeyboardEvent): void;
 }
-declare class XDatePickerEditor extends XBaseButtonInput {
+declare class XDatePickerEditor extends XBaseLoockupInput {
     constructor(pOwner: XElement | HTMLElement | null);
     Calendar: XCalendar;
     SelectedDate: Date;
+    protected CreateDropDown(): XDropDownElement;
     Selected(pDate: Date): void;
     FormatDate(data: Date, formato: string): string;
     private HandleInput;
@@ -701,10 +722,6 @@ declare class XCalendar extends XDropDownElement {
     private Navigate;
     UpdateCalendar(): void;
     protected CreateContainer(): HTMLElement;
-}
-declare class XDataGrid extends XDiv {
-    constructor(pOwner: XElement | HTMLElement | null, pClass: string | null);
-    Table: XTable;
 }
 declare class XMenuButtonItem extends XDiv {
     constructor(pOwner: XElement | HTMLElement | null, pItem: any);
@@ -925,19 +942,4 @@ declare class XTopBar extends XDiv {
 declare class XUtils {
     static IsNumber(pValue: any): boolean;
     static AddElement<T extends Element>(pOwner: any | HTMLElement | null, pTag: string | null, pClass?: string | null, pInsert?: boolean): T;
-}
-declare class XBaseLoockupInput extends XBaseInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    Button: XBaseButton;
-    DropDownContent: XDropDownElement;
-    OnClick(pArg: KeyboardEvent): void;
-}
-declare class XDropDownDataGrid extends XDataGrid {
-    constructor(pOwner: XDataLoockupEditor, pClass: string);
-    Editor: XDataLoockupEditor;
-}
-declare class XDataLoockupEditor extends XBaseLoockupInput {
-    constructor(pOwner: XElement | HTMLElement | null);
-    DataGrid: XDataGrid;
-    OnSelected(pRows: XArray<XTableRow>): void;
 }

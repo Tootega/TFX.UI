@@ -1,4 +1,5 @@
 ﻿/// <reference path="../Elements/Base/XBaseLoockupInput.ts" />
+/// <reference path="../Elements/XDataGrid.ts" />
 class XDropDownDataGrid extends XDataGrid
 {
     constructor(pOwner:  XDataLoockupEditor, pClass: string)

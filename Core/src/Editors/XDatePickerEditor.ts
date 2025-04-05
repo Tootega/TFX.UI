@@ -1,11 +1,11 @@
 ﻿/// <reference path="../Elements/Base/XBaseButtonInput.ts" />
-class XDatePickerEditor extends XBaseButtonInput
+class XDatePickerEditor extends XBaseLoockupInput
 {
     constructor(pOwner: XElement | HTMLElement | null)
     {
         super(pOwner);
+        this.Calendar = <XCalendar>this.DropDownContent;
         this.Input.className = "XDatePickerEditor";
-        this.Calendar = new XCalendar(pOwner);
         this.Calendar.IsVisible = false;
         this.Calendar.OnSelectdate = (d) => this.Selected(d);
         this.Calendar.ReferenceElement = this;
@@ -14,9 +14,14 @@ class XDatePickerEditor extends XBaseButtonInput
         this.Title = "Digite uma Data";
 
     }
-    Calendar: XCalendar;
+    Calendar: XCalendar ;
     SelectedDate: Date = new Date();
 
+    protected CreateDropDown(): XDropDownElement
+    {
+        this.Calendar = new XCalendar(this.Owner);
+        return this.Calendar;
+    }
 
     Selected(pDate: Date)
     {

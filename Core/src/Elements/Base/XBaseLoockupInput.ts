@@ -5,12 +5,17 @@ class XBaseLoockupInput extends XBaseInput
     {
         super(pOwner);
         this.Button = new XBaseButton(this, "XLookupButton");
-        this.DropDownContent = new XDropDownElement(pOwner, "XDropDown");
+        this.DropDownContent = this.CreateDropDown();
         XEventManager.AddEvent(this, this.Button.HTML, XEventType.Click, this.OnClick, true);
     }
 
     Button: XBaseButton;
     DropDownContent: XDropDownElement;
+
+    protected CreateDropDown(): XDropDownElement
+    {
+        return new XDropDownElement(this.Owner, "XDropDown");
+    }
 
     OnClick(pArg: KeyboardEvent)
     {

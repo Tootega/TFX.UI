@@ -47,6 +47,7 @@
   height: 230px;
   left: 400px;
   z-index: 99999;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
 }
 
 .DefaultHover:hover, .YearCell:hover, .MonthCell:hover, .DayCell:hover, .XCalendarRightArrow:hover, .XCalendarLeftArrow:hover, .XCalendarCenterButton:hover {
@@ -1104,6 +1105,7 @@ html {
   width: 300px;
   height: 250px;
   z-index: 99999;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
 }
 
 .XDropDownGrid {
